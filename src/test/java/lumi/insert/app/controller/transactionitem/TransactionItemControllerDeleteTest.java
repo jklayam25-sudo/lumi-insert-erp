@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,39 @@ public class TransactionItemControllerDeleteTest extends BaseTransactionItemCont
         .andExpect(jsonPath("$.data.id").value(transactionItemResponse.id().toString()))
         .andExpect(jsonPath("$.data.deleted").value(true))
         .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void deleteTransactionItemAPI_higherRole_shouldReturnDeleteDTO() throws Exception{ 
+        TransactionItemDelete transactionItemDelete = new TransactionItemDelete(transactionItemResponse.id(), UUID.randomUUID(), 1L, true, null);
+        when(transactionItemService.deleteTransactionItem(transactionItemResponse.id())).thenReturn(transactionItemDelete);
+
+        mockMvc.perform(
+            delete("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString())
+            .accept(MediaType.APPLICATION_JSON_VALUE) 
+        )
+        .andDo(print()) 
+        .andExpect(status().isGone())
+        .andExpect(jsonPath("$.data.id").value(transactionItemResponse.id().toString()))
+        .andExpect(jsonPath("$.data.deleted").value(true))
+        .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void deleteTransactionItemAPI_invalidRole_shouldReturnDeleteDTO() throws Exception{ 
+        TransactionItemDelete transactionItemDelete = new TransactionItemDelete(transactionItemResponse.id(), UUID.randomUUID(), 1L, true, null);
+        when(transactionItemService.deleteTransactionItem(transactionItemResponse.id())).thenReturn(transactionItemDelete);
+
+        mockMvc.perform(
+            delete("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString())
+            .accept(MediaType.APPLICATION_JSON_VALUE) 
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
     }
 
     @Test

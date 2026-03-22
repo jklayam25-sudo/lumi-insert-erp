@@ -56,7 +56,7 @@ public class MemoControllerGetTest extends BaseMemoControllerTest{
         when(memoService.getMemos(any(EmployeeLogin.class), any(LocalDateTime.class))).thenReturn(slices);
 
         mockMvc.perform(
-            get("/api/memos")
+            get("/api/memos") 
             .with(authentication(auth))
         )
         .andDo(print())
@@ -73,7 +73,7 @@ public class MemoControllerGetTest extends BaseMemoControllerTest{
         when(memoService.getMemos(any(EmployeeLogin.class), any(LocalDateTime.class))).thenReturn(slices);
 
         mockMvc.perform(
-            get("/api/memos?updatedAt=" + LocalDateTime.now().minusDays(7))
+            get("/api/memos?updatedAt=" + LocalDateTime.now().minusDays(7)) 
             .with(authentication(auth))
         )
         .andDo(print())
@@ -90,7 +90,7 @@ public class MemoControllerGetTest extends BaseMemoControllerTest{
         when(memoService.getMemos(any(EmployeeLogin.class), any(LocalDateTime.class))).thenReturn(slices);
 
         mockMvc.perform(
-            get("/api/memos")
+            get("/api/memos") 
             .with(authentication(auth))
         )
         .andDo(print())

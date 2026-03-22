@@ -11,7 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
  
 import org.junit.jupiter.api.Test;
-import org.springframework.http.MediaType; 
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.CustomerCreateRequest;
 import lumi.insert.app.exception.DuplicateEntityException;
@@ -37,6 +38,68 @@ public class CustomerControllerCreateTest extends BaseCustomerControllerTest{
         .andExpect(jsonPath("$.errors").isEmpty());
 
         verify(customerService, times(1)).createCustomer(argThat(arg -> arg.getShippingAddress().equals(customerDetailResponse.shippingAddress())));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    void createCustomerAPI_anyRoleFINANCE_returnDTO() throws Exception{
+        when(customerService.createCustomer(any(CustomerCreateRequest.class))).thenReturn(customerDetailResponse);
+
+        mockMvc.perform(
+            post("/api/customers")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("name", customerDetailResponse.name())
+            .param("email", customerDetailResponse.email())
+            .param("contact", customerDetailResponse.contact())
+            .param("shippingAddress", customerDetailResponse.shippingAddress())
+        )
+        .andDo(print())
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(customerDetailResponse.id().toString()))
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+        verify(customerService, times(1)).createCustomer(argThat(arg -> arg.getShippingAddress().equals(customerDetailResponse.shippingAddress())));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "OWNER")
+    void createCustomerAPI_higherRole_returnDTO() throws Exception{
+        when(customerService.createCustomer(any(CustomerCreateRequest.class))).thenReturn(customerDetailResponse);
+
+        mockMvc.perform(
+            post("/api/customers")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("name", customerDetailResponse.name())
+            .param("email", customerDetailResponse.email())
+            .param("contact", customerDetailResponse.contact())
+            .param("shippingAddress", customerDetailResponse.shippingAddress())
+        )
+        .andDo(print())
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(customerDetailResponse.id().toString()))
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+        verify(customerService, times(1)).createCustomer(argThat(arg -> arg.getShippingAddress().equals(customerDetailResponse.shippingAddress())));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    void createCustomerAPI_invalidRole_returnDTO() throws Exception{  
+        mockMvc.perform(
+            post("/api/customers")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("name", customerDetailResponse.name())
+            .param("email", customerDetailResponse.email())
+            .param("contact", customerDetailResponse.contact())
+            .param("shippingAddress", customerDetailResponse.shippingAddress())
+        )
+        .andDo(print())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
     }
 
     @Test 

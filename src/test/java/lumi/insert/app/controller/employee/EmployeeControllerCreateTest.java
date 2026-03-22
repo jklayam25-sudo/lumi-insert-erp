@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.MediaType;  
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.EmployeeCreateRequest;
 import lumi.insert.app.exception.DuplicateEntityException;
@@ -50,6 +51,25 @@ public class EmployeeControllerCreateTest extends BaseEmployeeControllerTest{
         .andExpect(jsonPath("$.data.fullname").value(employeeResponse.fullname())) 
         .andExpect(jsonPath("$.errors").isEmpty());
         verify(employeeService, times(1)).createEmployee(request);
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void createEmployeeAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{ 
+        mockMvc.perform(
+            post("/api/employees")
+            .with(csrf())
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("username", employeeResponse.username())
+            .param("fullname", employeeResponse.fullname()) 
+            .param("password", "secret$") 
+            .param("joinDate", LocalDateTime.now().toString())
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
     }
 
     @Test

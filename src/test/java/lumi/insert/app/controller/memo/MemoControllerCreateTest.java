@@ -79,14 +79,14 @@ public class MemoControllerCreateTest extends BaseMemoControllerTest{
         mockMvc.perform(
             post("/api/memos/1/read")
             .accept(MediaType.APPLICATION_JSON_VALUE)  
-            .with(authentication(auth))
+            .with(authentication(auth))  
         )
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.errors").isEmpty())
         .andExpect(jsonPath("$.data").value(true));
 
-        verify(memoService, times(1)).createMemoView(argThat(arg -> arg.getUsername().equals("lumi") && arg.getRole() == EmployeeRole.OWNER), eq(1L));
+        verify(memoService, times(1)).createMemoView(argThat(arg -> arg.getUsername().equals("lumi") && arg.getRole() == EmployeeRole.FINANCE), eq(1L));
     }
 
     @Test
@@ -96,14 +96,14 @@ public class MemoControllerCreateTest extends BaseMemoControllerTest{
         mockMvc.perform(
             post("/api/memos/1/read")
             .accept(MediaType.APPLICATION_JSON_VALUE)  
-            .with(authentication(auth))
+            .with(authentication(auth)) 
         )
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.errors").isEmpty())
         .andExpect(jsonPath("$.data").value(false));
 
-        verify(memoService, times(1)).createMemoView(argThat(arg -> arg.getUsername().equals("lumi") && arg.getRole() == EmployeeRole.OWNER), eq(1L));
+        verify(memoService, times(1)).createMemoView(argThat(arg -> arg.getUsername().equals("lumi") && arg.getRole() == EmployeeRole.FINANCE), eq(1L));
     }
 
 }

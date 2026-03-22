@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.PaginationRequest;
 import lumi.insert.app.dto.response.EmployeeResponse;
@@ -29,6 +30,23 @@ public class EmployeeControllerGetTest extends BaseEmployeeControllerTest{
     @Test
     @DisplayName("should return employee entity with status OK when entity found")
     public void getEmployeeAPI_validId_shouldReturnEntity() throws Exception{
+        when(employeeService.getEmployee(any(UUID.class))).thenReturn(employeeResponse);
+
+        mockMvc.perform(
+            get("/api/employees/" + employeeResponse.id()) 
+            .accept(MediaType.APPLICATION_JSON_VALUE) 
+        )
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.id").value(employeeResponse.id().toString()))
+        .andExpect(jsonPath("$.data.role").value(employeeResponse.role().toString())) 
+        .andExpect(jsonPath("$.errors").isEmpty());
+        verify(employeeService, times(1)).getEmployee(any());
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    public void getEmployeeAPI_publicROle_shouldReturnEntity() throws Exception{
         when(employeeService.getEmployee(any(UUID.class))).thenReturn(employeeResponse);
 
         mockMvc.perform(

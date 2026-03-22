@@ -8,6 +8,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute; 
@@ -47,6 +48,7 @@ public class TransactionItemController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionItemResponse>> createTransactionItem(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody TransactionItemCreateRequest request){
         TransactionItemResponse resultFromService = transactionItemService.createTransactionItem(id, request);
  
@@ -112,6 +114,7 @@ public class TransactionItemController {
         path = "/api/transactions/{transactionId}/items/{id}",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionItemDelete>> DeleteTransactionItem(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id){
         TransactionItemDelete resultFromService = transactionItemService.deleteTransactionItem(id);
  
@@ -129,6 +132,7 @@ public class TransactionItemController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionItemResponse>> UpdateTransactionItemQuantity(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id, @Parameter(description = "New quantity") @RequestBody @RequestParam(name = "quantity") Long quantity){
         TransactionItemResponse resultFromService = transactionItemService.updateTransactionItemQuantity(id, quantity);
  
@@ -147,6 +151,7 @@ public class TransactionItemController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionItemResponse>> refundTransactionItem(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody ItemRefundRequest request){
         TransactionItemResponse resultFromService = transactionItemService.refundTransactionItem(id, request);
  

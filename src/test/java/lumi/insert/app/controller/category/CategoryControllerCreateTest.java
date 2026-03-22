@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.core.entity.Category;
 import lumi.insert.app.dto.request.CategoryCreateRequest; 
@@ -22,6 +23,48 @@ public class CategoryControllerCreateTest extends BaseCategoryControllerTest  {
     @Test
     @DisplayName("Should return created http status and DTO when all request is valid")
     public void createCategoryAPI_validRequest_returnCreatedStatusAndResponseDTO() throws Exception{
+        Category mockCategory = CategoryUtils.getMockCategory();
+        CategoryResponse dtoResponseFromCategory = categoryMapper.createDtoResponseFromCategory(mockCategory);
+
+        when(categoryService.createCategory(any(CategoryCreateRequest.class))).thenReturn(dtoResponseFromCategory);
+
+         mockMvc.perform(
+            post("/api/categories")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("name", "Category") 
+        )
+        .andDo(print())
+        .andExpect(status().isCreated()) 
+        .andExpect(jsonPath("$.errors").isEmpty())
+        .andExpect(jsonPath("$.data.name").value("Category"));
+    }
+
+    @Test
+    @DisplayName("Should return 403 when authority role not warehouse or higher")
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    public void createCategoryAPI_invalidAuth_returnForbidden() throws Exception{
+        Category mockCategory = CategoryUtils.getMockCategory();
+        CategoryResponse dtoResponseFromCategory = categoryMapper.createDtoResponseFromCategory(mockCategory);
+
+        when(categoryService.createCategory(any(CategoryCreateRequest.class))).thenReturn(dtoResponseFromCategory);
+
+         mockMvc.perform(
+            post("/api/categories")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("name", "Category") 
+        )
+        .andDo(print())
+        .andExpect(status().isForbidden()) 
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"))
+        .andExpect(jsonPath("$.data ").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should run when authority role is higher")
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void createCategoryAPI_higherAuth_returnForbidden() throws Exception{
         Category mockCategory = CategoryUtils.getMockCategory();
         CategoryResponse dtoResponseFromCategory = categoryMapper.createDtoResponseFromCategory(mockCategory);
 

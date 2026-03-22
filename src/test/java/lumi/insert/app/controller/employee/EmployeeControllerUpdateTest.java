@@ -12,9 +12,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
  
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.dto.request.EmployeeUpdateRequest;
@@ -43,6 +45,22 @@ public class EmployeeControllerUpdateTest extends BaseEmployeeControllerTest{
         .andExpect(jsonPath("$.data.fullname").value(employeeResponse.fullname())) 
         .andExpect(jsonPath("$.errors").isEmpty());
         verify(employeeService, times(1)).resetEmployeePassword(any(), argThat(arg -> arg.equals("newPW%")));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void resetEmployeePasswordAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{ 
+        mockMvc.perform(
+            post("/api/employees/" + employeeResponse.id() + "/reset") 
+            .with(csrf())
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED) 
+            .param("password", "newPW%")
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
     }
 
     @Test
@@ -102,6 +120,22 @@ public class EmployeeControllerUpdateTest extends BaseEmployeeControllerTest{
         .andExpect(jsonPath("$.data.id").value(employeeResponse.id().toString())) 
         .andExpect(jsonPath("$.errors").isEmpty());
         verify(employeeService, times(1)).updateEmployee(any(), argThat(arg -> arg.getRole().equals(EmployeeRole.FINANCE.toString()) && arg.getUsername() == null));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void updateEmployeeAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{ 
+        mockMvc.perform(
+            patch("/api/employees/" + employeeResponse.id()) 
+            .with(csrf())
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED) 
+            .param("role", "FINANCE")
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
     }
 
     @Test

@@ -11,6 +11,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -60,6 +61,7 @@ public class SupplyController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<SupplyResponse>> createSupply(@Valid @RequestBody @org.springframework.web.bind.annotation.RequestBody SupplyCreateRequest request){
         SupplyResponse resultFromService = supplyService.createSupply(request);
  
@@ -144,6 +146,7 @@ public class SupplyController {
         path = "/api/supplies/{id}/cancel",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<SupplyResponse>> cancelSupply(@Parameter(description = "Supply order ID") @PathVariable(name = "id") UUID id){
         SupplyResponse resultFromService = supplyService.cancelSupply(id);
  
@@ -161,6 +164,7 @@ public class SupplyController {
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<SupplyResponse>> updateSupplierAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody SupplyUpdateRequest request){ 
         SupplyResponse resultFromService = supplyService.updateSupply(id, request);
 
@@ -177,6 +181,7 @@ public class SupplyController {
         path = "/api/supplies/{id}/refund",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<SupplyResponse>> refundSupplyItem(@Parameter(description = "Supply order ID") @PathVariable(name = "id") UUID id, @Valid ItemRefundRequest request){
         SupplyResponse resultFromService = supplyService.refundSupplyItem(id, request);
  

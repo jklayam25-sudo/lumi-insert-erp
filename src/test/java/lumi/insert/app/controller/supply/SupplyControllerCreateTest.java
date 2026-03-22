@@ -17,6 +17,7 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -53,6 +54,60 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
 
         verify(supplyService, times(1)).createSupply(argThat( arg -> arg.getSupplyItems().size() == 1 && arg.getSupplyItems().getFirst().getProductId() == 1L));
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER") 
+    public void createSupplyAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
+        when(supplyService.createSupply(any(SupplyCreateRequest.class))).thenReturn(supplyResponse);
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, 10L, null));
+
+        SupplyCreateRequest request = SupplyCreateRequest.builder()
+        .supplierId(UuidCreator.getTimeOrderedEpochFast())
+        .invoiceId("INV")
+        .totalFee(0L)
+        .totalDiscount(0L)
+        .supplyItems(items)
+        .build();
+
+        mockMvc.perform(
+            post("/api/supplies")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(objectMapper.writeValueAsString(request))
+        )
+        .andDo(print()) 
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.invoiceId").value(supplyResponse.invoiceId()))
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+      }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "FINANCE") 
+    public void createSupplyAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
+        when(supplyService.createSupply(any(SupplyCreateRequest.class))).thenReturn(supplyResponse);
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, 10L, null));
+
+        SupplyCreateRequest request = SupplyCreateRequest.builder()
+        .supplierId(UuidCreator.getTimeOrderedEpochFast())
+        .invoiceId("INV")
+        .totalFee(0L)
+        .totalDiscount(0L)
+        .supplyItems(items)
+        .build();
+
+        mockMvc.perform(
+            post("/api/supplies")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(objectMapper.writeValueAsString(request))
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
+
+      }
 
     @Test
     @DisplayName("should return errors NotNull when request param is not valid")

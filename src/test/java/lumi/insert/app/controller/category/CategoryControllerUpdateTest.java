@@ -11,8 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
-import lumi.insert.app.core.entity.Category;
+import lumi.insert.app.core.entity.Category; 
 import lumi.insert.app.dto.request.CategoryUpdateRequest;
 import lumi.insert.app.dto.response.CategoryResponse;
 import lumi.insert.app.exception.BoilerplateRequestException;
@@ -40,6 +41,22 @@ public class CategoryControllerUpdateTest extends BaseCategoryControllerTest {
         .andExpect(status().isOk()) 
         .andExpect(jsonPath("$.errors").isEmpty())
         .andExpect(jsonPath("$.data.name").value("Category"));
+    }
+ 
+    @Test
+    @DisplayName("Should return 403 when authority role not warehouse or higher")
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    public void editCategoryAPI_invalidAuth_returnForbidden() throws Exception{ 
+         mockMvc.perform(
+            put("/api/categories/1")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("name", "Category") 
+        )
+        .andDo(print())
+        .andExpect(status().isForbidden()) 
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"))
+        .andExpect(jsonPath("$.data ").isEmpty());
     }
 
     @Test
@@ -104,6 +121,20 @@ public class CategoryControllerUpdateTest extends BaseCategoryControllerTest {
     }
 
     @Test
+    @DisplayName("Should return 403 when authority role not warehouse or higher")
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    public void activateCategoryAPI_invalidAuth_returnForbidden() throws Exception{ 
+         mockMvc.perform(
+            post("/api/categories/1/activate")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isForbidden()) 
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"))
+        .andExpect(jsonPath("$.data ").isEmpty());
+    }
+
+    @Test
     @DisplayName("Should return 400 http status when request parameter type is not valid")
     public void deactivateCategoryAPI_invalidIdRequest_return400() throws Exception{
         mockMvc.perform(
@@ -114,6 +145,20 @@ public class CategoryControllerUpdateTest extends BaseCategoryControllerTest {
         .andExpect(status().isBadRequest()) 
         .andExpect(jsonPath("$.data").isEmpty())
         .andExpect(jsonPath("$.errors").isNotEmpty());
+    }
+
+    @Test
+    @DisplayName("Should return 403 when authority role not warehouse or higher")
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    public void deactivateCategoryAPI_invalidAuth_returnForbidden() throws Exception{ 
+         mockMvc.perform(
+            post("/api/categories/1/deactivate")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isForbidden()) 
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"))
+        .andExpect(jsonPath("$.data ").isEmpty());
     }
 
     @Test

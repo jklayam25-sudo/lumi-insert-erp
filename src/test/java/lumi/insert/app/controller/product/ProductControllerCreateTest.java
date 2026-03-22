@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.core.entity.Product;
 import lumi.insert.app.dto.request.ProductCreateRequest;
@@ -19,6 +20,7 @@ import lumi.insert.app.exception.NotFoundEntityException;
 import lumi.insert.app.utils.forTesting.ProductUtils;
 
 public class ProductControllerCreateTest extends BaseProductControllerTest{
+
     @Test
     public void createProductAPI_shouldReturnCreatedEntity() throws Exception{
         Product mockProduct = ProductUtils.getMockCategorizedProduct();
@@ -41,6 +43,56 @@ public class ProductControllerCreateTest extends BaseProductControllerTest{
         .andExpect(status().isCreated()) 
         .andExpect(jsonPath("$.data.name").value("Product"))
         .andExpect(jsonPath("$.data.category.name").value("Category"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void createProductAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
+        Product mockProduct = ProductUtils.getMockCategorizedProduct();
+        ProductResponse dtoResponseFromProduct = productMapper.createDtoResponseFromProduct(mockProduct);
+
+        when(productService.createProduct(any(ProductCreateRequest.class))).thenReturn(dtoResponseFromProduct);
+
+        mockMvc.perform(
+            post("/api/products")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("name", "Product")
+            .param("basePrice", "1000")
+            .param("sellPrice", "1200")
+            .param("stockQuantity", "10")
+            .param("stockMinimum", "1")
+            .param("categoryId", "1")
+        )
+        .andDo(print())
+        .andExpect(status().isCreated()) 
+        .andExpect(jsonPath("$.data.name").value("Product"))
+        .andExpect(jsonPath("$.data.category.name").value("Category"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    public void createProductAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
+        Product mockProduct = ProductUtils.getMockCategorizedProduct();
+        ProductResponse dtoResponseFromProduct = productMapper.createDtoResponseFromProduct(mockProduct);
+
+        when(productService.createProduct(any(ProductCreateRequest.class))).thenReturn(dtoResponseFromProduct);
+
+        mockMvc.perform(
+            post("/api/products")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("name", "Product")
+            .param("basePrice", "1000")
+            .param("sellPrice", "1200")
+            .param("stockQuantity", "10")
+            .param("stockMinimum", "1")
+            .param("categoryId", "1")
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
     }
 
     @Test

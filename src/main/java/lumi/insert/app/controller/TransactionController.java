@@ -11,6 +11,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,6 +59,7 @@ public class TransactionController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionResponse>> createTransaction(@Valid @RequestBody TransactionCreateRequest request){
         TransactionResponse resultFromService = transactionService.createTransaction(request);
  
@@ -142,6 +144,7 @@ public class TransactionController {
         path = "/api/transactions/{id}/process",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionResponse>> processTransaction(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id){
         TransactionResponse resultFromService = transactionService.setTransactionToProcess(id);
  
@@ -157,6 +160,7 @@ public class TransactionController {
         path = "/api/transactions/{id}/cancel",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionResponse>> cancelTransaction(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id){
         TransactionResponse resultFromService = transactionService.cancelTransaction(id);
  
@@ -172,6 +176,7 @@ public class TransactionController {
         path = "/api/transactions/{id}/refresh",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionResponse>> refreshTransaction(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id){
         TransactionResponse resultFromService = transactionService.refreshTransaction(id);
  

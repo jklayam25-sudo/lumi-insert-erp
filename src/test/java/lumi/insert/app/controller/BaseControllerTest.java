@@ -33,7 +33,7 @@ import lumi.insert.app.service.implement.StockCardServiceImpl;
 import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest
-@WithMockUser(username = "admin", roles = {"ADMIN"} )
+@WithMockUser(username = "admin")
 @ActiveProfiles("test")
 public abstract class BaseControllerTest {
     

@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.TransactionCreateRequest; 
 
@@ -29,8 +30,42 @@ public class TransactionControllerCreateTest extends BaseTransactionControllerTe
             .param("staffId", UUID.randomUUID().toString()) 
         )
         .andDo(print()) 
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.data.invoiceId").value(transactionResponse.invoiceId()))
         .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void createTransactionAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
+        when(transactionService.createTransaction(any(TransactionCreateRequest.class))).thenReturn(transactionResponse);
+        mockMvc.perform(
+            post("/api/transactions")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("customerId", UUID.randomUUID().toString())
+            .param("staffId", UUID.randomUUID().toString()) 
+        )
+        .andDo(print()) 
+        .andExpect(jsonPath("$.data.invoiceId").value(transactionResponse.invoiceId()))
+        .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void createTransactionAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
+        when(transactionService.createTransaction(any(TransactionCreateRequest.class))).thenReturn(transactionResponse);
+        mockMvc.perform(
+            post("/api/transactions")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("customerId", UUID.randomUUID().toString())
+            .param("staffId", UUID.randomUUID().toString()) 
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));
     }
 
     @Test

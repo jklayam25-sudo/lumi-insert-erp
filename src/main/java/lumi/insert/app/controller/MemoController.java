@@ -95,7 +95,7 @@ public class MemoController {
     @ApiResponse(responseCode = "200", description = "Memo archived successfully")
     @ApiResponse(responseCode = "404", description = "Memo not found")
     @ApiResponse(responseCode = "403", description = "Insufficient permissions")
-    @PreAuthorize("hasAuthority('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER')")
     @PostMapping(
         path = "/api/memos/{id}/archive",
         produces = MediaType.APPLICATION_JSON_VALUE
