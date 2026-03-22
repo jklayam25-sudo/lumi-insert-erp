@@ -64,10 +64,8 @@ public class JwtFilter extends OncePerRequestFilter{
             resolver.resolveException(request, response, null, e);
             return;
         }
-        
-        
-
-        List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList(accessToken.getClaim("role").asString());
+         
+        List<GrantedAuthority> roles = AuthorityUtils.createAuthorityList("ROLE_" + accessToken.getClaim("role").asString());
  
         EmployeeLogin employeeLogin = EmployeeLogin.builder()
         .id(UUID.fromString(accessToken.getClaim("id").asString()))
@@ -76,7 +74,7 @@ public class JwtFilter extends OncePerRequestFilter{
         .ipAddress(request.getRemoteAddr())
         .build();
 
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(employeeLogin, null, authorities);
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(employeeLogin, null, roles);
         SecurityContextHolder.getContext().setAuthentication(auth);
         filterChain.doFilter(request, response);
     }
