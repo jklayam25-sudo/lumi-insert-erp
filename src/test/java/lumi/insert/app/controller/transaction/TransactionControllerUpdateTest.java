@@ -14,7 +14,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test; 
 import org.springframework.http.MediaType;
- 
+import org.springframework.security.test.context.support.WithMockUser;
+
 import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
  
@@ -34,6 +35,34 @@ public class TransactionControllerUpdateTest extends BaseTransactionControllerTe
         .andExpect(jsonPath("$.data.invoiceId").value(transactionResponse.invoiceId()))
         .andExpect(jsonPath("$.errors").isEmpty());
         verify(transactionService, times(1)).setTransactionToProcess(transactionResponse.id());
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void processTransactionAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
+        when(transactionService.setTransactionToProcess(transactionResponse.id())).thenReturn(transactionResponse);
+        mockMvc.perform(
+            post("/api/transactions/" + transactionResponse.id() + "/process")
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
+        )
+        .andDo(print()) 
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.invoiceId").value(transactionResponse.invoiceId()))
+        .andExpect(jsonPath("$.errors").isEmpty()); 
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void processTransactionAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
+        when(transactionService.setTransactionToProcess(transactionResponse.id())).thenReturn(transactionResponse);
+        mockMvc.perform(
+            post("/api/transactions/" + transactionResponse.id() + "/process")
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
     }
 
     @Test
@@ -93,6 +122,38 @@ public class TransactionControllerUpdateTest extends BaseTransactionControllerTe
         verify(transactionService, times(1)).cancelTransaction(transactionResponse.id());
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    @DisplayName("should return Transaction Response when cancel transaction success")
+    public void cancelTransactionAPI_higherRole_shouldReturnEntity() throws Exception{
+        when(transactionService.cancelTransaction(transactionResponse.id())).thenReturn(transactionResponse);
+        mockMvc.perform(
+            post("/api/transactions/" + transactionResponse.id() + "/cancel")
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
+        )
+        .andDo(print()) 
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.invoiceId").value(transactionResponse.invoiceId()))
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+        verify(transactionService, times(1)).cancelTransaction(transactionResponse.id());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    @DisplayName("should return Transaction Response when cancel transaction success")
+    public void cancelTransactionAPI_invalidRole_shouldReturnEntity() throws Exception{
+        when(transactionService.cancelTransaction(transactionResponse.id())).thenReturn(transactionResponse);
+        mockMvc.perform(
+            post("/api/transactions/" + transactionResponse.id() + "/cancel")
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));
+    }
+
      @Test
     @DisplayName("should return errors of notFoundEntity when request Trx id isn't valid")
     public void cancelTransactionAPI_invalidId_shouldReturnErrors() throws Exception{
@@ -137,6 +198,36 @@ public class TransactionControllerUpdateTest extends BaseTransactionControllerTe
         .andExpect(jsonPath("$.errors").isEmpty());
 
         verify(transactionService, times(1)).refreshTransaction(transactionResponse.id());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER") 
+    public void refreshTransactionAPI_higherRole_shouldReturnEntity() throws Exception{
+        when(transactionService.refreshTransaction(transactionResponse.id())).thenReturn(transactionResponse);
+        mockMvc.perform(
+            post("/api/transactions/" + transactionResponse.id() + "/refresh")
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
+        )
+        .andDo(print()) 
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.invoiceId").value(transactionResponse.invoiceId()))
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+        verify(transactionService, times(1)).refreshTransaction(transactionResponse.id());
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void refreshTransactionAPI_invalidRole_shouldReturnEntity() throws Exception{
+        when(transactionService.refreshTransaction(transactionResponse.id())).thenReturn(transactionResponse);
+        mockMvc.perform(
+            post("/api/transactions/" + transactionResponse.id() + "/refresh")
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));
     }
 
      @Test

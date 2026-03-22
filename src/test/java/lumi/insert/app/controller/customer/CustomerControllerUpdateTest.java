@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.CustomerUpdateRequest;
 import lumi.insert.app.exception.DuplicateEntityException;
@@ -37,6 +38,57 @@ public class CustomerControllerUpdateTest extends BaseCustomerControllerTest{
         .andExpect(jsonPath("$.data.id").value(customerDetailResponse.id().toString()));
 
         verify(customerService, times(1)).updateCustomer(eq(customerDetailResponse.id()), argThat(arg -> arg.getIsActive().equals(false)));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    void updateCustomerAPI_anyRoleFINANCE_returnUpdatedDTO() throws Exception{
+        when(customerService.updateCustomer(any(UUID.class), any(CustomerUpdateRequest.class))).thenReturn(customerDetailResponse);
+
+        mockMvc.perform(
+            patch("/api/customers/" + customerDetailResponse.id())
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("isActive", "false")
+        )
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.id").value(customerDetailResponse.id().toString()));
+
+        verify(customerService, times(1)).updateCustomer(eq(customerDetailResponse.id()), argThat(arg -> arg.getIsActive().equals(false)));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    void updateCustomerAPI_higherRole_returnUpdatedDTO() throws Exception{
+        when(customerService.updateCustomer(any(UUID.class), any(CustomerUpdateRequest.class))).thenReturn(customerDetailResponse);
+
+        mockMvc.perform(
+            patch("/api/customers/" + customerDetailResponse.id())
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("isActive", "false")
+        )
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.id").value(customerDetailResponse.id().toString()));
+
+        verify(customerService, times(1)).updateCustomer(eq(customerDetailResponse.id()), argThat(arg -> arg.getIsActive().equals(false)));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    void createCustomerAPI_invalidRole_returnDTO() throws Exception{  
+        mockMvc.perform(
+            patch("/api/customers/" + customerDetailResponse.id())
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("isActive", "false")
+        )
+        .andDo(print())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
     }
 
     @Test

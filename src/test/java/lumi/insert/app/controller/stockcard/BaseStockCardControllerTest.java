@@ -18,7 +18,7 @@ public abstract class BaseStockCardControllerTest extends BaseControllerTest{
      
     StockCardResponse stockCardResponse = new StockCardResponse(UUID.randomUUID(), UUID.randomUUID(), 1L, "Product", -5L, 10L, 5L, 1000L, 1000L, StockMove.CUSTOMER_OUT, null, LocalDateTime.now());
 
-    List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList("OWNER");
+    List<GrantedAuthority> roles = AuthorityUtils.createAuthorityList("OWNER");
 
     EmployeeLogin employeeLogin = EmployeeLogin.builder()
         .id(UUID.randomUUID())
@@ -26,6 +26,6 @@ public abstract class BaseStockCardControllerTest extends BaseControllerTest{
         .role(EmployeeRole.OWNER)
         .build();
 
-    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(employeeLogin, null, authorities);
+    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(employeeLogin, null, roles);
  
 }

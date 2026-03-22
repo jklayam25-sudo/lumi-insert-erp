@@ -17,6 +17,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test; 
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.ItemRefundRequest; 
 import lumi.insert.app.dto.request.SupplyUpdateRequest;
@@ -43,7 +44,35 @@ public class SupplyControllerUpdateTest extends BaseSupplyControllerTest{
         verify(supplyService, times(1)).cancelSupply(supplyResponse.id());
     }
 
-     @Test
+    @Test 
+    @WithMockUser(username = "admin", roles = "OWNER") 
+    public void cancelSupplyAPI_higherRole_shouldReturnEntity() throws Exception{
+        when(supplyService.cancelSupply(supplyResponse.id())).thenReturn(supplyResponse);
+        mockMvc.perform(
+            post("/api/supplies/" + supplyResponse.id() + "/cancel")
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
+        )
+        .andDo(print()) 
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.invoiceId").value(supplyResponse.invoiceId()))
+        .andExpect(jsonPath("$.errors").isEmpty()); 
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "FINANCE") 
+    public void cancelSupplyAPI_invalidRole_shouldReturnEntity() throws Exception{
+        when(supplyService.cancelSupply(supplyResponse.id())).thenReturn(supplyResponse);
+        mockMvc.perform(
+            post("/api/supplies/" + supplyResponse.id() + "/cancel")
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
+    }
+
+    @Test
     @DisplayName("should return errors of notFoundEntity when request Trx id isn't valid")
     public void cancelSupplyAPI_invalidId_shouldReturnErrors() throws Exception{
         when(supplyService.cancelSupply(any(UUID.class))).thenThrow(new NotFoundEntityException("Supply with ID " + supplyResponse.id() + 1 + " was not found"));
@@ -91,6 +120,44 @@ public class SupplyControllerUpdateTest extends BaseSupplyControllerTest{
         .andExpect(jsonPath("$.errors").isEmpty());
 
         verify(supplyService, times(1)).updateSupply(eq(supplyResponse.id()), argThat( arg -> arg.getInvoiceId().equals("INV NEW") && arg.getTotalDiscount() == null));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "OWNER") 
+    public void updateSupplyAPI_higherRole_shouldReturnUpdatedEntity() throws Exception{
+        when(supplyService.updateSupply(any(), any(SupplyUpdateRequest.class))).thenReturn(supplyResponse);
+        mockMvc.perform(
+            patch("/api/supplies/" + supplyResponse.id())
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("invoiceId","INV NEW")  
+            .param("totalFee","10")  
+            
+        )
+        .andDo(print()) 
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.invoiceId").value(supplyResponse.invoiceId()))
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "FINANCE") 
+    public void updateSupplyAPI_invalidRole_shouldReturnUpdatedEntity() throws Exception{
+        when(supplyService.updateSupply(any(), any(SupplyUpdateRequest.class))).thenReturn(supplyResponse);
+        mockMvc.perform(
+            patch("/api/supplies/" + supplyResponse.id())
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("invoiceId","INV NEW")  
+            .param("totalFee","10")  
+            
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
+    
     }
 
     @Test
@@ -164,6 +231,42 @@ public class SupplyControllerUpdateTest extends BaseSupplyControllerTest{
         .andExpect(jsonPath("$.errors").isEmpty());
 
         verify(supplyService, times(1)).refundSupplyItem(eq(supplyResponse.id()), argThat( arg -> arg.getProductId() == 1L && arg.getQuantity() == 10L));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "OWNER") 
+    public void refundSupplyItemAPI_higherRole_shouldReturnUpdatedEntity() throws Exception{
+        when(supplyService.refundSupplyItem(any(), any(ItemRefundRequest.class))).thenReturn(supplyResponse);
+        mockMvc.perform(
+            post("/api/supplies/" + supplyResponse.id() + "/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("productId", "1")  
+            .param("quantity", "10")   
+        )
+        .andDo(print()) 
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.invoiceId").value(supplyResponse.invoiceId()))
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+        verify(supplyService, times(1)).refundSupplyItem(eq(supplyResponse.id()), argThat( arg -> arg.getProductId() == 1L && arg.getQuantity() == 10L));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "FINANCE") 
+    public void refundSupplyItemAPI_invalidROle_shouldReturnUpdatedEntity() throws Exception{
+        when(supplyService.refundSupplyItem(any(), any(ItemRefundRequest.class))).thenReturn(supplyResponse);
+        mockMvc.perform(
+            post("/api/supplies/" + supplyResponse.id() + "/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("productId", "1")  
+            .param("quantity", "10")   
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
     }
 
     @Test

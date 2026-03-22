@@ -14,7 +14,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
- 
+import org.springframework.security.test.context.support.WithMockUser;
+
 import lumi.insert.app.dto.request.TransactionPaymentCreateRequest;
 import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
@@ -25,6 +26,48 @@ public class TransactionPaymentControllerCreateTest extends BaseTransactionPayme
     @Test
     @DisplayName("should return Transaction Payment Response when create succesfully")
     public void createTransactionPaymentAPI_validRequest_shouldReturnCreatedEntity() throws Exception{
+        when(transactionPaymentService.createTransactionPayment(transactionPaymentResponse.transactionId(), TransactionPaymentCreateRequest.builder().totalPayment(transactionPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenReturn(transactionPaymentResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + transactionPaymentResponse.transactionId() + "/payments")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("paymentFrom", "CLIENT")
+            .param("paymentTo", "LUMI") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(transactionPaymentResponse.id().toString()))
+        .andExpect(jsonPath("$.data.transactionId").value(transactionPaymentResponse.transactionId().toString())) 
+        .andExpect(jsonPath("$.errors").isEmpty());
+        verify(transactionPaymentService, times(1)).createTransactionPayment(any(UUID.class), any(TransactionPaymentCreateRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void createTransactionPaymentAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
+        when(transactionPaymentService.createTransactionPayment(transactionPaymentResponse.transactionId(), TransactionPaymentCreateRequest.builder().totalPayment(transactionPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenReturn(transactionPaymentResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + transactionPaymentResponse.transactionId() + "/payments")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("paymentFrom", "CLIENT")
+            .param("paymentTo", "LUMI") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(transactionPaymentResponse.id().toString()))
+        .andExpect(jsonPath("$.data.transactionId").value(transactionPaymentResponse.transactionId().toString())) 
+        .andExpect(jsonPath("$.errors").isEmpty());
+        verify(transactionPaymentService, times(1)).createTransactionPayment(any(UUID.class), any(TransactionPaymentCreateRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    public void createTransactionPaymentAPI_anyRole_shouldReturnCreatedEntity() throws Exception{
         when(transactionPaymentService.createTransactionPayment(transactionPaymentResponse.transactionId(), TransactionPaymentCreateRequest.builder().totalPayment(transactionPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenReturn(transactionPaymentResponse);
 
         mockMvc.perform(
@@ -137,6 +180,50 @@ public class TransactionPaymentControllerCreateTest extends BaseTransactionPayme
     @Test
     @DisplayName("should return Transaction Payment Response when create succesfully")
     public void refundTransactionPaymentAPI_validRequest_shouldReturnCreatedEntity() throws Exception{ 
+        when(transactionPaymentService.refundTransactionPayment(transactionRefundResponse.transactionId(), TransactionPaymentCreateRequest.builder().totalPayment(transactionRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenReturn(transactionRefundResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + transactionRefundResponse.transactionId() + "/payments/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("paymentFrom", "LUMI")
+            .param("paymentTo", "CLIENT") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(transactionRefundResponse.id().toString()))
+        .andExpect(jsonPath("$.data.transactionId").value(transactionRefundResponse.transactionId().toString())) 
+        .andExpect(jsonPath("$.data.isForRefund").value(true)) 
+        .andExpect(jsonPath("$.errors").isEmpty());
+        verify(transactionPaymentService, times(1)).refundTransactionPayment(any(UUID.class), any(TransactionPaymentCreateRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void refundTransactionPaymentAPI_higherRole_shouldReturnCreatedEntity() throws Exception{ 
+        when(transactionPaymentService.refundTransactionPayment(transactionRefundResponse.transactionId(), TransactionPaymentCreateRequest.builder().totalPayment(transactionRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenReturn(transactionRefundResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + transactionRefundResponse.transactionId() + "/payments/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("paymentFrom", "LUMI")
+            .param("paymentTo", "CLIENT") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(transactionRefundResponse.id().toString()))
+        .andExpect(jsonPath("$.data.transactionId").value(transactionRefundResponse.transactionId().toString())) 
+        .andExpect(jsonPath("$.data.isForRefund").value(true)) 
+        .andExpect(jsonPath("$.errors").isEmpty());
+        verify(transactionPaymentService, times(1)).refundTransactionPayment(any(UUID.class), any(TransactionPaymentCreateRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    public void refundTransactionPaymentAPI_anyRole_shouldReturnCreatedEntity() throws Exception{ 
         when(transactionPaymentService.refundTransactionPayment(transactionRefundResponse.transactionId(), TransactionPaymentCreateRequest.builder().totalPayment(transactionRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenReturn(transactionRefundResponse);
 
         mockMvc.perform(

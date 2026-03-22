@@ -14,6 +14,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.TransactionItemCreateRequest;
 import lumi.insert.app.exception.NotFoundEntityException;
@@ -41,7 +42,43 @@ public class TransactionItemControllerCreateTest extends BaseTransactionItemCont
         verify(transactionItemService, times(1)).createTransactionItem(any(UUID.class), any(TransactionItemCreateRequest.class));
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void createTransactionItemAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
+        when(transactionItemService.createTransactionItem(transactionItemResponse.transactionId(), TransactionItemCreateRequest.builder().productId(1L).quantity(5L).build())).thenReturn(transactionItemResponse);
 
+        mockMvc.perform(
+            post("/api/transactions/" + transactionItemResponse.transactionId() + "/items")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("productId", "1")
+            .param("quantity", "5") 
+        )
+        .andDo(print()) 
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(transactionItemResponse.id().toString()))
+        .andExpect(jsonPath("$.data.transactionId").value(transactionItemResponse.transactionId().toString())) 
+        .andExpect(jsonPath("$.errors").isEmpty()); 
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void createTransactionItemAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
+        when(transactionItemService.createTransactionItem(transactionItemResponse.transactionId(), TransactionItemCreateRequest.builder().productId(1L).quantity(5L).build())).thenReturn(transactionItemResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + transactionItemResponse.transactionId() + "/items")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("productId", "1")
+            .param("quantity", "5") 
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
+    }
+ 
     @Test
     @DisplayName("should thrown method argument exception when id type missmatch")
     public void createTransactionItemAPI_missMatchId_shouldThrownBadRequest() throws Exception{

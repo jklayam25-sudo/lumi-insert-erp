@@ -14,7 +14,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
- 
+import org.springframework.security.test.context.support.WithMockUser;
+
 import lumi.insert.app.dto.request.SupplyPaymentCreateRequest;
 import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
@@ -43,8 +44,46 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
         verify(supplyPaymentService, times(1)).createSupplyPayment(any(UUID.class), any(SupplyPaymentCreateRequest.class));
     }
 
-    @Test
-    @DisplayName("should return error of notfound Response when request supply notfound")
+    @Test 
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void createSupplyPaymentAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
+        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenReturn(supplyPaymentResponse);
+
+        mockMvc.perform(
+            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("paymentFrom", "CLIENT")
+            .param("paymentTo", "LUMI") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(supplyPaymentResponse.id().toString()))
+        .andExpect(jsonPath("$.data.supplyId").value(supplyPaymentResponse.supplyId().toString())) 
+        .andExpect(jsonPath("$.errors").isEmpty()); 
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void createSupplyPaymentAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
+        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenReturn(supplyPaymentResponse);
+
+        mockMvc.perform(
+            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("paymentFrom", "CLIENT")
+            .param("paymentTo", "LUMI") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
+    }
+
+    @Test 
     public void createSupplyPaymentAPI_notFound_shouldReturnError() throws Exception{
         when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenThrow(new NotFoundEntityException("Supply with ID " + 1L + " was not found"));
 
@@ -154,6 +193,46 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
         .andExpect(jsonPath("$.data.isForRefund").value(true)) 
         .andExpect(jsonPath("$.errors").isEmpty());
         verify(supplyPaymentService, times(1)).refundSupplyPayment(any(UUID.class), any(SupplyPaymentCreateRequest.class));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void refundSupplyPaymentAPI_higherRole_shouldReturnCreatedEntity() throws Exception{ 
+        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenReturn(supplyRefundResponse);
+
+        mockMvc.perform(
+            post("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("paymentFrom", "LUMI")
+            .param("paymentTo", "CLIENT") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.id").value(supplyRefundResponse.id().toString()))
+        .andExpect(jsonPath("$.data.supplyId").value(supplyRefundResponse.supplyId().toString())) 
+        .andExpect(jsonPath("$.data.isForRefund").value(true)) 
+        .andExpect(jsonPath("$.errors").isEmpty()); 
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void refundSupplyPaymentAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{ 
+        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenReturn(supplyRefundResponse);
+
+        mockMvc.perform(
+            post("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("paymentFrom", "LUMI")
+            .param("paymentTo", "CLIENT") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
     }
 
     @Test

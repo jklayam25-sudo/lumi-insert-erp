@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.core.entity.Product;
 import lumi.insert.app.dto.request.ProductUpdateRequest;
@@ -20,6 +21,7 @@ import lumi.insert.app.exception.BoilerplateRequestException;
 import lumi.insert.app.utils.forTesting.ProductUtils;
 
 public class ProductControllerUpdateTest extends BaseProductControllerTest{
+
     @Test
     @DisplayName("Should response with updated entity")
     public void updateProductAPI_shouldReturnOKWithUpdatedEntity() throws Exception{
@@ -43,6 +45,58 @@ public class ProductControllerUpdateTest extends BaseProductControllerTest{
         .andExpect(status().isOk()) 
         .andExpect(jsonPath("$.data.name").value("Product"))
         .andExpect(jsonPath("$.data.category.name").value("Category"));
+    }
+
+    @Test
+    @DisplayName("Should response with updated entity")
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void updateProductAPI_higherRole_shouldReturnOKWithUpdatedEntity() throws Exception{
+        Product mockCategorizedProduct = ProductUtils.getMockCategorizedProduct();
+        ProductResponse dtoResponseFromProduct = productMapper.createDtoResponseFromProduct(mockCategorizedProduct);
+
+        when(productService.updateProduct(any(ProductUpdateRequest.class))).thenReturn(dtoResponseFromProduct);
+
+        mockMvc.perform(
+            put("/api/products/1")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("name", "Product")
+            .param("basePrice", "1000")
+            .param("sellPrice", "1200")
+            .param("stockQuantity", "10")
+            .param("stockMinimum", "1")
+            .param("categoryId", "1")
+        )
+        .andDo(print())
+        .andExpect(status().isOk()) 
+        .andExpect(jsonPath("$.data.name").value("Product"))
+        .andExpect(jsonPath("$.data.category.name").value("Category"));
+    }
+
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    @Test
+    @DisplayName("Should response with updated entity") 
+    public void updateProductAPI_invalidRole_shouldReturnOKWithUpdatedEntity() throws Exception{
+        Product mockCategorizedProduct = ProductUtils.getMockCategorizedProduct();
+        ProductResponse dtoResponseFromProduct = productMapper.createDtoResponseFromProduct(mockCategorizedProduct);
+
+        when(productService.updateProduct(any(ProductUpdateRequest.class))).thenReturn(dtoResponseFromProduct);
+
+        mockMvc.perform(
+            put("/api/products/1")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("name", "Product")
+            .param("basePrice", "1000")
+            .param("sellPrice", "1200")
+            .param("stockQuantity", "10")
+            .param("stockMinimum", "1")
+            .param("categoryId", "1")
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
     }
 
     @Test
@@ -108,6 +162,48 @@ public class ProductControllerUpdateTest extends BaseProductControllerTest{
         .andDo(print())
         .andExpect(status().isOk()) 
         .andExpect(jsonPath("$.data.isActive").value(false))
+        .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should response with OK Status and response with field isActive false")
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void deactivateProductAPI_higherRole_shouldReturnOK() throws Exception{
+        Product mockCategorizedProduct = ProductUtils.getMockCategorizedProduct();
+        mockCategorizedProduct.setIsActive(false);
+
+        ProductDeleteResponse deleteDtoResponseFromProduct = productMapper.createDeleteDtoResponseFromProduct(mockCategorizedProduct);
+
+        when(productService.deactivateProduct(1L)).thenReturn(deleteDtoResponseFromProduct);
+
+        mockMvc.perform(
+            post("/api/products/1/deactivate")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isOk()) 
+        .andExpect(jsonPath("$.data.isActive").value(false))
+        .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should response with OK Status and response with field isActive true")
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void activateProductAPI_higherRole_shouldReturnOK() throws Exception{
+        Product mockCategorizedProduct = ProductUtils.getMockCategorizedProduct();
+        mockCategorizedProduct.setIsActive(true);
+
+        ProductDeleteResponse deleteDtoResponseFromProduct = productMapper.createDeleteDtoResponseFromProduct(mockCategorizedProduct);
+
+        when(productService.activateProduct(1L)).thenReturn(deleteDtoResponseFromProduct);
+
+        mockMvc.perform(
+            post("/api/products/1/activate")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isOk()) 
+        .andExpect(jsonPath("$.data.isActive").value(true))
         .andExpect(jsonPath("$.errors").isEmpty());
     }
 

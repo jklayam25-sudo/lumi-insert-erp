@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 
 import lumi.insert.app.core.entity.Product;
@@ -315,6 +316,7 @@ public class ProductControllerGetTest extends BaseProductControllerTest{
 
     @Test
     @DisplayName("Should return 200 http status and pdf content when request valid")
+    @WithMockUser(username = "admin", roles = "OWNER")
     public void getProductsStatisticsAPI_validRequest_return200StatusAndPdf() throws Exception{
         ByteArrayInputStream bais = new ByteArrayInputStream("pdfBinary".getBytes());
 

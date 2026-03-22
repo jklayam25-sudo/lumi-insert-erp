@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.ItemRefundRequest;
 import lumi.insert.app.exception.ForbiddenRequestException;
@@ -40,6 +41,41 @@ public class TransactionItemControllerUpdateTest extends BaseTransactionItemCont
         .andExpect(jsonPath("$.data.id").value(transactionItemResponse.id().toString()))
         .andExpect(jsonPath("$.data.quantity").value(5L))
         .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void updateTransactionItemQuantityAPI_higherRole_shouldReturnDTO() throws Exception{  
+        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), 5L)).thenReturn(transactionItemResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/quantity")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("quantity", "5")
+        )
+        .andDo(print()) 
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.id").value(transactionItemResponse.id().toString()))
+        .andExpect(jsonPath("$.data.quantity").value(5L))
+        .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void updateTransactionItemQuantityAPI_invalidRole_shouldReturnDTO() throws Exception{  
+        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), 5L)).thenReturn(transactionItemResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/quantity")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("quantity", "5")
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
     }
 
     @Test
@@ -112,6 +148,45 @@ public class TransactionItemControllerUpdateTest extends BaseTransactionItemCont
         .andExpect(jsonPath("$.errors").isEmpty());
 
         verify(transactionItemService, times(1)).refundTransactionItem(any(), argThat(arg -> arg.getProductId() == 1L));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "OWNER")
+    public void refundTransactionItemAPI_higherRole_shouldReturnDTO() throws Exception{  
+        when(transactionItemService.refundTransactionItem(eq(transactionItemResponse.id()), any(ItemRefundRequest.class))).thenReturn(transactionItemResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("quantity", "5")
+            .param("productId", "1")
+        )
+        .andDo(print()) 
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.id").value(transactionItemResponse.id().toString()))
+        .andExpect(jsonPath("$.data.quantity").value(5L))
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+        verify(transactionItemService, times(1)).refundTransactionItem(any(), argThat(arg -> arg.getProductId() == 1L));
+    }
+
+    @Test 
+    @WithMockUser(username = "admin", roles = "WAREHOUSE")
+    public void refundTransactionItemAPI_invalidRole_shouldReturnDTO() throws Exception{  
+        when(transactionItemService.refundTransactionItem(eq(transactionItemResponse.id()), any(ItemRefundRequest.class))).thenReturn(transactionItemResponse);
+
+        mockMvc.perform(
+            post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .param("quantity", "5")
+            .param("productId", "1")
+        )
+        .andDo(print()) 
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.data").isEmpty())
+        .andExpect(jsonPath("$.errors").value("Access denied, require an authority")); 
     }
 
     @Test

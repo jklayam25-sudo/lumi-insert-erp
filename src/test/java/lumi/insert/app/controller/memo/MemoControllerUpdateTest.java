@@ -5,8 +5,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.mockito.Mockito.when; 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -15,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import lumi.insert.app.dto.request.MemoUpdateRequest;
 import lumi.insert.app.exception.NotFoundEntityException;
@@ -73,8 +73,7 @@ public class MemoControllerUpdateTest extends BaseMemoControllerTest{
         when(memoService.archiveMemo(1L)).thenReturn(memoResponse);
         mockMvc.perform(
             post("/api/memos/1/archive")
-            .accept(MediaType.APPLICATION_JSON_VALUE) 
-            .with(authentication(auth))
+            .accept(MediaType.APPLICATION_JSON_VALUE)  
         )
         .andDo(print())
         .andExpect(jsonPath("$.errors").isEmpty())
@@ -82,6 +81,7 @@ public class MemoControllerUpdateTest extends BaseMemoControllerTest{
     }
 
     @Test
+    @WithMockUser(roles = {"FINANCE"})
     void archiveMemoAPI_notOwner_returnForbidden() throws Exception{ 
         mockMvc.perform(
             post("/api/memos/1/archive")
@@ -99,8 +99,7 @@ public class MemoControllerUpdateTest extends BaseMemoControllerTest{
 
         mockMvc.perform(
             post("/api/memos/1/archive")
-            .accept(MediaType.APPLICATION_JSON_VALUE)  
-            .with(authentication(auth))
+            .accept(MediaType.APPLICATION_JSON_VALUE)   
         )
         .andDo(print())
         .andExpect(status().isNotFound())
