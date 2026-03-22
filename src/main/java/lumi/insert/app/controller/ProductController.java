@@ -10,6 +10,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -139,6 +140,7 @@ public class ProductController {
         path = "/api/products/statistics/export",
         produces = MediaType.APPLICATION_PDF_VALUE
     )
+    @PreAuthorize("hasAnyRole('OWNER')")
     ResponseEntity<InputStreamResource> getProductsStatistics(@Valid @ModelAttribute ProductStatisticExportRequest request){ 
         if(request.getStartDate() == null) request.setStartDate(dateUtils.getFirstDateThisMonth());
         if(request.getEndDate() == null) request.setEndDate(dateUtils.getFirstDateNextMonth());
@@ -164,6 +166,7 @@ public class ProductController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<ProductResponse>> createProduct(@Valid @RequestBody ProductCreateRequest request){
         ProductResponse resultFromService = productService.createProduct(request);
 
@@ -184,6 +187,7 @@ public class ProductController {
         path = "/api/products/{id}/activate",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<ProductDeleteResponse>> activateProduct(@Parameter(description = "Product ID") @PathVariable(value = "id", required = true) Long id ){ 
         ProductDeleteResponse resultFromService = productService.activateProduct(id);
 
@@ -199,6 +203,7 @@ public class ProductController {
         path = "/api/products/{id}/deactivate",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<ProductDeleteResponse>> deactivateProduct(@Parameter(description = "Product ID") @PathVariable(value = "id", required = true) Long id ){ 
         ProductDeleteResponse resultFromService = productService.deactivateProduct(id);
 
@@ -216,6 +221,7 @@ public class ProductController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<ProductResponse>> editProduct(@Parameter(description = "Product ID") @PathVariable(value = "id", required = true) Long id, @Valid @RequestBody ProductUpdateRequest request){
         request.setId(id);
         ProductResponse resultFromService = productService.updateProduct(request);

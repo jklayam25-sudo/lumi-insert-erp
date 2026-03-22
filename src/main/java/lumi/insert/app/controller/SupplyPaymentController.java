@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,6 +48,7 @@ public class SupplyPaymentController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('FINANCE')")
     ResponseEntity<WebResponse<SupplyPaymentResponse>> createSupplyPaymentAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId, @ModelAttribute @Valid SupplyPaymentCreateRequest request){
         SupplyPaymentResponse resultFromService = supplyPaymentService.createSupplyPayment(supplyId, request);
         WebResponse<SupplyPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
@@ -68,6 +70,7 @@ public class SupplyPaymentController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('FINANCE')")
     ResponseEntity<WebResponse<SupplyPaymentResponse>> refundSupplyPaymentAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId, @ModelAttribute @Valid @RequestBody SupplyPaymentCreateRequest request){
         SupplyPaymentResponse resultFromService = supplyPaymentService.refundSupplyPayment(supplyId, request);
         WebResponse<SupplyPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);

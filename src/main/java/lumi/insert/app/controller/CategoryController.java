@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +43,7 @@ public class CategoryController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<CategoryResponse>> createCategory(@Valid @RequestBody CategoryCreateRequest request){
         CategoryResponse resultFromService = categoryService.createCategory(request);
 
@@ -96,6 +98,7 @@ public class CategoryController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<CategoryResponse>> editCategory(@Parameter(description = "Category ID") @PathVariable(value = "id", required = true) Long id, @Valid @RequestBody CategoryUpdateRequest request){
         request.setId(id);
         CategoryResponse resultFromService = categoryService.updateCategoryName(request);
@@ -113,6 +116,7 @@ public class CategoryController {
         path = "/api/categories/{id}/activate",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<CategoryResponse>> activateProduct(@Parameter(description = "Category ID") @PathVariable(value = "id", required = true) Long id ){ 
         CategoryResponse resultFromService = categoryService.activateCategory(id);
 
@@ -129,6 +133,7 @@ public class CategoryController {
         path = "/api/categories/{id}/deactivate",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<CategoryResponse>> deactivateProduct(@Parameter(description = "Category ID") @PathVariable(value = "id", required = true) Long id ){ 
         CategoryResponse resultFromService = categoryService.deactivateCategory(id);
 

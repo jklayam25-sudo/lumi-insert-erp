@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -50,6 +51,7 @@ public class CustomerController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<CustomerDetailResponse>> createCustomerAPI(@Valid @RequestBody CustomerCreateRequest request){
         
         CustomerDetailResponse resultFromService = customerService.createCustomer(request);
@@ -116,6 +118,7 @@ public class CustomerController {
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<CustomerDetailResponse>> updateCustomerAPI(@Parameter(description = "Customer ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody CustomerUpdateRequest request){ 
         CustomerDetailResponse resultFromService = customerService.updateCustomer(id, request);
 

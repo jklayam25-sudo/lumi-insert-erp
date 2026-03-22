@@ -6,7 +6,8 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity; 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -47,6 +48,7 @@ public class EmployeeController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('OWNER')")
     ResponseEntity<WebResponse<EmployeeResponse>> createEmployeeAPI(@Valid @RequestBody EmployeeCreateRequest request){
         EmployeeResponse resultFromService = employeeService.createEmployee(request);
 
@@ -113,6 +115,7 @@ public class EmployeeController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('OWNER')")
     ResponseEntity<WebResponse<EmployeeResponse>> resetEmployeePasswordAPI(@Parameter(description = "Employee ID") @PathVariable(name = "id") UUID id, @RequestBody @Valid @RequestParam(name = "password") @Pattern(regexp = "^(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,50}$", message = "password has to be 5-50 length and has atleast 1 unique char") String password){
         EmployeeResponse resultFromService = employeeService.resetEmployeePassword(id, password);
 
@@ -130,6 +133,7 @@ public class EmployeeController {
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('OWNER')")
     ResponseEntity<WebResponse<EmployeeResponse>> updateEmployeeAPI(@Parameter(description = "Employee ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody EmployeeUpdateRequest request){ 
         EmployeeResponse resultFromService = employeeService.updateEmployee(id, request);
 

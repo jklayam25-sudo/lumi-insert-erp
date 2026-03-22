@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -48,6 +49,7 @@ public class SupplierController {
         produces = MediaType.APPLICATION_JSON_VALUE,
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE', 'FINANCE')")
     ResponseEntity<WebResponse<SupplierDetailResponse>> createSupplierAPI(@Valid @RequestBody SupplierCreateRequest request){
         
         SupplierDetailResponse resultFromService = supplierService.createSupplier(request);
@@ -114,6 +116,7 @@ public class SupplierController {
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('WAREHOUSE', 'FINANCE')")
     ResponseEntity<WebResponse<SupplierDetailResponse>> updateSupplierAPI(@Parameter(description = "Supplier ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody SupplierUpdateRequest request){ 
         SupplierDetailResponse resultFromService = supplierService.updateSupplier(id, request);
 
