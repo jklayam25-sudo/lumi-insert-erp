@@ -1,6 +1,8 @@
 package lumi.insert.app.service.implement;
 
-import java.io.ByteArrayInputStream; 
+import java.io.ByteArrayInputStream;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;  
 import org.springframework.core.io.ByteArrayResource; 
@@ -14,11 +16,15 @@ import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.core.entity.Transaction;
 import lumi.insert.app.core.entity.nondatabase.TransactionInvoiceMail;
 import lumi.insert.app.core.repository.TransactionRepository;
+import lumi.insert.app.core.repository.projection.ProductOutOfStock;
 import lumi.insert.app.dto.response.TransactionDetailResponse;
+import lumi.insert.app.dto.response.TransactionItemStatisticResponse;
 import lumi.insert.app.exception.NotFoundEntityException;
 import lumi.insert.app.mapper.AllTransactionMapper;
 import lumi.insert.app.service.MailSenderService;
 import lumi.insert.app.service.PdfService;
+import lumi.insert.app.service.ProductService;
+import lumi.insert.app.service.TransactionItemService;
 
 @Service
 @Slf4j
@@ -28,11 +34,17 @@ public class MailSenderServiceImpl implements MailSenderService {
     JavaMailSender sender;
 
     @Autowired
-    TransactionRepository transactionRepository;
-
-    @Autowired
     PdfService pdfService;
 
+    @Autowired
+    ProductService productService;
+
+    @Autowired
+    TransactionItemService transactionItemService;
+
+    @Autowired
+    TransactionRepository transactionRepository;
+ 
     @Autowired
     AllTransactionMapper allTransactionMapper;
 
@@ -64,6 +76,25 @@ public class MailSenderServiceImpl implements MailSenderService {
         helper.setSubject("Transaction Invoice - " + dataDetail.invoiceId());
         helper.setText(template, true); 
         helper.addAttachment(dataDetail.customerName() + "-" + dataDetail.invoiceId() + ".pdf", new ByteArrayResource(pdfByte.readAllBytes()));
+         
+        sender.send(mimeMessage);
+    }
+
+    @Override
+    public void sendProductsStatistic(LocalDateTime startDate, LocalDateTime endDate) throws MessagingException { 
+        TransactionItemStatisticResponse transactionItemStats = transactionItemService.getTransactionItemStats(startDate, endDate);
+
+        List<ProductOutOfStock> outOfStockProducts = productService.getOutOfStockProducts();
+
+        ByteArrayInputStream pdfByte = pdfService.exportProductsStatistic(transactionItemStats, outOfStockProducts,startDate, endDate);
+
+        MimeMessage mimeMessage = sender.createMimeMessage(); 
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true); 
+        helper.setTo("owner@mail.com");
+        helper.setFrom("noreply@lumiinc.com");
+        helper.setSubject("Products statistics - Daily");
+        helper.setText(template, true); 
+        helper.addAttachment( "Products statistics" + startDate + "-" + endDate + ".pdf", new ByteArrayResource(pdfByte.readAllBytes()));
          
         sender.send(mimeMessage);
     }
