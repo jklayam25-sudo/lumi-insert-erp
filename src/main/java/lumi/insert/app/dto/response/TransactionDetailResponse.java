@@ -6,9 +6,11 @@ import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lumi.insert.app.core.entity.nondatabase.TransactionStatus; 
 
-@Schema(description = "Full detail response for a transaction, including itemized product list")
+@Schema(description = "Full detail response for a transaction, including itemized product list") 
+@Builder
 public record TransactionDetailResponse(
     
     @Schema(description = "Primary key of the transaction", example = "550e8400-e29b-41d4-a716-446655440000")
