@@ -50,11 +50,11 @@ public class ActivityLogAspect {
                 result.setEntityId(idGetter.getId());
             }
             log.info(result.getEntityId());
-        }
-
-        if(response instanceof Identifiable){
+        } else if(response instanceof Identifiable) {
             result.setEntityId(((Identifiable) response).getId());
         }
+
+        
 
         messageProducerService.sendActivityLog(result);
 
