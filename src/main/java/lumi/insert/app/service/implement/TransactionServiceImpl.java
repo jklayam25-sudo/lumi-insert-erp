@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice; 
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specification; 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.github.f4b6a3.uuid.UuidCreator;
@@ -27,7 +28,9 @@ import lumi.insert.app.core.entity.StockCard;
 import lumi.insert.app.core.entity.Transaction;
 import lumi.insert.app.core.entity.TransactionItem;
 import lumi.insert.app.core.entity.nondatabase.ActivityAction;
+import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.core.entity.nondatabase.StockMove;
+import lumi.insert.app.core.entity.nondatabase.TransactionInvoiceMail;
 import lumi.insert.app.core.entity.nondatabase.TransactionStatus;
 import lumi.insert.app.core.repository.CustomerRepository;
 import lumi.insert.app.core.repository.ProductRepository;
@@ -44,6 +47,7 @@ import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
 import lumi.insert.app.exception.TransactionValidationException;
 import lumi.insert.app.mapper.AllTransactionMapper;
+import lumi.insert.app.service.MessageProducerService;
 import lumi.insert.app.service.TransactionService;
 import lumi.insert.app.utils.generator.InvoiceGenerator;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
@@ -76,6 +80,9 @@ public class TransactionServiceImpl implements TransactionService{
 
     @Autowired
     JpaSpecGenerator jpaSpecGenerator;
+
+    @Autowired
+    MessageProducerService messageProducerService;
 
     @Override
     @ActivityLogger(
@@ -188,7 +195,8 @@ public class TransactionServiceImpl implements TransactionService{
 
         Customer customer = searchedTransaction.getCustomer();
         customer.setTotalUnpaid(customer.getTotalUnpaid() + searchedTransaction.getGrandTotal());
-
+         
+        messageProducerService.sendTransactionInvoiceEmail(new TransactionInvoiceMail(id, customer.getEmail(), ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())));
         return allTransactionMapper.createTransactionResponseDto(searchedTransaction, messages);
     }
 
