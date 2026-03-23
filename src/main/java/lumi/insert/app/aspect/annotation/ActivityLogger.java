@@ -15,4 +15,6 @@ public @interface ActivityLogger {
     ActivityAction action();
 
     String actionMessage(); 
+
+    boolean entityIdFromSingleParam() default false;
 }
