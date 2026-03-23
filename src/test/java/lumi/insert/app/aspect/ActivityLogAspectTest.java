@@ -45,7 +45,7 @@ public class ActivityLogAspectTest {
 
 
         ProductResponse productResponse = new ProductResponse(1L, null, null, null, null, null, null, null, null);
-        activityLogAspect.afterMethod(activityLogger, productResponse);
+        activityLogAspect.afterMethod(null, activityLogger, productResponse);
 
         verify(messageProducerService, times(1)).sendActivityLog(argThat(arg -> arg.getEntityId().equals(String.valueOf(1L)) && arg.getAction() == ActivityAction.PRODUCT_CREATED));
     }
