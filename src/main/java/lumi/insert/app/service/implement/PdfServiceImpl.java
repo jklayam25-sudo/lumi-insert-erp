@@ -46,7 +46,8 @@ public class PdfServiceImpl implements PdfService{
     @ActivityLogger(
         entityName = "supplies",
         action = ActivityAction.EXPORT_DATA,
-        actionMessage = "Suppy exported as PDF"
+        actionMessage = "Suppy exported as PDF",
+        entityIdFromSingleParam = true
     )
     public ByteArrayInputStream exportSupplyWithItems(SupplyDetailResponse data) {
 
@@ -340,7 +341,8 @@ public class PdfServiceImpl implements PdfService{
     @ActivityLogger(
         entityName = "products",
         action = ActivityAction.EXPORT_DATA,
-        actionMessage = "Product statistics exported as PDF"
+        actionMessage = "Product statistics exported as PDF",
+        entityIdFromSingleParam = true
     )
     public ByteArrayInputStream exportProductsStatistic(TransactionItemStatisticResponse statistic,
             List<ProductOutOfStock> oosProducts, LocalDateTime minTime, LocalDateTime maxTime) {
