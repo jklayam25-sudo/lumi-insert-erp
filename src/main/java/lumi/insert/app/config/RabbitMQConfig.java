@@ -9,6 +9,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate; 
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
  
@@ -23,15 +24,28 @@ public class RabbitMQConfig {
     }
 
     @Bean 
+    public Queue transactionInvoiceQueue() {
+        return new Queue("transaction-invoice-mail", false);
+    }
+
+    @Bean 
     public Exchange exchange() {
         return new DirectExchange("main-exchange");
     }
 
     @Bean
-    public Binding binding(Queue queue, Exchange exchange) {
+    public Binding activityBinding(@Qualifier("activityQueue") Queue queue, Exchange exchange) {
         return BindingBuilder.bind(queue)
             .to(exchange)
             .with("activity-routing")
+            .noargs();
+    }
+
+    @Bean
+    public Binding transactionInvoiceBinding(@Qualifier("transactionInvoiceQueue") Queue queue, Exchange exchange) {
+        return BindingBuilder.bind(queue)
+            .to(exchange)
+            .with("transaction-invoice-routing")
             .noargs();
     }
 
