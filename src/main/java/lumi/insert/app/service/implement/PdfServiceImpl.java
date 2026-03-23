@@ -21,6 +21,7 @@ import org.openpdf.text.pdf.PdfPTable;
 import org.openpdf.text.pdf.PdfWriter; 
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.aspect.annotation.ActivityLogger;
 import lumi.insert.app.core.entity.nondatabase.ActivityAction;
 import lumi.insert.app.core.repository.projection.ProductOutOfStock;
@@ -36,6 +37,7 @@ import lumi.insert.app.utils.generator.PdfCellBuilder;
 import lumi.insert.app.utils.generator.PdfPageTemplate;
 
 @Service
+@Slf4j
 public class PdfServiceImpl implements PdfService{
  
     private Font helveticaBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
@@ -190,10 +192,11 @@ public class PdfServiceImpl implements PdfService{
     @ActivityLogger(
         entityName = "transactions",
         action = ActivityAction.EXPORT_DATA,
-        actionMessage = "Transaction exported as PDF"
+        actionMessage = "Transaction exported as PDF",
+        entityIdFromSingleParam = true
     )
     public ByteArrayInputStream exportTransactionWithItems(TransactionDetailResponse data) {
-
+        log.info("Creating Transaction PDF");
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 Document document = new Document(); 
                 
@@ -326,7 +329,7 @@ public class PdfServiceImpl implements PdfService{
 
                 
                 document.close();
-
+                log.info("Done created Transaction PDF");
                 return new ByteArrayInputStream(out.toByteArray());
         } catch (Exception e) {
                 throw new ExceptionConverter(e);
