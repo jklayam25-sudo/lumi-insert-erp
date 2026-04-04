@@ -4,7 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart; 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.multipart.MultipartFile;
 
 import lumi.insert.app.dto.request.SupplyPaymentCreateRequest;
 import lumi.insert.app.exception.ForbiddenRequestException;
@@ -26,12 +27,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @Test
     @DisplayName("should return Supply Payment Response when create succesfully")
     public void createSupplyPaymentAPI_validRequest_shouldReturnCreatedEntity() throws Exception{
-        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenReturn(supplyPaymentResponse);
+        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").files(new MultipartFile[]{mockMultipartFile}).paymentTo("LUMI").build())).thenReturn(supplyPaymentResponse);
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI") 
             .param("totalPayment", "10000")
@@ -47,12 +48,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @Test 
     @WithMockUser(username = "admin", roles = "OWNER")
     public void createSupplyPaymentAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
-        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenReturn(supplyPaymentResponse);
+        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").files(new MultipartFile[]{mockMultipartFile}).paymentTo("LUMI").build())).thenReturn(supplyPaymentResponse);
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI") 
             .param("totalPayment", "10000")
@@ -67,12 +68,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @Test 
     @WithMockUser(username = "admin", roles = "WAREHOUSE")
     public void createSupplyPaymentAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
-        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenReturn(supplyPaymentResponse);
+        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").files(new MultipartFile[]{mockMultipartFile}).paymentTo("LUMI").build())).thenReturn(supplyPaymentResponse);
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI") 
             .param("totalPayment", "10000")
@@ -85,12 +86,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
 
     @Test 
     public void createSupplyPaymentAPI_notFound_shouldReturnError() throws Exception{
-        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenThrow(new NotFoundEntityException("Supply with ID " + 1L + " was not found"));
+        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").files(new MultipartFile[]{mockMultipartFile}).paymentTo("LUMI").build())).thenThrow(new NotFoundEntityException("Supply with ID " + 1L + " was not found"));
 
-        mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+        mockMvc.perform( 
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI") 
             .param("totalPayment", "10000")
@@ -101,15 +102,65 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
         .andExpect(jsonPath("$.errors").isNotEmpty()); 
     }
 
+    @Test 
+    public void createSupplyPaymentAPI_filesIsNotImage_shouldReturnError() throws Exception{
+        mockMvc.perform( 
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .file(mockNotImage)
+            .param("paymentFrom", "CLIENT")
+            .param("paymentTo", "LUMI") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isBadRequest()) 
+        .andExpect(jsonPath("$.data").isEmpty( )) 
+        .andExpect(jsonPath("$.errors").isNotEmpty()); 
+    }
+
+    @Test 
+    public void createSupplyPaymentAPI_filesBigSize_shouldReturnError() throws Exception{
+        mockMvc.perform( 
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .file(mockBigSize)
+            .param("paymentFrom", "CLIENT")
+            .param("paymentTo", "LUMI") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isBadRequest()) 
+        .andExpect(jsonPath("$.data").isEmpty( )) 
+        .andExpect(jsonPath("$.errors").isNotEmpty()); 
+    }
+
+    @Test 
+    public void createSupplyPaymentAPI_filesBroken_shouldReturnError() throws Exception{
+        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").files(new MultipartFile[]{mockMultipartFile}).paymentTo("LUMI").build())).thenThrow(new NotFoundEntityException("Supply with ID " + 1L + " was not found"));
+
+        mockMvc.perform( 
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .file(mockBroken)
+            .param("paymentFrom", "CLIENT")
+            .param("paymentTo", "LUMI") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isBadRequest()) 
+        .andExpect(jsonPath("$.data").isEmpty( )) 
+        .andExpect(jsonPath("$.errors").isNotEmpty()); 
+    }
+
     @Test
     @DisplayName("should return error of tranasction validation Response when request supply payment have left balance")
     public void createSupplyPaymentAPI_paymentExceeds_shouldReturnError() throws Exception{
-        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").paymentTo("LUMI").build())).thenThrow(new TransactionValidationException("Payment exceeds the remaining supply debts with ID " + 1L + ", enter an exact amount to proceed"));
+        when(supplyPaymentService.createSupplyPayment(supplyPaymentResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyPaymentResponse.totalPayment()).paymentFrom("CLIENT").files(new MultipartFile[]{mockMultipartFile}).paymentTo("LUMI").build())).thenThrow(new TransactionValidationException("Payment exceeds the remaining supply debts with ID " + 1L + ", enter an exact amount to proceed"));
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI") 
             .param("totalPayment", "10000")
@@ -126,9 +177,9 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @DisplayName("should return error of methodargs Response when request param incomplete/ null")
     public void createSupplyPaymentAPI_incompleteParam_shouldReturnError() throws Exception{
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI")  
         )
@@ -142,9 +193,9 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @DisplayName("should return error of methodargs Response when totalpayment < 1")
     public void createSupplyPaymentAPI_minTotalPayment0_shouldReturnError() throws Exception{
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI")  
             .param("totalPayment", "0")
@@ -159,9 +210,9 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @DisplayName("should return error of methodargs Response when request param incomplete/ null")
     public void createSupplyPaymentAPI_missMatchParam_shouldReturnError() throws Exception{
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "true")  
             .param("totalPayment", "true")
@@ -176,12 +227,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @Test
     @DisplayName("should return Supply Payment Response when create succesfully")
     public void refundSupplyPaymentAPI_validRequest_shouldReturnCreatedEntity() throws Exception{ 
-        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenReturn(supplyRefundResponse);
+        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").files(new MultipartFile[]{mockMultipartFile}).paymentTo("CLIENT").build())).thenReturn(supplyRefundResponse);
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "LUMI")
             .param("paymentTo", "CLIENT") 
             .param("totalPayment", "10000")
@@ -198,12 +249,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @Test 
     @WithMockUser(username = "admin", roles = "OWNER")
     public void refundSupplyPaymentAPI_higherRole_shouldReturnCreatedEntity() throws Exception{ 
-        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenReturn(supplyRefundResponse);
+        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").files(new MultipartFile[]{mockMultipartFile}).paymentTo("CLIENT").build())).thenReturn(supplyRefundResponse);
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "LUMI")
             .param("paymentTo", "CLIENT") 
             .param("totalPayment", "10000")
@@ -219,12 +270,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @Test 
     @WithMockUser(username = "admin", roles = "WAREHOUSE")
     public void refundSupplyPaymentAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{ 
-        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenReturn(supplyRefundResponse);
+        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").files(new MultipartFile[]{mockMultipartFile}).paymentTo("CLIENT").build())).thenReturn(supplyRefundResponse);
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "LUMI")
             .param("paymentTo", "CLIENT") 
             .param("totalPayment", "10000")
@@ -239,9 +290,9 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @DisplayName("should return error of methodargs Response when request param incomplete/ null")
     public void refundSupplyPaymentAPI_incompleteParam_shouldReturnError() throws Exception{
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI")  
         )
@@ -255,9 +306,9 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @DisplayName("should return error of methodargs Response when request param incomplete/ null")
     public void refundSupplyPaymentAPI_minTotalPayment0_shouldReturnError() throws Exception{
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "LUMI")  
             .param("totalPayment", "0")
@@ -272,9 +323,9 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @DisplayName("should return error of methodargs Response when request param incomplete/ null")
     public void refundSupplyPaymentAPI_missMatchParam_shouldReturnError() throws Exception{
         mockMvc.perform(
-            post("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "CLIENT")
             .param("paymentTo", "true")  
             .param("totalPayment", "true")
@@ -288,12 +339,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
     @Test
     @DisplayName("should return error notFound when entity supply not found")
     public void refundSupplyPaymentAPI_notFound_shouldReturErrorNotFound() throws Exception{ 
-        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenThrow(new NotFoundEntityException("Supply with ID " + 1 + " was not found"));
+        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").files(new MultipartFile[]{mockMultipartFile}).paymentTo("CLIENT").build())).thenThrow(new NotFoundEntityException("Supply with ID " + 1 + " was not found"));
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "LUMI")
             .param("paymentTo", "CLIENT") 
             .param("totalPayment", "10000")
@@ -305,15 +356,66 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
         verify(supplyPaymentService, times(1)).refundSupplyPayment(any(UUID.class), any(SupplyPaymentCreateRequest.class));
     }
 
+    @Test
+    @DisplayName("should return error notFound when entity supply not found")
+    public void refundSupplyPaymentAPI_filesBroken_returnBadRequest() throws Exception{ 
+        mockMvc.perform(
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .file(mockBroken)
+            .param("paymentFrom", "LUMI")
+            .param("paymentTo", "CLIENT") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isBadRequest()) 
+        .andExpect(jsonPath("$.data").isEmpty()) 
+        .andExpect(jsonPath("$.errors").isNotEmpty()); 
+    }
+
+    @Test
+    @DisplayName("should return error notFound when entity supply not found")
+    public void refundSupplyPaymentAPI_filesNotImage_returnBadRequest() throws Exception{ 
+         mockMvc.perform(
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .file(mockNotImage)
+            .param("paymentFrom", "LUMI")
+            .param("paymentTo", "CLIENT") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isBadRequest()) 
+        .andExpect(jsonPath("$.data").isEmpty()) 
+        .andExpect(jsonPath("$.errors").isNotEmpty()); 
+    }
+
+    @Test
+    @DisplayName("should return error notFound when entity supply not found")
+    public void refundSupplyPaymentAPI_filesBigSize_returnBadRequest() throws Exception{ 
+        mockMvc.perform(
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+            .file(mockBigSize)
+            .param("paymentFrom", "LUMI")
+            .param("paymentTo", "CLIENT") 
+            .param("totalPayment", "10000")
+        )
+        .andDo(print()) 
+        .andExpect(status().isBadRequest()) 
+        .andExpect(jsonPath("$.data").isEmpty()) 
+        .andExpect(jsonPath("$.errors").isNotEmpty()); 
+    }
+
      @Test
     @DisplayName("should return error Forbidden when trx status is PENDING/COMPLETE ")
     public void refundSupplyPaymentAPI_pendingTrx_shouldReturnErrorForbidden() throws Exception{ 
-        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenThrow(new ForbiddenRequestException("Refund payment only to Supply with status PROCESS(onGoing) or CANCELLED, check carefully"));
+        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").files(new MultipartFile[]{mockMultipartFile}).paymentTo("CLIENT").build())).thenThrow(new ForbiddenRequestException("Refund payment only to Supply with status PROCESS(onGoing) or CANCELLED, check carefully"));
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "LUMI")
             .param("paymentTo", "CLIENT") 
             .param("totalPayment", "10000")
@@ -328,12 +430,12 @@ public class SupplyPaymentControllerCreateTest extends BaseSupplyPaymentControll
      @Test
     @DisplayName("should return error supply validation when amount refund bigger than supply unrefunded")
     public void refundSupplyPaymentAPI_amountRefundExceed_shouldReturnErrorSupplyValidation() throws Exception{ 
-        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").paymentTo("CLIENT").build())).thenThrow(new TransactionValidationException("Payment refund exceeds the remaining supply unrefunded debt with ID " + 1L + ", enter an exact amount to proceed"));
+        when(supplyPaymentService.refundSupplyPayment(supplyRefundResponse.supplyId(), SupplyPaymentCreateRequest.builder().totalPayment(supplyRefundResponse.totalPayment()).paymentFrom("LUMI").files(new MultipartFile[]{mockMultipartFile}).paymentTo("CLIENT").build())).thenThrow(new TransactionValidationException("Payment refund exceeds the remaining supply unrefunded debt with ID " + 1L + ", enter an exact amount to proceed"));
 
         mockMvc.perform(
-            post("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
+            multipart("/api/supplies/" + supplyRefundResponse.supplyId() + "/payments/refund")
             .accept(MediaType.APPLICATION_JSON_VALUE)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .file(mockMultipartFile)
             .param("paymentFrom", "LUMI")
             .param("paymentTo", "CLIENT") 
             .param("totalPayment", "10000")

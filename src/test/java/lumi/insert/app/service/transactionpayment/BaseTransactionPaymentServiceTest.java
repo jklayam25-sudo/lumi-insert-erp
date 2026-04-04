@@ -7,6 +7,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -14,6 +17,8 @@ import lumi.insert.app.core.entity.Customer;
 import lumi.insert.app.core.entity.Transaction;
 import lumi.insert.app.core.entity.TransactionItem;
 import lumi.insert.app.core.entity.TransactionPayment;
+import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
+import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.core.repository.TransactionPaymentRepository;
 import lumi.insert.app.core.repository.TransactionRepository;
 import lumi.insert.app.mapper.AllTransactionMapper;
@@ -43,6 +48,9 @@ public abstract class BaseTransactionPaymentServiceTest {
     @Spy
     InvoiceGenerator invoiceGenerator = new InvoiceGenerator();
 
+    @Mock
+    ApplicationEventPublisher eventPublisher;
+
     public Transaction setupTransaction;
 
     public TransactionPayment setupTransactionPayment;
@@ -68,5 +76,15 @@ public abstract class BaseTransactionPaymentServiceTest {
         setupCustomer = Customer.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .build();
+
+        EmployeeLogin employeeLogin = EmployeeLogin.builder()
+        .id(UuidCreator.getTimeOrderedEpochFast())
+        .username("Test Username")
+        .role(EmployeeRole.CASHIER)
+        .ipAddress("t.e.s.t")
+        .build();
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(employeeLogin, null, null);
+        SecurityContextHolder.getContext().setAuthentication(auth);
     }
 }

@@ -14,7 +14,9 @@ import com.github.f4b6a3.uuid.UuidCreator;
 
 import lumi.insert.app.core.entity.Employee;
 import lumi.insert.app.core.repository.AuthTokenRepository;
+import lumi.insert.app.core.repository.EmployeePictureRepository;
 import lumi.insert.app.core.repository.EmployeeRepository;
+import lumi.insert.app.service.StorageService;
 import lumi.insert.app.service.implement.EmployeeServiceImpl;
 import lumi.insert.app.mapper.EmployeeMapperImpl;
 
@@ -33,11 +35,16 @@ public abstract class BaseEmployeeServiceTest {
     @Mock
     AuthTokenRepository authTokenRepositoryMock;
 
+    @Mock
+    StorageService storageService;
+
+    @Mock
+    EmployeePictureRepository employeePictureRepository;
+
     @Spy
     EmployeeMapperImpl employeeMapperImpl = new EmployeeMapperImpl();
 
-    Employee setupEmployee;
-  
+    Employee setupEmployee; 
 
     @BeforeEach
     void setup(){

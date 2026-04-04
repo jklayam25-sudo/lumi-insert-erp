@@ -4,14 +4,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional; 
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import lumi.insert.app.core.entity.nondatabase.EntityList;
 import lumi.insert.app.core.entity.nondatabase.TransactionStatus;
+import lumi.insert.app.core.entity.nondatabase.UploadStorageMessage;
 import lumi.insert.app.dto.request.TransactionPaymentCreateRequest; 
 import lumi.insert.app.dto.response.TransactionPaymentResponse;
 import lumi.insert.app.exception.ForbiddenRequestException;
@@ -31,6 +38,7 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         .paymentFrom("BCA - XXXXXX")
         .paymentTo("SG BANK - 12XXXXXX")
         .totalPayment(523000L)
+        .files(new MultipartFile[]{})
         .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
@@ -56,6 +64,7 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         .paymentFrom("BCA - XXXXXX")
         .paymentTo("SG BANK - 12XXXXXX")
         .totalPayment(1000000L)
+        .files(new MultipartFile[]{})
         .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
@@ -85,9 +94,35 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         .paymentFrom("BCA - XXXXXX")
         .paymentTo("SG BANK - 12XXXXXX")
         .totalPayment(523000L)
+        .files(new MultipartFile[]{})
         .build();
 
         assertThrows(TransactionValidationException.class, ()-> transactionPaymentServiceMock.createTransactionPayment(setupTransaction.getId(), request));
+    }
+
+    @Test 
+    public void createTransactionPayment_uploadImage_shouldPublishEvent(){
+        setupTransaction.setCustomer(setupCustomer);
+        setupTransaction.setTotalUnpaid(1000000L);
+        when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
+
+        TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
+        .paymentFrom("BCA - XXXXXX")
+        .paymentTo("SG BANK - 12XXXXXX")
+        .totalPayment(523000L)
+        .files(new MultipartFile[]{new MockMultipartFile("test", "ff".getBytes())})
+        .build();
+
+        when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
+
+        transactionPaymentServiceMock.createTransactionPayment(setupTransaction.getId(), request);
+
+        ArgumentCaptor<UploadStorageMessage> capture = ArgumentCaptor.forClass(UploadStorageMessage.class);
+        verify(eventPublisher, times(1)).publishEvent(capture.capture());
+
+        UploadStorageMessage value = capture.getValue();
+        assertEquals(EntityList.TRANSACTION_PAYMENT, value.entity());
+        
     }
 
     @Test
@@ -106,6 +141,7 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         .paymentTo("BCA - XXXXXX")
         .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
         .totalPayment(900000L)
+        .files(new MultipartFile[]{})
         .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
@@ -116,6 +152,35 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         assertEquals(912000L, setupTransaction.getTotalRefunded()); 
         assertEquals(TransactionStatus.PROCESS, setupTransaction.getStatus());
         assertTrue(refundTransactionPayment.isForRefund());
+    }
+
+    @Test 
+    public void refundTransactionPayment_uploadImage_shouldPublishEvent(){
+        setupTransaction.setCustomer(setupCustomer);
+
+        setupTransaction.setTotalUnrefunded(1000000L);
+        setupTransaction.setTotalRefunded(12000L);
+        setupTransaction.setStatus(TransactionStatus.PROCESS);
+
+        setupTransactionPayment.setTransaction(setupTransaction);
+        when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
+
+        TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
+        .paymentTo("BCA - XXXXXX")
+        .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
+        .totalPayment(900000L)
+        .files(new MultipartFile[]{new MockMultipartFile("Test", "ff".getBytes())})
+        .build();
+
+        when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
+
+        transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request);;
+  
+        ArgumentCaptor<UploadStorageMessage> capture = ArgumentCaptor.forClass(UploadStorageMessage.class);
+        verify(eventPublisher, times(1)).publishEvent(capture.capture());
+
+        UploadStorageMessage value = capture.getValue();
+        assertEquals(EntityList.TRANSACTION_PAYMENT, value.entity());
     }
 
     @Test
@@ -133,6 +198,7 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         .paymentTo("BCA - XXXXXX")
         .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
         .totalPayment(1000000L)
+        .files(new MultipartFile[]{})
         .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
@@ -154,6 +220,7 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         .paymentTo("BCA - XXXXXX")
         .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
         .totalPayment(1000000L)
+        .files(new MultipartFile[]{})
         .build();
 
         assertThrows(NotFoundEntityException.class, () -> transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request));
@@ -170,6 +237,7 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         .paymentTo("BCA - XXXXXX")
         .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
         .totalPayment(1000000L)
+        .files(new MultipartFile[]{})
         .build();
 
         assertThrows(ForbiddenRequestException.class, () -> transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request));
@@ -189,6 +257,7 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         .paymentTo("BCA - XXXXXX")
         .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
         .totalPayment(109900000L)
+        .files(new MultipartFile[]{})
         .build();
  
         assertThrows(TransactionValidationException.class, () -> transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request));

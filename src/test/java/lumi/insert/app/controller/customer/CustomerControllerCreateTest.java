@@ -2,17 +2,22 @@ package lumi.insert.app.controller.customer;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
- 
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
-import org.springframework.http.MediaType;
+import org.springframework.http.MediaType; 
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.multipart.MultipartFile;
 
 import lumi.insert.app.dto.request.CustomerCreateRequest;
 import lumi.insert.app.exception.DuplicateEntityException;
@@ -156,4 +161,95 @@ public class CustomerControllerCreateTest extends BaseCustomerControllerTest{
 
         verify(customerService, times(1)).createCustomer(argThat(arg -> arg.getShippingAddress().equals(customerDetailResponse.shippingAddress())));
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "CASHIER")
+    void uploadCustomerPictures_validFile_returnTrue() throws Exception {
+        UUID customerId = customerDetailResponse.id(); 
+        
+        when(customerService.addCustomerPicture(eq(customerId), any(MultipartFile[].class))).thenReturn(true);
+        
+        mockMvc.perform(
+            multipart("/api/customers/{id}/pictures", customerId)
+            .file(mockMultipartFile)
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").value(true))
+        .andExpect(jsonPath("$.errors").isEmpty());
+        
+        verify(customerService, times(1)).addCustomerPicture(eq(customerId), any(MultipartFile[].class));
+    }
+    
+    @Test
+    @WithMockUser(username = "admin", roles = "FINANCE")
+    void uploadCustomerPictures_validFileWithFINANCERole_returnTrue() throws Exception {
+        UUID customerId = customerDetailResponse.id(); 
+        
+        when(customerService.addCustomerPicture(eq(customerId), any(MultipartFile[].class))).thenReturn(true);
+        
+        mockMvc.perform(
+            multipart("/api/customers/{id}/pictures", customerId)
+            .file(mockMultipartFile)
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").value(true));
+        
+        verify(customerService, times(1)).addCustomerPicture(eq(customerId), any(MultipartFile[].class));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "CASHIER")
+    void uploadCustomerPictures_emptyFile_returnBadRequest() throws Exception {
+        UUID customerId = customerDetailResponse.id(); 
+        
+        mockMvc.perform(
+            multipart("/api/customers/{id}/pictures", customerId)
+            .file(mockBroken)
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors").value("File picture cannot be empty!"));
+        
+        verify(customerService, times(0)).addCustomerPicture(any(), any());
+    }
+    
+    @Test
+    @WithMockUser(username = "admin", roles = "CASHIER")
+    void uploadCustomerPictures_fileSizeExceeds800KB_returnBadRequest() throws Exception {
+        UUID customerId = customerDetailResponse.id(); 
+        
+        mockMvc.perform(
+            multipart("/api/customers/{id}/pictures", customerId)
+            .file(mockBigSize)
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors").value("File size must be less than 8Mb"));
+        
+        verify(customerService, times(0)).addCustomerPicture(any(), any());
+    } 
+    
+    @Test
+    @WithMockUser(username = "admin", roles = "CASHIER")
+    void uploadCustomerPictures_nonImageContentType_returnBadRequest() throws Exception {
+        UUID customerId = customerDetailResponse.id(); 
+        
+        mockMvc.perform(
+            multipart("/api/customers/{id}/pictures", customerId)
+            .file(mockNotImage)
+            .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+        .andDo(print())
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors").value("File format type must be image"));
+        
+        verify(customerService, times(0)).addCustomerPicture(any(), any());
+    }
+
 }

@@ -4,7 +4,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
+ 
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -53,4 +53,7 @@ public class AcvityLogAspectTITest {
         verify(auditorAwareImpl, times(1)).getAuditorIpAddress();
         verify(messageProducerService, times(1)).sendActivityLog(argThat(arg -> arg.getEntityId().equals(String.valueOf(response.id())) && arg.getAction() == ActivityAction.CATEGORY_CREATED));
     }
-}
+} 
+
+
+
