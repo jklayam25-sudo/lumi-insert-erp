@@ -1,0 +1,2 @@
+ALTER TABLE customers
+    ADD COLUMN picture_url TEXT[];
