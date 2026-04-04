@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.validation.Valid;
@@ -30,6 +31,7 @@ import lumi.insert.app.dto.request.EmployeeCreateRequest;
 import lumi.insert.app.dto.request.EmployeeUpdateRequest;
 import lumi.insert.app.dto.request.PaginationRequest;
 import lumi.insert.app.dto.response.EmployeeResponse;
+import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.service.EmployeeService;
 
 @RestController 
@@ -39,6 +41,8 @@ public class EmployeeController {
     
     @Autowired
     EmployeeService employeeService;
+
+    private final int fileUploadSize = 2 * 1024 * 1024;
 
     @Operation(summary = "Create new employee", description = "Creates a new employee account with the specified details")
     @ApiResponse(responseCode = "201", description = "Employee created successfully")
@@ -138,6 +142,28 @@ public class EmployeeController {
         EmployeeResponse resultFromService = employeeService.updateEmployee(id, request);
 
         WebResponse<EmployeeResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
+ 
+        return ResponseEntity.ok(wrappedResult);
+    }
+
+    @Operation(summary = "Upload and set employee profile", description = "Upload an employee's profile picture")
+    @ApiResponse(responseCode = "200", description = "Profile set successfully")
+    @ApiResponse(responseCode = "404", description = "Employee not found")
+    @ApiResponse(responseCode = "400", description = "Upload file doesnt meet criteria")
+    @PostMapping(
+        path = "/api/employees/{id}/profile",
+        produces = MediaType.APPLICATION_JSON_VALUE,
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    @PreAuthorize("hasAnyRole('OWNER')")
+    ResponseEntity<WebResponse<Boolean>> uploadEmployeeProfile(@Parameter(description = "Employee ID") @PathVariable(name = "id") UUID id, @Parameter(description = "File(image) to be store") @RequestParam("files") MultipartFile file){
+        if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
+        if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 2Mb");
+        if(!(file.getContentType().contains("image"))) throw new ForbiddenRequestException("File format type must be image");
+
+        Boolean resultFromService = employeeService.setEmployeeProfile(id, file);
+
+        WebResponse<Boolean> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
         return ResponseEntity.ok(wrappedResult);
     }

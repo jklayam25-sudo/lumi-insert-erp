@@ -5,14 +5,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional; 
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import lumi.insert.app.core.entity.nondatabase.EntityList;
 import lumi.insert.app.core.entity.nondatabase.SupplyStatus;
+import lumi.insert.app.core.entity.nondatabase.UploadStorageMessage;
 import lumi.insert.app.dto.request.SupplyPaymentCreateRequest; 
 import lumi.insert.app.dto.response.SupplyPaymentResponse;
 import lumi.insert.app.exception.ForbiddenRequestException;
@@ -36,6 +43,7 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         .paymentFrom("BCA - XXXXXX")
         .paymentTo("SG BANK - 12XXXXXX")
         .totalPayment(523000L)
+        .files(new MultipartFile[]{})
         .build();
 
         when(supplyPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
@@ -69,6 +77,7 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         .paymentFrom("BCA - XXXXXX")
         .paymentTo("SG BANK - 12XXXXXX")
         .totalPayment(1000000L)
+        .files(new MultipartFile[]{})
         .build();
 
         when(supplyPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
@@ -96,6 +105,7 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         .paymentFrom("BCA - XXXXXX")
         .paymentTo("SG BANK - 12XXXXXX")
         .totalPayment(1000000L)
+        .files(new MultipartFile[]{})
         .build(); 
 
         assertThrows(ForbiddenRequestException.class, ()-> supplyPaymentServiceMock.createSupplyPayment(setupSupply.getId(), request));
@@ -111,9 +121,39 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         .paymentFrom("BCA - XXXXXX")
         .paymentTo("SG BANK - 12XXXXXX")
         .totalPayment(523000L)
+        .files(new MultipartFile[]{})
         .build();
 
         assertThrows(TransactionValidationException.class, ()-> supplyPaymentServiceMock.createSupplyPayment(setupSupply.getId(), request));
+    }
+
+    @Test
+    @DisplayName("Should calcute Supply total , return SupplyPaymentResponse DTO when creating supply payment is successful")
+    public void createSupplyPayment_uploadImage_shouldPublishEvent(){
+        setupSupplier.setTotalUnpaid(1500000L);
+        setupSupplier.setTotalPaid(200000L);
+
+        setupSupply.setSupplier(setupSupplier);
+        setupSupply.setTotalUnpaid(1000000L);
+        setupSupply.setTotalPaid(200000L);
+        when(supplyRepositoryMock.findById(any())).thenReturn(Optional.of(setupSupply));
+
+        SupplyPaymentCreateRequest request = SupplyPaymentCreateRequest.builder()
+        .paymentFrom("BCA - XXXXXX")
+        .paymentTo("SG BANK - 12XXXXXX")
+        .totalPayment(523000L)
+        .files(new MultipartFile[]{new MockMultipartFile("Test", "ff".getBytes())})
+        .build();
+
+        when(supplyPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
+
+        supplyPaymentServiceMock.createSupplyPayment(setupSupply.getId(), request);
+        ArgumentCaptor<UploadStorageMessage> capture = ArgumentCaptor.forClass(UploadStorageMessage.class);
+        verify(applicationEventPublisher, times(1)).publishEvent(capture.capture());
+
+        UploadStorageMessage value = capture.getValue();
+        assertEquals(EntityList.SUPPLY_PAYMENT, value.entity());
+        
     }
 
     @Test
@@ -136,6 +176,7 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         .paymentFrom("BCA - XXXXXX")
         .paymentTo("SG BANK - 12XXXXXX")
         .totalPayment(10000L)
+        .files(new MultipartFile[]{})
         .build();
 
         when(supplyPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
@@ -154,6 +195,39 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         assertEquals(11000L - request.getTotalPayment(), setupSupplier.getTotalUnrefunded());
         assertEquals(request.getTotalPayment() + 8000L, setupSupplier.getTotalRefunded());   
     }
+
+    @Test 
+    public void refundSupplyPayment_uploadImage_shouldPublishEvent(){
+        setupSupplier.setTotalUnpaid(0L);
+        setupSupplier.setTotalPaid(200000L);
+        setupSupplier.setTotalUnrefunded(11000L);
+        setupSupplier.setTotalRefunded(8000L);
+
+        setupSupply.setSupplier(setupSupplier);
+        setupSupply.setTotalUnpaid(0L);
+        setupSupply.setTotalPaid(200000L);
+        setupSupply.setTotalUnrefunded(10000L);
+        setupSupply.setTotalRefunded(7000L);
+        setupSupply.setStatus(SupplyStatus.COMPLETE);
+        when(supplyRepositoryMock.findById(any())).thenReturn(Optional.of(setupSupply));
+
+        SupplyPaymentCreateRequest request = SupplyPaymentCreateRequest.builder()
+        .paymentFrom("BCA - XXXXXX")
+        .paymentTo("SG BANK - 12XXXXXX")
+        .totalPayment(10000L)
+        .files(new MultipartFile[]{new MockMultipartFile("Test", "ff".getBytes())})
+        .build();
+
+        when(supplyPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
+
+        supplyPaymentServiceMock.refundSupplyPayment(setupSupply.getId(), request);
+
+        ArgumentCaptor<UploadStorageMessage> capture = ArgumentCaptor.forClass(UploadStorageMessage.class);
+        verify(applicationEventPublisher, times(1)).publishEvent(capture.capture());
+
+        UploadStorageMessage value = capture.getValue();
+        assertEquals(EntityList.SUPPLY_PAYMENT, value.entity());   
+    }
  
 
     @Test
@@ -165,6 +239,7 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         .paymentTo("BCA - XXXXXX")
         .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
         .totalPayment(1000000L)
+        .files(new MultipartFile[]{})
         .build();
 
         assertThrows(NotFoundEntityException.class, () -> supplyPaymentServiceMock.refundSupplyPayment(setupSupplyPayment.getId(), request));
@@ -181,6 +256,7 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         .paymentTo("BCA - XXXXXX")
         .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
         .totalPayment(1000000L)
+        .files(new MultipartFile[]{})
         .build();
 
         assertThrows(ForbiddenRequestException.class, () -> supplyPaymentServiceMock.refundSupplyPayment(setupSupplyPayment.getId(), request));
@@ -200,6 +276,7 @@ public class SupplyPaymentServiceCreateTest extends BaseSupplyPaymentServiceTest
         .paymentTo("BCA - XXXXXX")
         .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
         .totalPayment(109900000L)
+        .files(new MultipartFile[]{})
         .build();
  
         assertThrows(TransactionValidationException.class, () -> supplyPaymentServiceMock.refundSupplyPayment(setupSupplyPayment.getId(), request));

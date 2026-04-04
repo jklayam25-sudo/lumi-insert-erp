@@ -1,22 +1,34 @@
 package lumi.insert.app.service.implement;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service; 
+import org.springframework.web.multipart.MultipartFile;
 
 import com.github.f4b6a3.uuid.UuidCreator;
-
+ 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.aspect.annotation.ActivityLogger;
 import lumi.insert.app.core.entity.Supplier;
 import lumi.insert.app.core.entity.Supply;
 import lumi.insert.app.core.entity.SupplyPayment;
 import lumi.insert.app.core.entity.nondatabase.ActivityAction;
+import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
+import lumi.insert.app.core.entity.nondatabase.EntityList;
 import lumi.insert.app.core.entity.nondatabase.SupplyStatus;
+import lumi.insert.app.core.entity.nondatabase.UploadStorageMessage;
 import lumi.insert.app.core.repository.SupplyPaymentRepository;
 import lumi.insert.app.core.repository.SupplyRepository;
 import lumi.insert.app.dto.request.PaginationRequest;
@@ -25,13 +37,15 @@ import lumi.insert.app.dto.request.SupplyPaymentGetByFilter;
 import lumi.insert.app.dto.response.SupplyPaymentResponse;
 import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
+import lumi.insert.app.exception.StorageActionException;
 import lumi.insert.app.exception.TransactionValidationException;
-import lumi.insert.app.mapper.AllSupplyMapper;
+import lumi.insert.app.mapper.AllSupplyMapper; 
 import lumi.insert.app.service.SupplyPaymentService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
 @Service
 @Transactional
+@Slf4j
 public class SupplyPaymentServiceImpl implements SupplyPaymentService{
 
     @Autowired
@@ -46,6 +60,8 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
     @Autowired
     AllSupplyMapper allSupplyMapper;
 
+    @Autowired
+    ApplicationEventPublisher eventPublisher;
 
     @Override
     @ActivityLogger(
@@ -80,6 +96,31 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         SupplyPayment savedSupplyPayment = supplyPaymentRepository.save(supplyPayment);
         SupplyPaymentResponse supplyPaymentResponse = allSupplyMapper.createSupplyPaymentResponseDto(savedSupplyPayment);
 
+        MultipartFile[] files = request.getFiles();
+        List<Path> paths = new ArrayList<>(); 
+        try {
+            for (MultipartFile file : files) {
+                Path tempFile = Files.createTempFile("paymentOf" + supply.getId() + "-", "_upload");
+                file.transferTo(tempFile);
+                paths.add(tempFile);
+                
+            }    
+        } catch (IOException e) {
+            log.error("Store file failed, messages: {}", e.getMessage());
+            throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
+        }
+        
+         paths.forEach(path -> {
+            eventPublisher.publishEvent(
+                new UploadStorageMessage(
+                    EntityList.SUPPLY_PAYMENT,
+                    supplyPayment.getId(), 
+                    path.toAbsolutePath().toString(),
+                    ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                )
+            );
+        });       
+  
         return supplyPaymentResponse;
     }
 
@@ -142,6 +183,31 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         // Upcoming: integrate with email notification 
         SupplyPayment savedSupplyPayment = supplyPaymentRepository.save(supplyPayment);
         SupplyPaymentResponse supplyPaymentResponse = allSupplyMapper.createSupplyPaymentResponseDto(savedSupplyPayment);
+
+        MultipartFile[] files = request.getFiles();
+        List<Path> paths = new ArrayList<>(); 
+        try {
+            for (MultipartFile file : files) {
+                Path tempFile = Files.createTempFile("refPaymentOf" + supply.getId() + "-", "_upload");
+                file.transferTo(tempFile);
+                paths.add(tempFile);
+                
+            }    
+        } catch (IOException e) {
+            log.error("Store file failed, messages: {}", e.getMessage());
+            throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
+        }
+        
+         paths.forEach(path -> {
+            eventPublisher.publishEvent(
+                new UploadStorageMessage(
+                    EntityList.SUPPLY_PAYMENT,
+                    supplyPayment.getId(), 
+                    path.toAbsolutePath().toString(),
+                    ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                )
+            );
+        });       
 
         return supplyPaymentResponse;
     }

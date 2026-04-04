@@ -19,6 +19,7 @@ public class RoleHierarchyConfig {
                 """);
     }
 
+    @SuppressWarnings("deprecation")
     @Bean
     static MethodSecurityExpressionHandler methodSecurityExpressionHandler(RoleHierarchy roleHierarchy) {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();

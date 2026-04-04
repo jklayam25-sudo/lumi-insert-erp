@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.transaction.Transactional;
@@ -24,7 +25,8 @@ import lumi.insert.app.controller.wrapper.WebResponse;
 import lumi.insert.app.dto.request.PaginationRequest;
 import lumi.insert.app.dto.request.TransactionPaymentCreateRequest;
 import lumi.insert.app.dto.request.TransactionPaymentGetByFilter;
-import lumi.insert.app.dto.response.TransactionPaymentResponse; 
+import lumi.insert.app.dto.response.TransactionPaymentResponse;
+import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.service.TransactionPaymentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +44,8 @@ public class TransactionPaymentController {
     @Autowired
     TransactionPaymentService transactionPaymentService;
 
+    private final int fileUploadSize = 8 * 1024 * 1024;
+
     @Operation(summary = "Create transaction payment", description = "Records a new payment received for a transaction")
     @ApiResponse(responseCode = "201", description = "Transaction payment created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -49,10 +53,16 @@ public class TransactionPaymentController {
     @PostMapping(
         path = "/api/transactions/{transactionId}/payments",
         produces = MediaType.APPLICATION_JSON_VALUE,
-        consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<TransactionPaymentResponse>> createTransactionPaymentAPI(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @ModelAttribute @Valid @RequestBody TransactionPaymentCreateRequest request){
+        for (MultipartFile file : request.getFiles()) {
+            if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
+            if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 8Mb");
+            if(!(file.getContentType().contains("image"))) throw new ForbiddenRequestException("File format type must be image");  
+        }
+
         TransactionPaymentResponse resultFromService = transactionPaymentService.createTransactionPayment(transactionId, request);
         WebResponse<TransactionPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -71,10 +81,16 @@ public class TransactionPaymentController {
     @PostMapping(
         path = "/api/transactions/{transactionId}/payments/refund",
         produces = MediaType.APPLICATION_JSON_VALUE,
-        consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<TransactionPaymentResponse>> refundTransactionPaymentAPI(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @ModelAttribute @Valid @RequestBody TransactionPaymentCreateRequest request){
+        for (MultipartFile file : request.getFiles()) {
+            if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
+            if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 8Mb");
+            if(!(file.getContentType().contains("image"))) throw new ForbiddenRequestException("File format type must be image");  
+        }
+        
         TransactionPaymentResponse resultFromService = transactionPaymentService.refundTransactionPayment(transactionId, request);
         WebResponse<TransactionPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 

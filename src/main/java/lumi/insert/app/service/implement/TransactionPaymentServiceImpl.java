@@ -1,14 +1,22 @@
 package lumi.insert.app.service.implement;
  
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
  
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service; 
+import org.springframework.web.multipart.MultipartFile;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -20,7 +28,10 @@ import lumi.insert.app.core.entity.Customer;
 import lumi.insert.app.core.entity.Transaction;
 import lumi.insert.app.core.entity.TransactionPayment;
 import lumi.insert.app.core.entity.nondatabase.ActivityAction;
+import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
+import lumi.insert.app.core.entity.nondatabase.EntityList;
 import lumi.insert.app.core.entity.nondatabase.TransactionStatus;
+import lumi.insert.app.core.entity.nondatabase.UploadStorageMessage;
 import lumi.insert.app.core.repository.TransactionPaymentRepository;
 import lumi.insert.app.core.repository.TransactionRepository;
 import lumi.insert.app.dto.request.PaginationRequest;
@@ -29,8 +40,9 @@ import lumi.insert.app.dto.request.TransactionPaymentGetByFilter;
 import lumi.insert.app.dto.response.TransactionPaymentResponse;
 import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
+import lumi.insert.app.exception.StorageActionException;
 import lumi.insert.app.exception.TransactionValidationException;
-import lumi.insert.app.mapper.AllTransactionMapper;
+import lumi.insert.app.mapper.AllTransactionMapper; 
 import lumi.insert.app.service.TransactionPaymentService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
@@ -50,6 +62,9 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
 
     @Autowired
     JpaSpecGenerator jpaSpecGenerator;
+
+    @Autowired
+    ApplicationEventPublisher eventPublisher;
 
     @Override
     @ActivityLogger(
@@ -82,6 +97,31 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         TransactionPayment savedTransactionPayment = transactionPaymentRepository.save(transactionPayment);
         TransactionPaymentResponse transactionPaymentResponseDto = allTransactionMapper.createTransactionPaymentResponseDto(savedTransactionPayment);
 
+        MultipartFile[] files = request.getFiles();
+        List<Path> paths = new ArrayList<>();
+        try {
+            for (MultipartFile file : files) {
+                Path tempFile = Files.createTempFile("paymentOf" + transaction.getId() + "-", "_upload");
+                file.transferTo(tempFile);
+                paths.add(tempFile);
+                
+            }    
+        } catch (IOException e) {
+            log.error("Store file failed, messages: {}", e.getMessage());
+            throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
+        }
+ 
+        paths.forEach(path -> {
+            eventPublisher.publishEvent(
+                new UploadStorageMessage(
+                    EntityList.TRANSACTION_PAYMENT,
+                    transactionPayment.getId(), 
+                    path.toAbsolutePath().toString(),
+                    ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                )
+            );
+        });                    
+  
         return transactionPaymentResponseDto;
     }
 
@@ -155,6 +195,32 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         
         TransactionPaymentResponse transactionPaymentResponseDto = allTransactionMapper.createTransactionPaymentResponseDto(savedTransactionPayment);
         log.info("{}", transactionPaymentResponseDto);
+        
+        MultipartFile[] files = request.getFiles();
+        List<Path> paths = new ArrayList<>();
+        try {
+            for (MultipartFile file : files) {
+                Path tempFile = Files.createTempFile("refPaymentOf" + transaction.getId() + "-", "_upload");
+                file.transferTo(tempFile);
+                paths.add(tempFile);
+                
+            }    
+        } catch (IOException e) {
+            log.error("Store file failed, messages: {}", e.getMessage());
+            throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
+        }
+ 
+        paths.forEach(path -> {
+            eventPublisher.publishEvent(
+                new UploadStorageMessage(
+                    EntityList.TRANSACTION_PAYMENT,
+                    savedTransactionPayment.getId(), 
+                    path.toAbsolutePath().toString(),
+                    ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                )
+            );
+        });    
+
         return transactionPaymentResponseDto;
     }
     

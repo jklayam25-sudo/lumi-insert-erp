@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -75,4 +77,16 @@ public class Customer extends BaseAuditing{
     @ToString.Exclude
     @NotAudited
     private List<Transaction> transactions = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @NotAudited 
+    @Builder.Default
+    private List<String> pictureUrl = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer")
+    @Builder.Default
+    @ToString.Exclude
+    @NotAudited
+    private List<CustomerPicture> customerPictures = new ArrayList<>();
+
 }

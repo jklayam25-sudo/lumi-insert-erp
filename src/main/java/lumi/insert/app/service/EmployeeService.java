@@ -1,8 +1,9 @@
 package lumi.insert.app.service;
-
+ 
 import java.util.UUID;
 
 import org.springframework.data.domain.Slice;
+import org.springframework.web.multipart.MultipartFile;
 
 import lumi.insert.app.dto.request.EmployeeCreateRequest;
 import lumi.insert.app.dto.request.EmployeeUpdateRequest;
@@ -22,4 +23,6 @@ public interface EmployeeService {
     EmployeeResponse resetEmployeePassword(UUID id, String password);
 
     EmployeeResponse updateEmployee(UUID id, EmployeeUpdateRequest request);
+
+    boolean setEmployeeProfile(UUID id, MultipartFile file);
 }
