@@ -29,6 +29,11 @@ public class RabbitMQConfig {
     }
 
     @Bean 
+    public Queue uploadStorageQueue() {
+        return new Queue("upload-storage", false);
+    }
+
+    @Bean 
     public Exchange exchange() {
         return new DirectExchange("main-exchange");
     }
@@ -46,6 +51,14 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(queue)
             .to(exchange)
             .with("transaction-invoice-routing")
+            .noargs();
+    }
+
+    @Bean
+    public Binding uploadStorageBinding(@Qualifier("uploadStorageQueue") Queue queue, Exchange exchange) {
+        return BindingBuilder.bind(queue)
+            .to(exchange)
+            .with("upload-storage-routing")
             .noargs();
     }
 
