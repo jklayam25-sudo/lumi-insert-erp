@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  
 import jakarta.transaction.Transactional;
@@ -22,7 +23,8 @@ import lumi.insert.app.controller.wrapper.WebResponse;
 import lumi.insert.app.dto.request.PaginationRequest;
 import lumi.insert.app.dto.request.SupplyPaymentCreateRequest;
 import lumi.insert.app.dto.request.SupplyPaymentGetByFilter;
-import lumi.insert.app.dto.response.SupplyPaymentResponse; 
+import lumi.insert.app.dto.response.SupplyPaymentResponse;
+import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.service.SupplyPaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,6 +41,8 @@ public class SupplyPaymentController {
     @Autowired
     SupplyPaymentService supplyPaymentService;
 
+    private final int fileUploadSize = 8 * 1024 * 1024;
+
     @Operation(summary = "Create supply payment", description = "Records a new payment made for a supply order")
     @ApiResponse(responseCode = "201", description = "Supply payment created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -46,10 +50,16 @@ public class SupplyPaymentController {
     @PostMapping(
         path = "/api/supplies/{supplyId}/payments",
         produces = MediaType.APPLICATION_JSON_VALUE,
-        consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     @PreAuthorize("hasAnyRole('FINANCE')")
     ResponseEntity<WebResponse<SupplyPaymentResponse>> createSupplyPaymentAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId, @ModelAttribute @Valid SupplyPaymentCreateRequest request){
+        for (MultipartFile file : request.getFiles()) {
+            if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
+            if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 8Mb");
+            if(!(file.getContentType().contains("image"))) throw new ForbiddenRequestException("File format type must be image");  
+        }
+        
         SupplyPaymentResponse resultFromService = supplyPaymentService.createSupplyPayment(supplyId, request);
         WebResponse<SupplyPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -68,10 +78,17 @@ public class SupplyPaymentController {
     @PostMapping(
         path = "/api/supplies/{supplyId}/payments/refund",
         produces = MediaType.APPLICATION_JSON_VALUE,
-        consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     @PreAuthorize("hasAnyRole('FINANCE')")
     ResponseEntity<WebResponse<SupplyPaymentResponse>> refundSupplyPaymentAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId, @ModelAttribute @Valid @RequestBody SupplyPaymentCreateRequest request){
+        
+        for (MultipartFile file : request.getFiles()) {
+            if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
+            if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 8Mb");
+            if(!(file.getContentType().contains("image"))) throw new ForbiddenRequestException("File format type must be image");  
+        }
+        
         SupplyPaymentResponse resultFromService = supplyPaymentService.refundSupplyPayment(supplyId, request);
         WebResponse<SupplyPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
