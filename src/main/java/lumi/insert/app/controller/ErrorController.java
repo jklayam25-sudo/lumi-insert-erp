@@ -20,9 +20,11 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import lumi.insert.app.controller.wrapper.WebResponse;
 import lumi.insert.app.exception.AuthenticationTokenException;
 import lumi.insert.app.exception.BoilerplateRequestException;
+import lumi.insert.app.exception.DatabaseInternalException;
 import lumi.insert.app.exception.DuplicateEntityException;
 import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
+import lumi.insert.app.exception.StorageActionException;
 import lumi.insert.app.exception.TransactionValidationException;
 
 @RestControllerAdvice
@@ -217,6 +219,32 @@ public class ErrorController {
 
         ResponseEntity<WebResponse<String>> response = ResponseEntity
         .status(HttpStatus.FORBIDDEN)
+        .body(webResponse);
+
+        return response;
+    }
+
+    @ExceptionHandler(StorageActionException.class)
+    public ResponseEntity<WebResponse<String>> storageActionException(StorageActionException exception){
+        WebResponse<String> webResponse = WebResponse.<String>builder()
+        .errors(exception.getMessage())
+        .build();
+
+        ResponseEntity<WebResponse<String>> response = ResponseEntity
+        .status(HttpStatus.INSUFFICIENT_STORAGE)
+        .body(webResponse);
+
+        return response;
+    }
+
+    @ExceptionHandler(DatabaseInternalException.class)
+    public ResponseEntity<WebResponse<String>> databaseInternalException(DatabaseInternalException exception){
+        WebResponse<String> webResponse = WebResponse.<String>builder()
+        .errors(exception.getMessage())
+        .build();
+
+        ResponseEntity<WebResponse<String>> response = ResponseEntity
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(webResponse);
 
         return response;
