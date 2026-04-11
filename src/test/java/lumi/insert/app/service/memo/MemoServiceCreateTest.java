@@ -1,7 +1,6 @@
 package lumi.insert.app.service.memo;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals; 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,7 +63,7 @@ public class MemoServiceCreateTest extends BaseMemoServiceTest{
         when(employeeRepository.getReferenceById(any())).thenReturn(employee);
         when(memoViewRepository.save(any(MemoView.class))).thenAnswer(arg -> arg.getArgument(0));
  
-        assertTrue(memoService.createMemoView(login, 1L));
+        assertTrue(memoService.createMemoView(login, 1L) != null);
         verify(memoViewRepository, times(1)).save(argThat(arg-> arg.getId().equals("1" + employeeId)));
     }
 
@@ -88,7 +87,7 @@ public class MemoServiceCreateTest extends BaseMemoServiceTest{
         when(employeeRepository.getReferenceById(any())).thenReturn(employee);
         when(memoViewRepository.save(any(MemoView.class))).thenThrow(new ConstraintViolationException("", null));
  
-        assertFalse(memoService.createMemoView(login, 1L));
+        assertTrue(memoService.createMemoView(login, 1L).getId().isEmpty());
         
     }
 }

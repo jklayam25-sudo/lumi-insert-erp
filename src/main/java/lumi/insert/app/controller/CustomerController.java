@@ -58,6 +58,8 @@ public class CustomerController {
     )
     @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<CustomerDetailResponse>> createCustomerAPI(@Valid @RequestBody CustomerCreateRequest request){
+        log.debug("Customer creation request: {}", request);
+        log.info("Register request for new customer: {}", request.getName());
         
         CustomerDetailResponse resultFromService = customerService.createCustomer(request);
 
@@ -68,6 +70,7 @@ public class CustomerController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Customer created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -79,10 +82,12 @@ public class CustomerController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<CustomerDetailResponse>> getCustomerAPI(@Parameter(description = "Customer ID") @PathVariable(name = "id") UUID id){
+        log.debug("Customer search by id request: {}", id);
         CustomerDetailResponse resultFromService = customerService.getCustomer(id);
 
         WebResponse<CustomerDetailResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Customer search by id result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -93,10 +98,12 @@ public class CustomerController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<CustomerResponse>>> getCustomersAPI(@Valid @ModelAttribute CustomerGetByFilter request){ 
+        log.debug("Customers search request: {}", request);
         Slice<CustomerResponse> resultFromService = customerService.getCustomers(request);
 
         WebResponse<Slice<CustomerResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
+        log.debug("Customers search request result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -107,10 +114,12 @@ public class CustomerController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<SliceIndex<CustomerNameResponse>>> searchCustomerNamesAPI(@Valid @ModelAttribute CustomerGetNameRequest request){
+        log.debug("Customer search by name request: {}", request);
         SliceIndex<CustomerNameResponse> resultFromService = customerService.searchCustomerNames(request);
 
         WebResponse<SliceIndex<CustomerNameResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Customer search by name result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -125,10 +134,15 @@ public class CustomerController {
     )
     @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<CustomerDetailResponse>> updateCustomerAPI(@Parameter(description = "Customer ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody CustomerUpdateRequest request){ 
+        log.info("Update request for customer with ID: {}", id);
+        log.debug("Customer ID: {}. Update request: {}", id, request);
+        
         CustomerDetailResponse resultFromService = customerService.updateCustomer(id, request);
+        log.debug("Customer ID: {} updated. Changed value: {}", id, resultFromService);
 
         WebResponse<CustomerDetailResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Successfully updated customer with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -143,16 +157,29 @@ public class CustomerController {
     )
     @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<Boolean>> uploadCustomerPictures(@Parameter(description = "Customer ID") @PathVariable(name = "id") UUID id, @Parameter(description = "File(image) to be store") @RequestParam("files") MultipartFile[] files){
+        log.info("Picture upload request for customer with ID: {}", id);
+        log.debug("Number of files to upload: {}", files.length);
+        
         for (MultipartFile file : files) {
-            if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
-            if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 8Mb");
-            if(!(file.getContentType().contains("image"))) throw new ForbiddenRequestException("File format type must be image");  
+            if(file.isEmpty()) {
+                log.debug("Upload picture request for customer ID {} failed, caused: File picture cannot be empty", id);
+                throw new ForbiddenRequestException("File picture cannot be empty!"); 
+            } 
+            if(file.getSize() > fileUploadSize) {
+                log.debug("Upload picture request for customer ID {} failed, caused: File size must be less than 8Mb", id);
+                throw new ForbiddenRequestException("File size must be less than 8Mb");
+            } 
+            if(!(file.getContentType().contains("image"))) {
+                log.debug("Upload picture request for customer ID {} failed, caused: File format type must be image", id);
+                throw new ForbiddenRequestException("File format type must be image"); 
+            }  
         }
         
         Boolean resultFromService = customerService.addCustomerPicture(id, files);
 
         WebResponse<Boolean> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Successfully uploaded pictures for customer with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);
     }
 }

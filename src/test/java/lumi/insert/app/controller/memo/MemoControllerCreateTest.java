@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
+import lumi.insert.app.core.entity.MemoView;
 import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.dto.request.MemoCreateRequest; 
@@ -74,7 +75,7 @@ public class MemoControllerCreateTest extends BaseMemoControllerTest{
 
     @Test
     void createMemoViewAPI_validRequest_returnTrue() throws Exception{ 
-        when(memoService.createMemoView(any(EmployeeLogin.class), anyLong())).thenReturn(true);
+        when(memoService.createMemoView(any(EmployeeLogin.class), anyLong())).thenReturn(new MemoView("id", null, null));
 
         mockMvc.perform(
             post("/api/memos/1/read")
@@ -91,7 +92,7 @@ public class MemoControllerCreateTest extends BaseMemoControllerTest{
 
     @Test
     void createMemoViewAPI_alreadyRead_returnFalse() throws Exception{ 
-        when(memoService.createMemoView(any(EmployeeLogin.class), anyLong())).thenReturn(false);
+        when(memoService.createMemoView(any(EmployeeLogin.class), anyLong())).thenReturn(new MemoView("id", null, null));
 
         mockMvc.perform(
             post("/api/memos/1/read")

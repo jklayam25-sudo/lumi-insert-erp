@@ -50,6 +50,7 @@ public class PdfServiceImpl implements PdfService{
         entityIdFromSingleParam = true
     )
     public ByteArrayInputStream exportSupplyWithItems(SupplyDetailResponse data) {
+        log.info("Exporting supply PDF for invoiceId={}", data.invoiceId());
 
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {     
                 Document document = new Document(); 
@@ -197,7 +198,7 @@ public class PdfServiceImpl implements PdfService{
         entityIdFromSingleParam = true
     )
     public ByteArrayInputStream exportTransactionWithItems(TransactionDetailResponse data) {
-        log.info("Creating Transaction PDF");
+        log.info("Exporting transaction PDF for invoiceId={}", data.invoiceId());
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 Document document = new Document(); 
                 

@@ -18,7 +18,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid; 
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.controller.wrapper.WebResponse;
 import lumi.insert.app.dto.request.AuthTokenCreateRequest;
 import lumi.insert.app.dto.response.AuthTokenResponse;
@@ -26,6 +27,7 @@ import lumi.insert.app.service.AuthTokenService;
 
 @RestController
 @Tag(name = "Authentication", description = "Endpoints for managing user sessions and JWT tokens") 
+@Slf4j
 public class AuthTokenController {
     
     @Autowired
@@ -39,7 +41,9 @@ public class AuthTokenController {
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     public ResponseEntity<WebResponse<AuthTokenResponse>> loginAuthAPI(@Valid @RequestBody AuthTokenCreateRequest request){
-        AuthTokenResponse resultFromService = authTokenService.createAuthToken(request);
+        log.info("Login request for username: {}", request.getUsername());
+
+        AuthTokenResponse resultFromService = authTokenService.createAuthToken(request); 
 
         WebResponse<AuthTokenResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -49,6 +53,8 @@ public class AuthTokenController {
         .maxAge(604800)
         .path("/")
         .build(); 
+
+        log.info("User logged in successfully with username: {}", request.getUsername());
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(wrappedResult);
     }
 
@@ -59,10 +65,12 @@ public class AuthTokenController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<WebResponse<AuthTokenResponse>> refreshAuthAPI(@CookieValue(name = "refreshToken", required = true) String refreshToken){
+        log.debug("Refresh access token request initiated for: {}", refreshToken.substring(0, 5));
         AuthTokenResponse resultFromService = authTokenService.refreshAuthToken(refreshToken);
-
+ 
         WebResponse<AuthTokenResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null); 
         
+        log.info("Access token refreshed successfully");
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -73,11 +81,15 @@ public class AuthTokenController {
     )
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public void deleteAuthAPI(@CookieValue(name = "refreshToken", required = true) String refreshToken, HttpServletResponse response){
-        authTokenService.deleteRefreshToken(refreshToken);
+        log.debug("Delete refresh token request initiated for: {}", refreshToken.substring(0, 5));
+
+        authTokenService.deleteRefreshToken(refreshToken); 
+
         Cookie cookie = new Cookie("refreshToken", null);
         cookie.setPath("/");
         cookie.setMaxAge(0);
 
+        log.info("User logged out successfully");
         response.addHeader("X-ACCESS-TOKEN", null);
         response.addCookie(cookie);
     }

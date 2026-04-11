@@ -54,6 +54,9 @@ public class SupplyPaymentController {
     )
     @PreAuthorize("hasAnyRole('FINANCE')")
     ResponseEntity<WebResponse<SupplyPaymentResponse>> createSupplyPaymentAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId, @ModelAttribute @Valid SupplyPaymentCreateRequest request){
+        log.info("Create supply payment request for supply ID: {}", supplyId);
+        log.debug("Payment creation request: {}", request);
+        
         for (MultipartFile file : request.getFiles()) {
             if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
             if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 8Mb");
@@ -61,6 +64,7 @@ public class SupplyPaymentController {
         }
         
         SupplyPaymentResponse resultFromService = supplyPaymentService.createSupplyPayment(supplyId, request);
+        log.debug("Supply payment created: {}", resultFromService);
         WebResponse<SupplyPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -68,6 +72,7 @@ public class SupplyPaymentController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Supply payment created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -82,6 +87,8 @@ public class SupplyPaymentController {
     )
     @PreAuthorize("hasAnyRole('FINANCE')")
     ResponseEntity<WebResponse<SupplyPaymentResponse>> refundSupplyPaymentAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId, @ModelAttribute @Valid @RequestBody SupplyPaymentCreateRequest request){
+        log.info("Refund supply payment request for supply ID: {}", supplyId);
+        log.debug("Payment refund request: {}", request);
         
         for (MultipartFile file : request.getFiles()) {
             if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
@@ -90,6 +97,7 @@ public class SupplyPaymentController {
         }
         
         SupplyPaymentResponse resultFromService = supplyPaymentService.refundSupplyPayment(supplyId, request);
+        log.debug("Supply payment refunded: {}", resultFromService);
         WebResponse<SupplyPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -97,6 +105,7 @@ public class SupplyPaymentController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Supply payment refund created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -108,7 +117,9 @@ public class SupplyPaymentController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<SupplyPaymentResponse>> getSupplyPaymentAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId, @Parameter(description = "Payment ID") @PathVariable(name = "id") UUID id){
+        log.debug("Supply payment search by id request: {}", id);
         SupplyPaymentResponse resultFromService = supplyPaymentService.getSupplyPayment(id);
+        log.debug("Supply payment found: {}", resultFromService);
 
         WebResponse<SupplyPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -123,7 +134,9 @@ public class SupplyPaymentController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<SupplyPaymentResponse>>> getSupplyPaymentsAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId,@ModelAttribute @Valid PaginationRequest request){
+        log.debug("Supply payments list request for supply ID: {}, pagination: {}", supplyId, request);
         Slice<SupplyPaymentResponse> resultFromService = supplyPaymentService.getSupplyPaymentsBySupplyId(supplyId, request);
+        log.debug("Supply payments found: {}", resultFromService);
 
         WebResponse<Slice<SupplyPaymentResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -138,8 +151,9 @@ public class SupplyPaymentController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<SupplyPaymentResponse>>> searchSupplyPaymentsFilter(@Parameter(description = "Supply order ID") @PathVariable(name = "supplyId") UUID supplyId, @ModelAttribute @Valid SupplyPaymentGetByFilter request){
-        log.info("{}", request);
+        log.debug("Supply payments search request with filter: {}", request);
         Slice<SupplyPaymentResponse> resultFromService = supplyPaymentService.getSupplyPaymentsByRequests(request);
+        log.debug("Supply payments found: {}", resultFromService);
 
         WebResponse<Slice<SupplyPaymentResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 

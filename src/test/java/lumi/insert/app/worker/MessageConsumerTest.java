@@ -30,6 +30,7 @@ import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.mail.MessagingException;
 import lumi.insert.app.activitycore.entity.ActivityLog;
+import lumi.insert.app.activitycore.entity.nondatabase.ActivityLogMessage;
 import lumi.insert.app.activitycore.repository.ActivityLogRepository;
 import lumi.insert.app.core.entity.TransactionPayment;
 import lumi.insert.app.core.entity.nondatabase.CloudinaryResponse;
@@ -78,7 +79,7 @@ public class MessageConsumerTest {
         .actionMessage("a message")
         .build();
 
-        consumer.activityLogsHandler(activityLog);
+        consumer.activityLogsHandler(new ActivityLogMessage(activityLog));
 
         verify(repository, times(1)).save(argThat(arg -> arg.getActionMessage().equals(activityLog.getActionMessage())));
     }

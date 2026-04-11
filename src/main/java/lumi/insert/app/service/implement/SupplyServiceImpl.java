@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.github.f4b6a3.uuid.UuidCreator; 
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.aspect.annotation.ActivityLogger;
 import lumi.insert.app.core.entity.Product;
 import lumi.insert.app.core.entity.StockCard;
@@ -46,6 +47,7 @@ import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
 @Service
 @Transactional
+@Slf4j
 public class SupplyServiceImpl implements SupplyService{
 
     @Autowired
@@ -76,20 +78,27 @@ public class SupplyServiceImpl implements SupplyService{
         actionMessage = "New supply order placed"
     )
     public SupplyResponse createSupply(SupplyCreateRequest request) {
+        log.info("Creating supply order for supplier ID: {}", request.getSupplierId());
         Supplier supplier = supplierRepository.findById(request.getSupplierId())
-             .orElseThrow(() -> new NotFoundEntityException("Supplier with id " + request.getSupplierId() + " is not found"));
+             .orElseThrow(() -> {
+                 log.debug("Supplier not found for supply creation with ID: {}", request.getSupplierId());
+                 return new NotFoundEntityException("Supplier with id " + request.getSupplierId() + " is not found");
+             });
 
         List<SupplyItemCreate> items = request.getSupplyItems();
+        log.debug("Supply creation request contains {} items", items.size());
 
         List<Long> listOfProductId = items.stream().map(item -> item.getProductId()).distinct().collect(Collectors.toCollection(ArrayList::new));
         List<Product> listOfProduct = productRepository.findAllById(listOfProductId);
 
         if(listOfProduct.size() != listOfProductId.size()){
             listOfProductId.removeAll(listOfProduct.stream().map(Product::getId).distinct().toList());
+            log.debug("Supply creation failed - product ids not found: {}", listOfProductId);
             throw new NotFoundEntityException("Product with id " + listOfProductId.toString() + " not found!");
         } 
 
         Long subTotal = items.stream().mapToLong(item -> item.getPrice() * item.getQuantity()).sum();
+        log.debug("Supply subtotal calculated: {}", subTotal);
 
         Supply supply = Supply.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -151,22 +160,27 @@ public class SupplyServiceImpl implements SupplyService{
         }
 
         supplyItemRepository.saveAll(itemsToAdd);
+        log.debug("Saved {} supply items", itemsToAdd.size());
 
         stockCardRepository.saveAll(stockCardsToAdd);
+        log.debug("Saved {} stock cards", stockCardsToAdd.size());
 
         supplier.addTransaction();
         supplier.setTotalUnpaid(supplier.getTotalUnpaid() + savedSupply.getTotalUnpaid());
-        return allSupplyMapper.createSimpleDTO(savedSupply);
+        SupplyResponse response = allSupplyMapper.createSimpleDTO(savedSupply);
+        log.debug("Supply order created successfully: {}", response);
+        return response;
     }
 
     @Override
     public Slice<SupplyResponse> searchSuppliesByRequests(SupplyGetByFilter request) {
+        log.debug("Searching supplies with filter: {}", request);
         Pageable pageable = jpaSpecGenerator.pageable(request);
      
         Specification<Supply> supplySpecification = jpaSpecGenerator.supplySpecification(request);
 
         Slice<Supply> supplies = supplyRepository.findAll(supplySpecification, pageable);
-
+        log.debug("Found {} supplies", supplies.getNumberOfElements());
         return supplies.map(allSupplyMapper::createSimpleDTO);
     }
 
@@ -177,10 +191,17 @@ public class SupplyServiceImpl implements SupplyService{
         actionMessage = "Supply order cancelled"
     )
     public SupplyResponse cancelSupply(UUID id) {
+        log.info("Cancelling supply order with ID: {}", id);
         Supply supply = supplyRepository.findByIdDetail(id)
-            .orElseThrow(() -> new NotFoundEntityException("Supply with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Supply not found for cancellation with ID: {}", id);
+                return new NotFoundEntityException("Supply with ID " + id + " was not found");
+            });
 
-        if(supply.getStatus() == SupplyStatus.CANCELLED) throw new ForbiddenRequestException("Unable to cancel supply because Supply Status is CANCELLED");
+        if(supply.getStatus() == SupplyStatus.CANCELLED) {
+            log.debug("Supply cancellation failed - already cancelled: {}", id);
+            throw new ForbiddenRequestException("Unable to cancel supply because Supply Status is CANCELLED");
+        }
 
         List<SupplyItem> supplyItems = supply.getSupplyItems();
         
@@ -240,7 +261,9 @@ public class SupplyServiceImpl implements SupplyService{
             );   
         }
         supplyItemRepository.saveAll(reverseToAdd);
+        log.debug("Saved {} refund supply items", reverseToAdd.size());
         stockCardRepository.saveAll(stockCardToAdd);
+        log.debug("Saved {} refund stock cards", stockCardToAdd.size());
         
         Supplier supplier = supply.getSupplier();
         supplier.setTotalUnpaid(supplier.getTotalUnpaid() - supply.getTotalUnpaid());
@@ -252,15 +275,23 @@ public class SupplyServiceImpl implements SupplyService{
         supply.setTotalUnpaid(0L);
         supply.setTotalPaid(0L); 
 
-        return allSupplyMapper.createSimpleDTO(supply);
+        SupplyResponse response = allSupplyMapper.createSimpleDTO(supply);
+        log.debug("Supply cancellation response created: {}", response);
+        return response;
     }
 
     @Override
     public SupplyDetailResponse getSupply(UUID id) {
+        log.debug("Getting supply detail for ID: {}", id);
         Supply supply = supplyRepository.findByIdDetail(id)
-            .orElseThrow(() -> new NotFoundEntityException("Supply with ID " + id + " is not found"));
+            .orElseThrow(() -> {
+                log.debug("Supply not found with ID: {}", id);
+                return new NotFoundEntityException("Supply with ID " + id + " is not found");
+            });
 
-        return allSupplyMapper.createDetailDTO(supply);
+        SupplyDetailResponse response = allSupplyMapper.createDetailDTO(supply);
+        log.debug("Supply detail response created: {}", response);
+        return response;
     }
 
     @Override
@@ -270,17 +301,24 @@ public class SupplyServiceImpl implements SupplyService{
         actionMessage = "Supply updated"
     )
     public SupplyResponse updateSupply(UUID id, SupplyUpdateRequest request) {
+        log.info("Updating supply order with ID: {}", id);
         Supply supply = supplyRepository.findByIdDetail(id)
-            .orElseThrow(() -> new NotFoundEntityException("Supply with ID " + id + " is not found"));
+            .orElseThrow(() -> {
+                log.debug("Supply not found for update with ID: {}", id);
+                return new NotFoundEntityException("Supply with ID " + id + " is not found");
+            });
  
-        if(supply.getStatus() == SupplyStatus.CANCELLED) throw new ForbiddenRequestException("Unable to cancel supply because Supply Status is CANCELLED");
+        if(supply.getStatus() == SupplyStatus.CANCELLED) {
+            log.debug("Supply update failed - supply already cancelled: {}", id);
+            throw new ForbiddenRequestException("Unable to cancel supply because Supply Status is CANCELLED");
+        }
 
         allSupplyMapper.updateSupply(request, supply);
 
         if(request.getTotalDiscount() == null) request.setTotalDiscount(0L);
         if(request.getTotalFee() == null) request.setTotalFee(0L);
         if(request.getTotalDiscount() != 0 || request.getTotalFee() != 0){
-            
+            log.debug("Updating supply totals for ID: {}, discount: {}, fee: {}", id, request.getTotalDiscount(), request.getTotalFee());
             Long totalChange = request.getTotalDiscount() - request.getTotalFee();
             Long oldTotalUnpaid = supply.getTotalUnpaid();
             Long oldTotalPaid = supply.getTotalPaid();
@@ -315,20 +353,33 @@ public class SupplyServiceImpl implements SupplyService{
         actionMessage = "Supply item refunded"
     )
     public SupplyResponse refundSupplyItem(UUID id, ItemRefundRequest request) { 
+        log.info("Refunding supply item for supply ID: {}, product ID: {}, quantity: {}", id, request.getProductId(), request.getQuantity());
 
         List<SupplyItem> matchItems = supplyItemRepository.findBySupplyIdAndProductId(id, request.getProductId());
-        if(matchItems.size() == 0) throw new NotFoundEntityException("Unable to find any supply item with product id " + request.getProductId());
+        if(matchItems.size() == 0) {
+            log.debug("No supply items found for refund request supply ID: {}, product ID: {}", id, request.getProductId());
+            throw new NotFoundEntityException("Unable to find any supply item with product id " + request.getProductId());
+        }
         long priceFromSupplier = matchItems.getLast().getPrice();
         long ttlQuantiyLeft = matchItems.stream().mapToLong(item -> item.getQuantity()).sum();
 
-        if(ttlQuantiyLeft < request.getQuantity()) throw new ForbiddenRequestException("refund quantity exceeds the remaining refundedable stock with quantity: " + ttlQuantiyLeft + ", enter an exact amount to proceed");
+        if(ttlQuantiyLeft < request.getQuantity()) {
+            log.debug("Refund request quantity {} exceeds remaining refundable stock {} for supply ID: {}", request.getQuantity(), ttlQuantiyLeft, id);
+            throw new ForbiddenRequestException("refund quantity exceeds the remaining refundedable stock with quantity: " + ttlQuantiyLeft + ", enter an exact amount to proceed");
+        }
 
         Supply supply = matchItems.getFirst().getSupply();
 
-        if(supply.getStatus() == SupplyStatus.CANCELLED) throw new ForbiddenRequestException("Unable to cancel supply because Supply Status is CANCELLED");
+        if(supply.getStatus() == SupplyStatus.CANCELLED) {
+            log.debug("Refund request failed - supply already cancelled: {}", id);
+            throw new ForbiddenRequestException("Unable to cancel supply because Supply Status is CANCELLED");
+        }
 
         Product product = matchItems.getFirst().getProduct();
-        if(product.getStockQuantity() < request.getQuantity()) throw new TransactionValidationException("Unable to cancel supply items, product with id " + product.getId() + " doesn't have enough stock to refund, stock left: " + product.getStockQuantity());
+        if(product.getStockQuantity() < request.getQuantity()) {
+            log.debug("Refund request failed - insufficient stock for product ID: {}. requested {}, available {}", product.getId(), request.getQuantity(), product.getStockQuantity());
+            throw new TransactionValidationException("Unable to cancel supply items, product with id " + product.getId() + " doesn't have enough stock to refund, stock left: " + product.getStockQuantity());
+        }
 
         Long oldPrice = product.getBasePrice();
         Long oldStock = product.getStockQuantity();
@@ -386,7 +437,9 @@ public class SupplyServiceImpl implements SupplyService{
 
         stockCardRepository.save(stockCard);
         supplyItemRepository.save(supplyItem);
-        return allSupplyMapper.createSimpleDTO(supply);
+        SupplyResponse response = allSupplyMapper.createSimpleDTO(supply);
+        log.debug("Supply refund response created: {}", response);
+        return response;
     }
     
 }

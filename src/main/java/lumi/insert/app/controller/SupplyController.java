@@ -63,7 +63,11 @@ public class SupplyController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<SupplyResponse>> createSupply(@Valid @RequestBody @org.springframework.web.bind.annotation.RequestBody SupplyCreateRequest request){
+        log.debug("Supply creation request: {}", request);
+        log.info("Request for new supply order from supplier with ID {}", request.getSupplierId());
+        
         SupplyResponse resultFromService = supplyService.createSupply(request);
+        log.debug("Supply created: {}", resultFromService);
  
         WebResponse<SupplyResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -72,6 +76,7 @@ public class SupplyController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Supply order created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
@@ -83,7 +88,9 @@ public class SupplyController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<SupplyDetailResponse>> getSupply(@Parameter(description = "Supply order ID") @PathVariable(name = "id") UUID id){
+        log.debug("Supply search by id request: {}", id);
         SupplyDetailResponse resultFromService = supplyService.getSupply(id);
+        log.debug("Supply found: {}", resultFromService);
         
         WebResponse<SupplyDetailResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -98,12 +105,15 @@ public class SupplyController {
         produces = MediaType.APPLICATION_PDF_VALUE
     )
     ResponseEntity<InputStreamResource> exportSupply(@Parameter(description = "Supply order ID") @PathVariable(name = "id") UUID id){
+        log.info("Supply PDF export request for ID: {}", id);
         SupplyDetailResponse resultFromService = supplyService.getSupply(id);
+        log.debug("Supply detail for export: {}. Converting data to Pdf...", resultFromService);
         ByteArrayInputStream pdf = pdfService.exportSupplyWithItems(resultFromService);
         
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename="+ resultFromService.invoiceId() + ".pdf");
 
+        log.info("Supply PDF export completed for ID: {}", id);
         return ResponseEntity.ok()
             .headers(headers)
             .contentType(MediaType.APPLICATION_PDF)
@@ -117,7 +127,9 @@ public class SupplyController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<SupplyResponse>>> getSupplies(@ModelAttribute @Valid SupplyGetByFilter request){
+        log.debug("Supplies search request: {}", request);
         Slice<SupplyResponse> resultFromService = supplyService.searchSuppliesByRequests(request);
+        log.debug("Supplies found: {}", resultFromService);
         
         WebResponse<Slice<SupplyResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -131,12 +143,16 @@ public class SupplyController {
         produces = MediaType.APPLICATION_XML_VALUE
     )
     void exportSupplies(@ModelAttribute @Valid SupplyGetByFilter request, HttpServletResponse response) throws IOException{
+        log.debug("Supply history export request with filter: {}", request);
+        log.debug("Supply history export request with filter");
         request.setSize(99999000);
         Slice<SupplyResponse> resultFromService = supplyService.searchSuppliesByRequests(request);
+        log.debug("Supplies for export: {}. Converting data to Xlsx...", resultFromService);
         
         response.setContentType("application/xml");
         response.addHeader("Content-Disposition", "attachment; filename=supplyHistory" + ".xlsx");
         xlsxService.exportSupplies(resultFromService.getContent(), response.getOutputStream());
+        log.info("Supply history export completed successfully");
     } 
  
     @Operation(summary = "Cancel supply order", description = "Cancels an existing supply order")
@@ -148,10 +164,13 @@ public class SupplyController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<SupplyResponse>> cancelSupply(@Parameter(description = "Supply order ID") @PathVariable(name = "id") UUID id){
+        log.info("Cancel supply request for ID: {}", id);
         SupplyResponse resultFromService = supplyService.cancelSupply(id);
+        log.debug("Supply cancelled: {}", resultFromService);
  
         WebResponse<SupplyResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
+        log.info("Supply cancelled successfully for ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     } 
 
@@ -166,10 +185,15 @@ public class SupplyController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<SupplyResponse>> updateSupplierAPI(@Parameter(description = "Supply order ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody SupplyUpdateRequest request){ 
+        log.info("Update supply request for ID: {}", id);
+        log.debug("Supply ID: {}. Update request: {}", id, request);
+        
         SupplyResponse resultFromService = supplyService.updateSupply(id, request);
+        log.debug("Supply updated: {}", resultFromService);
 
         WebResponse<SupplyResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Successfully updated supply with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -183,10 +207,15 @@ public class SupplyController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<SupplyResponse>> refundSupplyItem(@Parameter(description = "Supply order ID") @PathVariable(name = "id") UUID id, @Valid ItemRefundRequest request){
+        log.info("Refund supply item request for supply ID: {}", id);
+        log.debug("Refund request: {}", request);
+        
         SupplyResponse resultFromService = supplyService.refundSupplyItem(id, request);
+        log.debug("Supply item refunded: {}", resultFromService);
  
         WebResponse<SupplyResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Supply item refunded successfully for supply ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     } 
 }

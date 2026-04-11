@@ -66,7 +66,11 @@ public class EmployeeServiceImpl implements EmployeeService{
         actionMessage = "New employee registered"
     )
     public EmployeeResponse createEmployee(EmployeeCreateRequest request) {
-        if(employeeRepository.existsByUsername(request.getUsername())) throw new DuplicateEntityException("Employee with username " + request.getUsername() + " already exists");
+        log.info("Creating employee username={}", request.getUsername());
+        if(employeeRepository.existsByUsername(request.getUsername())) {
+            log.debug("Create failed, duplicate username={}", request.getUsername());
+            throw new DuplicateEntityException("Employee with username " + request.getUsername() + " already exists");
+        }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -79,19 +83,25 @@ public class EmployeeServiceImpl implements EmployeeService{
             .build();
         
         Employee savedEmployee = employeeRepository.save(employee);
+        log.info("Employee created employeeId={}, username={}", savedEmployee.getId(), savedEmployee.getUsername());
         return employeeMapper.createDtoResponseFromEmployee(savedEmployee);
     }
 
     @Override
     public EmployeeResponse getEmployee(UUID id) {
+        log.info("Retrieving employee id={}", id);
         Employee employee = employeeRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Employee with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Get failed, employee not found id={}", id);
+                return new NotFoundEntityException("Employee with ID " + id + " was not found");
+            });
 
         return employeeMapper.createDtoResponseFromEmployee(employee);
     }
 
     @Override
     public Slice<EmployeeResponse> getEmployees(PaginationRequest request) {
+        log.info("Listing employees page={}, size={}", request.getPage(), request.getSize());
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), Sort.by("createdAt").descending());
         Slice<Employee> employees = employeeRepository.findAll(pageable);
 
@@ -110,8 +120,12 @@ public class EmployeeServiceImpl implements EmployeeService{
         actionMessage = "Employee password changed"
     )
     public EmployeeResponse resetEmployeePassword(UUID id, String password) {
+        log.info("Resetting password for employee id={}", id);
         Employee employee = employeeRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Employee with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Password reset failed, employee not found id={}", id);
+                return new NotFoundEntityException("Employee with ID " + id + " was not found");
+            });
 
         String encodedPassword = passwordEncoder.encode(password);
 
@@ -130,11 +144,18 @@ public class EmployeeServiceImpl implements EmployeeService{
         actionMessage = "Employee updated"
     )
     public EmployeeResponse updateEmployee(UUID id, EmployeeUpdateRequest request) {
+        log.info("Updating employee id={}", id);
         Employee employee = employeeRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Employee with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Update failed, employee not found id={}", id);
+                return new NotFoundEntityException("Employee with ID " + id + " was not found");
+            });
 
         if(request.getUsername() != null){
-            if(employeeRepository.existsByUsername(request.getUsername())) throw new DuplicateEntityException("Employee with username " + request.getUsername() + " already exists");  
+            if(employeeRepository.existsByUsername(request.getUsername())) {
+                log.debug("Update failed, duplicate username={}", request.getUsername());
+                throw new DuplicateEntityException("Employee with username " + request.getUsername() + " already exists");
+            }
         }
 
         employeeMapper.updateEmployeeFromDto(request, employee);
@@ -146,9 +167,12 @@ public class EmployeeServiceImpl implements EmployeeService{
 
     @Override
     public boolean setEmployeeProfile(UUID id, MultipartFile file){ 
-
+        log.info("Setting profile image for employee id={}", id);
         Employee employee = employeeRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Employee with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Profile update failed, employee not found id={}", id);
+                return new NotFoundEntityException("Employee with ID " + id + " was not found");
+            });
         
         String fileName = employee.getUsername() + "-profile";
 
@@ -168,12 +192,13 @@ public class EmployeeServiceImpl implements EmployeeService{
 
             employeePictureRepository.save(employeePicture);
             employee.setPictureUrl(String.valueOf(upload.getSecureUrl()));
+            log.info("Employee profile updated for employeeId={}, publicId={}", id, publicId);
             return true; 
         } catch (IOException e) { 
-            log.error("Upload failed, messages: {}", e.getMessage());
+            log.error("Upload failed for employeeId={}, messages={}", id, e.getMessage());
             throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
         } catch (Exception e) { 
-            log.error("Save to database failed, attempting to delete image at storage. Messages: {}", e.getMessage()); 
+            log.error("Save to database failed for employeeId={}, attempting to delete image at storage. Messages={}", id, e.getMessage()); 
 
             if(publicId != null) {
                 if(!(storageService.deleteImage(publicId))) log.error("Failed to delete image with publicId: {}", publicId);

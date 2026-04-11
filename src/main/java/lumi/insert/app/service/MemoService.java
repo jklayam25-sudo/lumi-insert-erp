@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Slice;
 
+import lumi.insert.app.core.entity.MemoView;
 import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.dto.request.MemoCreateRequest;
 import lumi.insert.app.dto.request.MemoUpdateRequest;
@@ -20,5 +21,5 @@ public interface MemoService {
 
     Slice<MemoResponse> getMemos(EmployeeLogin login, LocalDateTime time);
 
-    Boolean createMemoView(EmployeeLogin login, Long id);
+    MemoView createMemoView(EmployeeLogin login, Long id);
 }

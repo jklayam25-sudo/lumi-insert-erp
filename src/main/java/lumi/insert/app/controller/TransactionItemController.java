@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.validation.Valid; 
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.controller.wrapper.WebResponse;
 import lumi.insert.app.dto.request.ItemRefundRequest;
 import lumi.insert.app.dto.request.PaginationRequest;
@@ -33,6 +34,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
+@Slf4j
 @Tag(name = "Transaction Items", description = "Endpoints for managing items within sales transactions")
 public class TransactionItemController {
     
@@ -50,7 +52,11 @@ public class TransactionItemController {
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionItemResponse>> createTransactionItem(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody TransactionItemCreateRequest request){
+        log.debug("Transaction item creation request for transaction ID: {}, request: {}", id, request);
+        log.info("Adding item to transaction with ID: {}", id);
+        
         TransactionItemResponse resultFromService = transactionItemService.createTransactionItem(id, request);
+        log.debug("Transaction item created: {}", resultFromService);
  
         WebResponse<TransactionItemResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -59,6 +65,7 @@ public class TransactionItemController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Transaction item created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
@@ -70,7 +77,9 @@ public class TransactionItemController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<TransactionItemResponse>>> getTransactionItems(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @ModelAttribute PaginationRequest request){
+        log.debug("Transaction items list request for transaction ID: {}, pagination: {}", transactionId, request);
         Slice<TransactionItemResponse> resultFromService = transactionItemService.getTransactionItemsByTransactionId(transactionId, request);
+        log.debug("Transaction items found: {}", resultFromService);
  
         WebResponse<Slice<TransactionItemResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -85,7 +94,9 @@ public class TransactionItemController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<TransactionItemResponse>> getTransactionItem(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id){
+        log.debug("Transaction item search by id request: {}", id);
         TransactionItemResponse resultFromService = transactionItemService.getTransactionItem(id);
+        log.debug("Transaction item found: {}", resultFromService);
  
         WebResponse<TransactionItemResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -100,7 +111,9 @@ public class TransactionItemController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<TransactionItemResponse>>> getTransactionItemByProductId(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Product ID") @PathVariable(name = "productId") Long productId){
+        log.debug("Transaction items by product request for transaction ID: {}, product ID: {}", transactionId, productId);
         Slice<TransactionItemResponse> resultFromService = transactionItemService.getTransactionByTransactionIdAndProductId(transactionId, productId);
+        log.debug("Transaction items found: {}", resultFromService);
  
         WebResponse<Slice<TransactionItemResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -116,7 +129,9 @@ public class TransactionItemController {
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionItemDelete>> DeleteTransactionItem(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id){
+        log.info("Deleting transaction item with ID: {}", id);
         TransactionItemDelete resultFromService = transactionItemService.deleteTransactionItem(id);
+        log.debug("Transaction item deleted: {}", resultFromService);
  
         WebResponse<TransactionItemDelete> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -134,7 +149,9 @@ public class TransactionItemController {
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionItemResponse>> UpdateTransactionItemQuantity(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id, @Parameter(description = "New quantity") @RequestBody @RequestParam(name = "quantity") Long quantity){
+        log.info("Updating transaction item quantity for item ID: {} to quantity: {}", id, quantity);
         TransactionItemResponse resultFromService = transactionItemService.updateTransactionItemQuantity(id, quantity);
+        log.debug("Transaction item updated: {}", resultFromService);
  
         WebResponse<TransactionItemResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -153,7 +170,9 @@ public class TransactionItemController {
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionItemResponse>> refundTransactionItem(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody ItemRefundRequest request){
+        log.info("Refunding transaction item with ID: {}", id);
         TransactionItemResponse resultFromService = transactionItemService.refundTransactionItem(id, request);
+        log.debug("Transaction item refunded: {}", resultFromService);
  
         WebResponse<TransactionItemResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 

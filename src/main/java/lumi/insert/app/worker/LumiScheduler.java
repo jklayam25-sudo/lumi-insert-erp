@@ -23,12 +23,15 @@ public class LumiScheduler {
     
     @Scheduled(cron = "0 3 0 * * *", zone = "Asia/Jakarta") 
     void dailyProductsStatistics(){
+        log.info("Starting daily products statistics email generation");
         try {
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(springScheduler, null, null));
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime startDate = now.minusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
             LocalDateTime endDate = now.minusDays(1).withHour(23).withMinute(59).withSecond(59).withNano(999);
-            mailSenderService.sendProductsStatistic(startDate, endDate);   
+            log.debug("Daily statistics date range: {} to {}", startDate, endDate);
+            mailSenderService.sendProductsStatistic(startDate, endDate);
+            log.info("Daily products statistics email sent successfully");
         } catch (Exception e) {
             log.error("Fail to send product statistics, message: " + e.getMessage());
         }
@@ -36,12 +39,15 @@ public class LumiScheduler {
 
     @Scheduled(cron = "0 5 1 * * *", zone = "Asia/Jakarta")
     void monthlyProductsStatistics(){
+        log.info("Starting monthly products statistics email generation");
         try {
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(springScheduler, null, null));
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime startDate = now.minusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
             LocalDateTime endDate = now.minusDays(1).withHour(23).withMinute(59).withSecond(59).withNano(999);
-            mailSenderService.sendProductsStatistic(startDate, endDate);    
+            log.debug("Monthly statistics date range: {} to {}", startDate, endDate);
+            mailSenderService.sendProductsStatistic(startDate, endDate);
+            log.info("Monthly products statistics email sent successfully");
         } catch (Exception e) {
             log.error("Fail to send product statistics, message: " + e.getMessage());
         }

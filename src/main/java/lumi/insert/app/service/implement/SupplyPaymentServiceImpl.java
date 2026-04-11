@@ -70,10 +70,17 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         actionMessage = "Supply payment settled to supplier"
     )
     public SupplyPaymentResponse createSupplyPayment(UUID supplyId, SupplyPaymentCreateRequest request) {
+        log.info("Creating supply payment for supplyId={}, amount={}", supplyId, request.getTotalPayment());
         Supply supply = supplyRepository.findById(supplyId)
-            .orElseThrow(() -> new NotFoundEntityException("Supply with ID " + supplyId + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Supply payment creation failed, supply not found id={}", supplyId);
+                return new NotFoundEntityException("Supply with ID " + supplyId + " was not found");
+            });
 
-        if(supply.getStatus() != SupplyStatus.UNPAID) throw new ForbiddenRequestException("Unable to set payment because supply status is not UNPAID, check carefully");
+        if(supply.getStatus() != SupplyStatus.UNPAID) {
+            log.debug("Supply payment creation failed, invalid supply status id={}, status={}", supplyId, supply.getStatus());
+            throw new ForbiddenRequestException("Unable to set payment because supply status is not UNPAID, check carefully");
+        }
 
         SupplyPayment supplyPayment = SupplyPayment.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -86,7 +93,10 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         supply.setTotalUnpaid(supply.getTotalUnpaid() - request.getTotalPayment());
         supply.setTotalPaid(supply.getTotalPaid() + request.getTotalPayment());
 
-        if(supply.getTotalUnpaid() < 0) throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + supplyId + ", enter an exact amount to proceed");
+        if(supply.getTotalUnpaid() < 0) {
+            log.debug("Supply payment exceeds unpaid amount supplyId={}, requestedPayment={}", supplyId, request.getTotalPayment());
+            throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + supplyId + ", enter an exact amount to proceed");
+        }
 
         Supplier supplier = supply.getSupplier();
         supplier.setTotalUnpaid(supplier.getTotalUnpaid() - request.getTotalPayment());
@@ -106,7 +116,7 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
                 
             }    
         } catch (IOException e) {
-            log.error("Store file failed, messages: {}", e.getMessage());
+            log.error("Store file failed for supplyId={}, messages={}", supplyId, e.getMessage());
             throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
         }
         
@@ -121,12 +131,14 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
             );
         });       
   
+        log.info("Supply payment created paymentId={}, supplyId={}", savedSupplyPayment.getId(), supplyId);
         return supplyPaymentResponse;
     }
 
     @Override
     
     public Slice<SupplyPaymentResponse> getSupplyPaymentsBySupplyId(UUID supplyId, PaginationRequest request) {
+        log.info("Retrieving supply payments for supplyId={}, page={}, size={}", supplyId, request.getPage(), request.getSize());
         Pageable pageable = jpaSpecGenerator.pageable(request);
 
         Slice<SupplyPayment> payments = supplyPaymentRepository.findAllBySupplyId(supplyId, pageable); 
@@ -135,14 +147,19 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
 
     @Override
     public SupplyPaymentResponse getSupplyPayment(UUID id) {
+        log.info("Retrieving supply payment id={}", id);
         SupplyPayment supplyPayment = supplyPaymentRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("null"));
+            .orElseThrow(() -> {
+                log.debug("Supply payment not found id={}", id);
+                return new NotFoundEntityException("Supply payment with ID " + id + " was not found");
+            });
 
         return allSupplyMapper.createSupplyPaymentResponseDto(supplyPayment);
     }
 
     @Override
     public Slice<SupplyPaymentResponse> getSupplyPaymentsByRequests(SupplyPaymentGetByFilter request) {
+        log.info("Searching supply payments with filters page={}, size={}", request.getPage(), request.getSize());
         Pageable pageable = jpaSpecGenerator.pageable(request);
 
         Specification<SupplyPayment> supplyPaymentSpecification = jpaSpecGenerator.supplyPaymentSpecification(request);
@@ -158,10 +175,17 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         actionMessage = "Supply payment refund received from supplier"
     )
     public SupplyPaymentResponse refundSupplyPayment(UUID supplyId, SupplyPaymentCreateRequest request) {
+        log.info("Creating supply refund payment for supplyId={}, amount={}", supplyId, request.getTotalPayment());
         Supply supply = supplyRepository.findById(supplyId)
-            .orElseThrow(() -> new NotFoundEntityException("Supply with ID " + supplyId + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Refund failed, supply not found id={}", supplyId);
+                return new NotFoundEntityException("Supply with ID " + supplyId + " was not found");
+            });
 
-        if(supply.getStatus() == SupplyStatus.UNPAID) throw new ForbiddenRequestException("Unable to set payment because supply status is UNPAID / NOT DONE YET, check carefully");
+        if(supply.getStatus() == SupplyStatus.UNPAID) {
+            log.debug("Refund payment attempted on invalid supply status supplyId={}, status={}", supplyId, supply.getStatus());
+            throw new ForbiddenRequestException("Unable to set payment because supply status is UNPAID / NOT DONE YET, check carefully");
+        }
 
         SupplyPayment supplyPayment = SupplyPayment.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -175,7 +199,10 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         supply.setTotalUnrefunded(supply.getTotalUnrefunded() - request.getTotalPayment());
         supply.setTotalRefunded(supply.getTotalRefunded() + request.getTotalPayment());
 
-        if(supply.getTotalUnrefunded() < 0) throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + supplyId + ", enter an exact amount to proceed");
+        if(supply.getTotalUnrefunded() < 0) {
+            log.debug("Refund exceeds unrefunded amount supplyId={}, requestAmount={}", supplyId, request.getTotalPayment());
+            throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + supplyId + ", enter an exact amount to proceed");
+        }
 
         Supplier supplier = supply.getSupplier();
         supplier.setTotalUnrefunded(supplier.getTotalUnrefunded() - request.getTotalPayment());
@@ -194,7 +221,7 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
                 
             }    
         } catch (IOException e) {
-            log.error("Store file failed, messages: {}", e.getMessage());
+            log.error("Store file failed for supplyId={}, messages={}", supplyId, e.getMessage());
             throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
         }
         
@@ -202,13 +229,14 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
             eventPublisher.publishEvent(
                 new UploadStorageMessage(
                     EntityList.SUPPLY_PAYMENT,
-                    supplyPayment.getId(), 
+                    savedSupplyPayment.getId(), 
                     path.toAbsolutePath().toString(),
                     ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
                 )
             );
         });       
 
+        log.info("Supply refund payment created paymentId={}, supplyId={}", savedSupplyPayment.getId(), supplyId);
         return supplyPaymentResponse;
     }
     

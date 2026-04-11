@@ -57,6 +57,9 @@ public class TransactionPaymentController {
     )
     @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<TransactionPaymentResponse>> createTransactionPaymentAPI(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @ModelAttribute @Valid @RequestBody TransactionPaymentCreateRequest request){
+        log.info("Create transaction payment request for transaction ID: {}", transactionId);
+        log.debug("Payment creation request: {}", request);
+        
         for (MultipartFile file : request.getFiles()) {
             if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
             if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 8Mb");
@@ -64,6 +67,7 @@ public class TransactionPaymentController {
         }
 
         TransactionPaymentResponse resultFromService = transactionPaymentService.createTransactionPayment(transactionId, request);
+        log.debug("Transaction payment created: {}", resultFromService);
         WebResponse<TransactionPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -71,6 +75,7 @@ public class TransactionPaymentController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Transaction payment created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -85,6 +90,9 @@ public class TransactionPaymentController {
     )
     @PreAuthorize("hasAnyRole('CASHIER', 'FINANCE')")
     ResponseEntity<WebResponse<TransactionPaymentResponse>> refundTransactionPaymentAPI(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @ModelAttribute @Valid @RequestBody TransactionPaymentCreateRequest request){
+        log.info("Refund transaction payment request for transaction ID: {}", transactionId);
+        log.debug("Payment refund request: {}", request);
+        
         for (MultipartFile file : request.getFiles()) {
             if(file.isEmpty()) throw new ForbiddenRequestException("File picture cannot be empty!");
             if(file.getSize() > fileUploadSize) throw new ForbiddenRequestException("File size must be less than 8Mb");
@@ -92,6 +100,7 @@ public class TransactionPaymentController {
         }
         
         TransactionPaymentResponse resultFromService = transactionPaymentService.refundTransactionPayment(transactionId, request);
+        log.debug("Transaction payment refunded: {}", resultFromService);
         WebResponse<TransactionPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -99,6 +108,7 @@ public class TransactionPaymentController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Transaction payment refund created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -110,7 +120,9 @@ public class TransactionPaymentController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<TransactionPaymentResponse>> getTransactionPaymentAPI(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Payment ID") @PathVariable(name = "id") UUID id){
+        log.debug("Transaction payment search by id request: {}", id);
         TransactionPaymentResponse resultFromService = transactionPaymentService.getTransactionPayment(id);
+        log.debug("Transaction payment found: {}", resultFromService);
 
         WebResponse<TransactionPaymentResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -125,7 +137,9 @@ public class TransactionPaymentController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<TransactionPaymentResponse>>> getTransactionPaymentsAPI(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId,@ModelAttribute @Valid PaginationRequest request){
+        log.debug("Transaction payments list request for transaction ID: {}, pagination: {}", transactionId, request);
         Slice<TransactionPaymentResponse> resultFromService = transactionPaymentService.getTransactionPaymentsByTransactionId(transactionId, request);
+        log.debug("Transaction payments found: {}", resultFromService);
 
         WebResponse<Slice<TransactionPaymentResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -140,8 +154,9 @@ public class TransactionPaymentController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<TransactionPaymentResponse>>> searchTransactionPaymentsFilter(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @ModelAttribute @Valid TransactionPaymentGetByFilter request){
-        log.info("{}", request);
+        log.debug("Transaction payments search request with filter: {}", request);
         Slice<TransactionPaymentResponse> resultFromService = transactionPaymentService.getTransactionPaymentsByRequests(request);
+        log.debug("Transaction payments found: {}", resultFromService);
 
         WebResponse<Slice<TransactionPaymentResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 

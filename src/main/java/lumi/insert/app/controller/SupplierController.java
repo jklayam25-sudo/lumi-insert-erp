@@ -51,8 +51,11 @@ public class SupplierController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE', 'FINANCE')")
     ResponseEntity<WebResponse<SupplierDetailResponse>> createSupplierAPI(@Valid @RequestBody SupplierCreateRequest request){
+        log.debug("Supplier creation request: {}", request);
+        log.info("Register request for new supplier: {}", request.getName());
         
         SupplierDetailResponse resultFromService = supplierService.createSupplier(request);
+        log.debug("Supplier created: {}", resultFromService);
 
         WebResponse<SupplierDetailResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -61,6 +64,7 @@ public class SupplierController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Supplier created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -72,10 +76,12 @@ public class SupplierController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<SupplierDetailResponse>> getSupplierAPI(@Parameter(description = "Supplier ID") @PathVariable(name = "id") UUID id){
+        log.debug("Supplier search by id request: {}", id);
         SupplierDetailResponse resultFromService = supplierService.getSupplier(id);
 
         WebResponse<SupplierDetailResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Supplier search by id result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -86,10 +92,12 @@ public class SupplierController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<SupplierDetailResponse>>> getSuppliersAPI(@Valid @ModelAttribute SupplierGetByFilter request){ 
+        log.debug("Suppliers search request: {}", request);
         Slice<SupplierDetailResponse> resultFromService = supplierService.getSuppliers(request);
 
         WebResponse<Slice<SupplierDetailResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
+        log.debug("Suppliers search request result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -100,10 +108,12 @@ public class SupplierController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<SliceIndex<SupplierNameResponse>>> searchSupplierNamesAPI(@Valid @ModelAttribute SupplierGetNameRequest request){
+        log.debug("Supplier search by name request: {}", request);
         SliceIndex<SupplierNameResponse> resultFromService = supplierService.searchSupplierNames(request);
 
         WebResponse<SliceIndex<SupplierNameResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Supplier search by name result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -118,10 +128,15 @@ public class SupplierController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE', 'FINANCE')")
     ResponseEntity<WebResponse<SupplierDetailResponse>> updateSupplierAPI(@Parameter(description = "Supplier ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody SupplierUpdateRequest request){ 
+        log.info("Update request for supplier with ID: {}", id);
+        log.debug("Supplier ID: {}. Update request: {}", id, request);
+        
         SupplierDetailResponse resultFromService = supplierService.updateSupplier(id, request);
+        log.debug("Supplier ID: {} updated. New value: {}", id, request);
 
         WebResponse<SupplierDetailResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Successfully updated supplier with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);
     }
 }

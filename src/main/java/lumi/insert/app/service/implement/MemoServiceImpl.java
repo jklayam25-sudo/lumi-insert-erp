@@ -1,6 +1,6 @@
 package lumi.insert.app.service.implement;
 
-import java.time.LocalDateTime;  
+import java.time.LocalDateTime; 
 
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.data.domain.Slice; 
@@ -47,6 +47,7 @@ public class MemoServiceImpl implements MemoService{
         actionMessage = "New memo created"
     )
     public MemoResponse createMemo(MemoCreateRequest request) {
+        log.info("Creating memo title={}", request.getTitle());
         Memo memo = Memo.builder()
         .title(request.getTitle())
         .body(request.getBody())
@@ -54,6 +55,7 @@ public class MemoServiceImpl implements MemoService{
 
         if(request.getRole() != null) memo.setRole(EmployeeRole.valueOf(request.getRole()));
         Memo savedMemo = memoRepository.save(memo);
+        log.info("Memo created id={}", savedMemo.getId());
 
         if(!(request.getImages() == null)){
             // Call method to process the image
@@ -69,12 +71,17 @@ public class MemoServiceImpl implements MemoService{
         actionMessage = "Memo updated"
     )
     public MemoResponse updateMemo(Long id, MemoUpdateRequest request) {
+        log.info("Updating memo id={}", id);
         Memo memo = memoRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Memo with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Memo update failed, not found id={}", id);
+                return new NotFoundEntityException("Memo with ID " + id + " was not found");
+            });
         
         mapper.updateEntityFromDto(request, memo);
 
         memoViewRepository.deleteMemoView(id);
+        log.info("Memo updated id={}", id);
 
         return mapper.createDtoResponseFromMemo(memo);
     }
@@ -86,17 +93,26 @@ public class MemoServiceImpl implements MemoService{
         actionMessage = "Memo is archieved"
     )
     public MemoResponse archiveMemo(Long id) {
+        log.info("Archiving memo id={}", id);
         Memo memo = memoRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Memo with ID " + id + " is not found"));
+            .orElseThrow(() -> {
+                log.debug("Memo archive failed, not found id={}", id);
+                return new NotFoundEntityException("Memo with ID " + id + " is not found");
+            });
 
         memo.setIsActive(false);
+        log.info("Memo archived id={}", id);
         return mapper.createDtoResponseFromMemo(memo);
     }
 
     @Override
     public MemoResponse getMemo(Long id) {
+        log.info("Retrieving memo id={}", id);
         Memo memo = memoRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Memo with ID " + id + " is not found"));
+            .orElseThrow(() -> {
+                log.debug("Memo not found id={}", id);
+                return new NotFoundEntityException("Memo with ID " + id + " is not found");
+            });
  
         return mapper.createDtoResponseFromMemo(memo);
     }
@@ -112,16 +128,19 @@ public class MemoServiceImpl implements MemoService{
         action = ActivityAction.MEMO_READ,
         actionMessage = "Memo read"
     )
-    public Boolean createMemoView(EmployeeLogin login, Long id) {
+    public MemoView createMemoView(EmployeeLogin login, Long id) {
+        log.info("Creating memo view for memoId={} employeeId={}", id, login.getId());
         try {
             Memo memo = memoRepository.getReferenceById(id);
             Employee employee = employeeRepository.getReferenceById(login.getId());
             MemoView memoView = new MemoView(memo, employee);
-            memoViewRepository.save(memoView);
-            return true;
+            MemoView result = memoViewRepository.save(memoView); 
+            log.info("Memo view created memoId={} employeeId={}", id, login.getId());
+            return result;
         } catch (Exception e) {
-            log.info("{}", e.getLocalizedMessage());
-            return false;
+            log.error("Failed to create memo view memoId={} employeeId={} message={}", id, login.getId(), e.getLocalizedMessage());
+            log.debug("Memo view exception", e);
+            return new MemoView();
         }
     }
     

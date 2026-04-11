@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter; 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -30,6 +31,7 @@ import lumi.insert.app.service.CategoryService;
 
 @RestController
 @Tag(name = "Categories", description = "Endpoints for managing product categories")
+@Slf4j
 public class CategoryController {
     
     @Autowired
@@ -45,8 +47,11 @@ public class CategoryController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<CategoryResponse>> createCategory(@Valid @RequestBody CategoryCreateRequest request){
-        CategoryResponse resultFromService = categoryService.createCategory(request);
+        log.debug("Category creation request: {}", request);
+        log.info("Register request for new category: {}", request.getName());
 
+        CategoryResponse resultFromService = categoryService.createCategory(request);
+        
         WebResponse<CategoryResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);;
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -54,6 +59,7 @@ public class CategoryController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Category created succesfully with ID: {}", resultFromService.getId()); 
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
@@ -65,10 +71,12 @@ public class CategoryController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<CategoryResponse>>> getCategories(@Valid @ModelAttribute PaginationRequest request){
+        log.debug("Categories search request: {}", request);
         Slice<CategoryResponse> resultFromService = categoryService.getCategories(request);
 
         WebResponse<Slice<CategoryResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Categories search request result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -81,10 +89,12 @@ public class CategoryController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<CategoryResponse>> getCategoryById(@Parameter(description = "Category ID") @PathVariable(value = "id") Long id){
+        log.debug("Category search by id request: {}", id);
         CategoryResponse resultFromService = categoryService.getCategoryById(id);
 
         WebResponse<CategoryResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);;
 
+        log.debug("Category search by id result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -101,10 +111,15 @@ public class CategoryController {
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<CategoryResponse>> editCategory(@Parameter(description = "Category ID") @PathVariable(value = "id", required = true) Long id, @Valid @RequestBody CategoryUpdateRequest request){
         request.setId(id);
-        CategoryResponse resultFromService = categoryService.updateCategoryName(request);
+        log.info("Edit request for category with ID: {}", id);
+        log.debug("Category ID: {}. Edit request: {}", id, request);
 
+        CategoryResponse resultFromService = categoryService.updateCategoryName(request);
+        log.debug("Category ID: {} updated. Changed value: {}", id, resultFromService);
+        
         WebResponse<CategoryResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);;
 
+        log.info("Succesfully edited category with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -118,10 +133,13 @@ public class CategoryController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<CategoryResponse>> activateProduct(@Parameter(description = "Category ID") @PathVariable(value = "id", required = true) Long id ){ 
+        log.info("Activate request for category with ID: {}", id); 
+        
         CategoryResponse resultFromService = categoryService.activateCategory(id);
 
         WebResponse<CategoryResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);;
 
+        log.info("Successfully activated category with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -135,10 +153,13 @@ public class CategoryController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<CategoryResponse>> deactivateProduct(@Parameter(description = "Category ID") @PathVariable(value = "id", required = true) Long id ){ 
+        log.info("Deactivate request for category with ID: {}", id); 
+        
         CategoryResponse resultFromService = categoryService.deactivateCategory(id);
 
         WebResponse<CategoryResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);;
 
+        log.info("Successfully deactivated category with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 }

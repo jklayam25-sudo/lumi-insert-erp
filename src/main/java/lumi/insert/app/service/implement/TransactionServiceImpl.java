@@ -91,10 +91,17 @@ public class TransactionServiceImpl implements TransactionService{
         actionMessage = "New transaction cart created"
     )
     public TransactionResponse createTransaction(TransactionCreateRequest request) {
+        log.info("Creating transaction for customer ID: {}", request.getCustomerId());
         Customer customer = customerRepository.findById(request.getCustomerId())
-            .orElseThrow(() -> new NotFoundEntityException("Customer with ID " + request.getCustomerId() + " is not found"));
+            .orElseThrow(() -> {
+                log.debug("Customer not found for transaction creation: {}", request.getCustomerId());
+                return new NotFoundEntityException("Customer with ID " + request.getCustomerId() + " is not found");
+            });
 
-        if(customer.getIsActive() == false) throw new TransactionValidationException("Customer with ID " + request.getCustomerId() + " is not active");
+        if(customer.getIsActive() == false) {
+            log.debug("Transaction creation failed - customer inactive: {}", request.getCustomerId());
+            throw new TransactionValidationException("Customer with ID " + request.getCustomerId() + " is not active");
+        }
 
         Transaction transaction = Transaction.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -103,22 +110,25 @@ public class TransactionServiceImpl implements TransactionService{
             .customer(customer)
             .build();
 
-        log.info("{}", transaction);
+        log.debug("New transaction created: {}", transaction);
 
         Transaction savedTransaction = transactionRepository.save(transaction);
-        return allTransactionMapper.createTransactionResponseDto(savedTransaction);
+        TransactionResponse response = allTransactionMapper.createTransactionResponseDto(savedTransaction);
+        log.debug("Transaction created successfully: {}", response);
+        return response;
     }
 
     @Override
     public Slice<TransactionResponse> searchTransactionsByRequests(TransactionGetByFilter request) {
+        log.debug("Searching transactions with filter: {}", request);
         Pageable pageable = jpaSpecGenerator.pageable(request);
 
         Specification<Transaction> specification = jpaSpecGenerator.transactionSpecification(request);
 
         Slice<Transaction> transactions = transactionRepository.findAll(specification, pageable);
+        log.debug("Found {} transactions", transactions.getNumberOfElements());
 
         Slice<TransactionResponse> result = transactions.map(allTransactionMapper::createTransactionResponseDto);
-
         return result;
     }
 
@@ -129,13 +139,21 @@ public class TransactionServiceImpl implements TransactionService{
         actionMessage = "Transaction order placed"
     )
     public TransactionResponse setTransactionToProcess(UUID id) {
+        log.info("Processing transaction to PROCESS status, ID: {}", id);
         List<String> messages = new ArrayList<>();
 
         Transaction searchedTransaction = transactionRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Transaction with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Transaction not found for processing: {}", id);
+                return new NotFoundEntityException("Transaction with ID " + id + " was not found");
+            });
         
-        if(searchedTransaction.getStatus() == null || searchedTransaction.getStatus() != TransactionStatus.PENDING) throw new ForbiddenRequestException("Unable to process transaction because Transaction Status is not PENDING(CART)");
+        if(searchedTransaction.getStatus() == null || searchedTransaction.getStatus() != TransactionStatus.PENDING) {
+            log.debug("Transaction cannot be processed because status is {}", searchedTransaction.getStatus());
+            throw new ForbiddenRequestException("Unable to process transaction because Transaction Status is not PENDING(CART)");
+        }
         List<TransactionItem> transactionItems = searchedTransaction.getTransactionItems(); 
+        log.debug("Transaction contains {} items", transactionItems.size());
 
         List<Long> listProductIdFromTrxItems = transactionItems.stream().map(item -> item.getProduct().getId()).distinct().toList();
         List<Product> listProductFromTrxItemsUpdated = productRepository.findAllById(listProductIdFromTrxItems);
@@ -191,13 +209,16 @@ public class TransactionServiceImpl implements TransactionService{
         searchedTransaction.setTotalItems(Long.valueOf(transactionItems.size()));
         searchedTransaction.setSubTotal(transactionItems.stream().mapToLong(item -> item.getPrice() * item.getQuantity()).sum());
         searchedTransaction.setGrandTotal(searchedTransaction.getSubTotal() - searchedTransaction.getTotalDiscount() + searchedTransaction.getTotalFee());
+        searchedTransaction.setTotalUnpaid(searchedTransaction.getGrandTotal());
         searchedTransaction.setStatus(TransactionStatus.PROCESS);
 
         Customer customer = searchedTransaction.getCustomer();
         customer.setTotalUnpaid(customer.getTotalUnpaid() + searchedTransaction.getGrandTotal());
          
         messageProducerService.sendTransactionInvoiceEmail(new TransactionInvoiceMail(id, customer.getEmail(), ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())));
-        return allTransactionMapper.createTransactionResponseDto(searchedTransaction, messages);
+        TransactionResponse response = allTransactionMapper.createTransactionResponseDto(searchedTransaction, messages);
+        log.debug("Transaction processed to PROCESS status: {}, messages: {}", id, messages);
+        return response;
     }
 
     @Override
@@ -207,15 +228,26 @@ public class TransactionServiceImpl implements TransactionService{
         actionMessage = "Transaction order completed"
     )
     public TransactionResponse setTransactionToComplete(UUID id) {
+        log.info("Completing transaction with ID: {}", id);
         Transaction searchedTransaction = transactionRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Transaction with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Transaction not found for completion: {}", id);
+                return new NotFoundEntityException("Transaction with ID " + id + " was not found");
+            });
             
-        if(searchedTransaction.getStatus() == TransactionStatus.COMPLETE) throw new BoilerplateRequestException("Transaction with ID " + id + " already process");
-        if(searchedTransaction.getStatus() != TransactionStatus.PROCESS) throw new ForbiddenRequestException("Transaction with ID " + id + " is " + searchedTransaction.getStatus() + " and can't be set to COMPLETE");
+        if(searchedTransaction.getStatus() == TransactionStatus.COMPLETE) {
+            log.debug("Transaction already complete: {}", id);
+            throw new BoilerplateRequestException("Transaction with ID " + id + " already process");
+        }
+        if(searchedTransaction.getStatus() != TransactionStatus.PROCESS) {
+            log.debug("Transaction cannot be completed because status is {}", searchedTransaction.getStatus());
+            throw new ForbiddenRequestException("Transaction with ID " + id + " is " + searchedTransaction.getStatus() + " and can't be set to COMPLETE");
+        }
 
         searchedTransaction.setStatus(TransactionStatus.COMPLETE);
-
-        return allTransactionMapper.createTransactionResponseDto(searchedTransaction);
+        TransactionResponse response = allTransactionMapper.createTransactionResponseDto(searchedTransaction);
+        log.debug("Transaction completed successfully: {}", response);
+        return response;
     }
 
     @Override
@@ -225,10 +257,17 @@ public class TransactionServiceImpl implements TransactionService{
         actionMessage = "Transaction order cancelled"
     )
     public TransactionResponse cancelTransaction(UUID id) {
+        log.info("Cancelling transaction with ID: {}", id);
         Transaction searchedTransaction = transactionRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Transaction with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Transaction not found for cancellation: {}", id);
+                return new NotFoundEntityException("Transaction with ID " + id + " was not found");
+            });
 
-        if (searchedTransaction.getStatus() != TransactionStatus.PROCESS && searchedTransaction.getStatus() != TransactionStatus.COMPLETE ) throw new ForbiddenRequestException("Unable to cancel transaction because Transaction Status is not PROCESS OR COMPLETE");
+        if (searchedTransaction.getStatus() != TransactionStatus.PROCESS && searchedTransaction.getStatus() != TransactionStatus.COMPLETE ) {
+            log.debug("Transaction cannot be cancelled because status is {}", searchedTransaction.getStatus());
+            throw new ForbiddenRequestException("Unable to cancel transaction because Transaction Status is not PROCESS OR COMPLETE");
+        }
 
         List<TransactionItem> transactionItems = searchedTransaction.getTransactionItems();
         List<Long> listProductIdFromTrxItems = transactionItems.stream().map(item -> item.getProduct().getId()).distinct().toList();
@@ -327,15 +366,22 @@ public class TransactionServiceImpl implements TransactionService{
         customer.setTotalUnrefunded(customer.getTotalUnrefunded() + totalPaid);
 
         TransactionResponse transactionResponseDto = allTransactionMapper.createTransactionResponseDto(searchedTransaction);
+        log.debug("Transaction cancellation response created: {}", transactionResponseDto);
         return transactionResponseDto;
     }
 
     @Override
     public TransactionResponse getTransaction(UUID id) {
+        log.debug("Getting transaction by ID: {}", id);
         Transaction searchedTransaction = transactionRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Transaction with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Transaction not found with ID: {}", id);
+                return new NotFoundEntityException("Transaction with ID " + id + " was not found");
+            });
 
-        return allTransactionMapper.createTransactionResponseDto(searchedTransaction);
+        TransactionResponse response = allTransactionMapper.createTransactionResponseDto(searchedTransaction);
+        log.debug("Transaction response created: {}", response);
+        return response;
     }
 
     @Override

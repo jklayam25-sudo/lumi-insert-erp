@@ -54,7 +54,11 @@ public class EmployeeController {
     )
     @PreAuthorize("hasAnyRole('OWNER')")
     ResponseEntity<WebResponse<EmployeeResponse>> createEmployeeAPI(@Valid @RequestBody EmployeeCreateRequest request){
+        log.debug("Employee creation request: {}", request);
+        log.info("Register request for new employee: {}", request.getUsername());
+        
         EmployeeResponse resultFromService = employeeService.createEmployee(request);
+        log.debug("Employee created: {}", resultFromService);
 
         WebResponse<EmployeeResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -63,6 +67,8 @@ public class EmployeeController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Employee created successfully with ID: {}, username: {}", resultFromService.
+        id(), resultFromService.username());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -74,10 +80,12 @@ public class EmployeeController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<EmployeeResponse>> getEmployeeAPI(@Parameter(description = "Employee ID") @PathVariable(name = "id") UUID id){
+        log.debug("Employee search by id request: {}", id);
         EmployeeResponse resultFromService = employeeService.getEmployee(id);
 
         WebResponse<EmployeeResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Employee search by id result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -88,11 +96,13 @@ public class EmployeeController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<EmployeeResponse>>> getEmployeesAPI(@Valid @ModelAttribute PaginationRequest request){
+        log.debug("Employees list request: {}", request);
         
         Slice<EmployeeResponse> resultFromService = employeeService.getEmployees(request);
 
         WebResponse<Slice<EmployeeResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
+        log.debug("Employees list result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -121,10 +131,13 @@ public class EmployeeController {
     )
     @PreAuthorize("hasAnyRole('OWNER')")
     ResponseEntity<WebResponse<EmployeeResponse>> resetEmployeePasswordAPI(@Parameter(description = "Employee ID") @PathVariable(name = "id") UUID id, @RequestBody @Valid @RequestParam(name = "password") @Pattern(regexp = "^(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,50}$", message = "password has to be 5-50 length and has atleast 1 unique char") String password){
+        log.info("Password reset requested for employee: {}", id);
+        
         EmployeeResponse resultFromService = employeeService.resetEmployeePassword(id, password);
 
         WebResponse<EmployeeResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Password reset completed for employee: {}", id);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -139,10 +152,15 @@ public class EmployeeController {
     )
     @PreAuthorize("hasAnyRole('OWNER')")
     ResponseEntity<WebResponse<EmployeeResponse>> updateEmployeeAPI(@Parameter(description = "Employee ID") @PathVariable(name = "id") UUID id, @Valid @RequestBody EmployeeUpdateRequest request){ 
+        log.info("Update request for employee with ID: {}", id);
+        log.debug("Employee ID: {}. Update request: {}", id, request);
+        
         EmployeeResponse resultFromService = employeeService.updateEmployee(id, request);
+        log.debug("Employee ID: {} updated. New value: {}", id, resultFromService);
 
         WebResponse<EmployeeResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Successfully updated employee with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);
     }
 

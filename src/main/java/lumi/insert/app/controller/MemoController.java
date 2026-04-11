@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.controller.wrapper.WebResponse;
+import lumi.insert.app.core.entity.MemoView;
 import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.dto.request.MemoCreateRequest;
 import lumi.insert.app.dto.request.MemoUpdateRequest;
@@ -31,6 +33,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
+@Slf4j
 @Tag(name = "Memos", description = "Endpoints for managing memos and announcements")
 public class MemoController {
     
@@ -46,7 +49,11 @@ public class MemoController {
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     ResponseEntity<WebResponse<MemoResponse>> createMemoAPI(@Valid @RequestBody MemoCreateRequest request){
+        log.debug("Memo creation request: {}", request);
+        log.info("Register request for new memo");
+        
         MemoResponse resultFromService = memoService.createMemo(request);
+        log.debug("Memo created: {}", resultFromService);
 
         WebResponse<MemoResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -55,6 +62,7 @@ public class MemoController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Memo created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -66,9 +74,11 @@ public class MemoController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Boolean>> createMemoViewAPI(@AuthenticationPrincipal EmployeeLogin login, @Parameter(description = "Memo ID") @PathVariable(name = "id") Long id){
-        Boolean resultFromService = memoService.createMemoView(login, id);
-
-        WebResponse<Boolean> wrappedResult = WebResponse.getWrapper(resultFromService, null);
+        log.debug("Memo read mark request for memo ID: {} by employee: {}", id, login.getUsername());
+        MemoView resultFromService = memoService.createMemoView(login, id);
+        log.debug("Memo view created: {}", resultFromService);
+        Boolean isFailed =  resultFromService.getId().isEmpty();
+        WebResponse<Boolean> wrappedResult = WebResponse.getWrapper(!isFailed, null);
  
         return ResponseEntity.ok(wrappedResult);
     }
@@ -84,10 +94,15 @@ public class MemoController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<MemoResponse>> updateMemoAPI(@Parameter(description = "Memo ID") @PathVariable(name = "id", required = true) Long id, @Valid @RequestBody MemoUpdateRequest request){
+        log.info("Update request for memo with ID: {}", id);
+        log.debug("Memo ID: {}. Update request: {}", id, request);
+        
         MemoResponse resultFromService = memoService.updateMemo(id, request);
+        log.debug("Memo updated: {}", resultFromService);
 
         WebResponse<MemoResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Successfully updated memo with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -101,10 +116,13 @@ public class MemoController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<MemoResponse>> archiveMemoAPI(@Parameter(description = "Memo ID") @PathVariable(name = "id") Long id){
+        log.info("Archive request for memo with ID: {}", id);
         MemoResponse resultFromService = memoService.archiveMemo(id);
+        log.debug("Memo archived: {}", resultFromService);
 
         WebResponse<MemoResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
- 
+        
+        log.info("Successfully archived memo with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);
     }
 
@@ -116,7 +134,9 @@ public class MemoController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<MemoResponse>> getMemoAPI(@Parameter(description = "Memo ID") @PathVariable(name = "id") Long id){
+        log.debug("Memo search by id request: {}", id);
         MemoResponse resultFromService = memoService.getMemo(id);
+        log.debug("Memo found: {}", resultFromService);
 
         WebResponse<MemoResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
@@ -130,8 +150,10 @@ public class MemoController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<MemoResponse>>> getMemosAPI(@AuthenticationPrincipal EmployeeLogin login, @Parameter(description = "Filter memos updated after this date (ISO format, defaults to 1 month ago)") @RequestParam(name = "updatedAt", required = false) LocalDateTime time){
+        log.debug("Memos list request for employee: {}, updated after: {}", login.getUsername(), time);
         if(time == null) time = LocalDateTime.now().minusMonths(1);
         Slice<MemoResponse> resultFromService = memoService.getMemos(login, time);
+        log.debug("Memos found: {}", resultFromService);
 
         WebResponse<Slice<MemoResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
