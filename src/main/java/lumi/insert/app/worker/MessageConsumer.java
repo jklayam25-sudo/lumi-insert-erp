@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +19,7 @@ import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.activitycore.entity.ActivityLog;
+import lumi.insert.app.activitycore.entity.nondatabase.ActivityLogMessage;
 import lumi.insert.app.activitycore.repository.ActivityLogRepository;
 import lumi.insert.app.core.entity.SupplyPayment;
 import lumi.insert.app.core.entity.SupplyPaymentPicture;
@@ -63,20 +65,31 @@ public class MessageConsumer {
     private SupplyPaymentPictureRepository supplyPaymentPictureRepository;
 
     @RabbitListener(queues = "activity-logs")
-    void activityLogsHandler(ActivityLog activityLog){ 
-        activityLogRepository.save(activityLog);
+    void activityLogsHandler(ActivityLogMessage activityLog){ 
+        try {
+            if (activityLog.getRequestId() != null) MDC.put("requestId", activityLog.getRequestId());
+            log.info("Processing activity log: {}", activityLog.getId());
+            ActivityLog result = activityLogRepository.save(activityLog);
+            log.debug("Activity log saved: {}", result);
+        } finally {
+            MDC.clear();
+        }
     }
 
     @RabbitListener(queues = "transaction-invoice-mail")
     void transactionInvoiceMailHandler(TransactionInvoiceMail request) throws MessagingException{ 
         try {
+            if (request.requestId() != null) MDC.put("requestId", request.requestId());
+            log.info("Processing transaction invoice mail request for transaction: {}", request.transactionId());
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(request.auth(), null, null));
-            mailSenderService.sendTransactionInvoice(request);    
+            mailSenderService.sendTransactionInvoice(request);
+            log.debug("Transaction invoice mail sent successfully for transaction: {}", request.transactionId());
         } catch (Exception e) {
-            log.error("Failed to send, with message: " + e.getMessage());
+            log.error("Failed to send transaction invoice mail, with message: " + e.getMessage());
             throw e;
+        } finally{
+            MDC.clear();
         }
-                
     }
 
     @RabbitListener(queues = "upload-storage")
@@ -85,20 +98,23 @@ public class MessageConsumer {
         EntityList entity = request.entity();
         File file = new File(request.path());
         String publicId = null;
-
+        
         try {
-            log.info("Entity id, {}", request.id());
-            log.info("Received message, trying to upload...");
+            if (request.requestId() != null) MDC.put("requestId", request.requestId());
+
+            log.debug("Received message, trying to upload file: {}", request.path());
+            log.info("Processing upload storage request for entity: {}, id: {}", entity, request.id());
+            
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(request.auth(), null, null));
             if(entity == EntityList.TRANSACTION_PAYMENT){
 
                 TransactionPayment transactionPayment = trxPaymentRepository.findById(request.id())
-                    .orElseThrow(() -> new NotFoundEntityException("Ters"));
-                log.info("Get payment to update, {}", transactionPayment.getId());
+                    .orElseThrow(() -> new NotFoundEntityException("Transaction payment not found"));
+                log.debug("Found transaction payment to update: {}", transactionPayment.getId());
 
                 CloudinaryResponse uploadImage = storageService.uploadImage(Path.of(request.path()), "transactionPayment"); 
                 publicId = uploadImage.getPublicId();
-                log.info("Upload succesfully, {}", uploadImage.getSecureUrl());
+                log.info("Image uploaded successfully for transaction payment: {}", uploadImage.getSecureUrl());
 
                 TransactionPaymentPicture transactionPaymentPicture = TransactionPaymentPicture.builder()
                     .id(UuidCreator.getTimeOrderedEpochFast())
@@ -107,20 +123,24 @@ public class MessageConsumer {
                     .transactionPayment(transactionPayment)
                     .build();
 
-                trxPaymentPicRepository.save(transactionPaymentPicture);
+                TransactionPaymentPicture savedPicture = trxPaymentPicRepository.save(transactionPaymentPicture);
+                log.debug("Transaction payment picture saved: {}", savedPicture);
 
                 List<String> pictureUrl = transactionPayment.getPictureUrl();
                 if(pictureUrl == null) pictureUrl = new ArrayList<>();
 
                 pictureUrl.add(uploadImage.getSecureUrl());
                 transactionPayment.setPictureUrl(pictureUrl);
+                log.debug("Transaction payment updated with new picture URL");
             } else if (entity == EntityList.SUPPLY_PAYMENT){
 
                 SupplyPayment supplyPayment = supplyPaymentRepository.findById(request.id())
-                    .orElseThrow(() -> new NotFoundEntityException("Ters"));
+                    .orElseThrow(() -> new NotFoundEntityException("Supply payment not found"));
+                log.debug("Found supply payment to update: {}", supplyPayment.getId());
 
                 CloudinaryResponse uploadImage = storageService.uploadImage(Path.of(request.path()), "supplyPayment"); 
                 publicId = uploadImage.getPublicId();
+                log.info("Image uploaded successfully for supply payment: {}", uploadImage.getSecureUrl());
 
                 SupplyPaymentPicture supplyPaymentPicture = SupplyPaymentPicture.builder()
                     .id(UuidCreator.getTimeOrderedEpochFast())
@@ -129,30 +149,32 @@ public class MessageConsumer {
                     .supplyPayment(supplyPayment)
                     .build();
                 
-                supplyPaymentPictureRepository.save(supplyPaymentPicture);
+                SupplyPaymentPicture savedPicture = supplyPaymentPictureRepository.save(supplyPaymentPicture);
+                log.debug("Supply payment picture saved: {}", savedPicture);
 
                 List<String> pictureUrl = supplyPayment.getPictureUrl();
                 if(pictureUrl == null) pictureUrl = new ArrayList<>();
                 
                 pictureUrl.add(uploadImage.getSecureUrl());
                 supplyPayment.setPictureUrl(pictureUrl);
+                log.debug("Supply payment updated with new picture URL");
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
-            log.error("Upload failed, messages: " + e.getMessage());
+            log.error("Upload failed for entity {} with id {}, messages: {}", entity, request.id(), e.getMessage());
             throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
         } catch (Exception e) { 
-            e.printStackTrace();
-            log.error("Save to database failed, attempting to delete image at storage. Messages: {}", e.getMessage()); 
+            log.error("Save to database failed for entity {} with id {}, attempting to delete image at storage. Messages: {}", entity, request.id(), e.getMessage()); 
 
             if(publicId != null) {
                 if(!(storageService.deleteImage(publicId))) log.error("Failed to delete image with publicId: {}", publicId);
             }
 
             throw new DatabaseInternalException("Server couldn't complete the request due to internal problem, try again or contact developer");
-        }  finally{
+        } finally{
             file.deleteOnExit();
+            log.debug("Upload storage handler completed for entity: {}, id: {}", entity, request.id());
+            MDC.clear();
         }
             
     } 
