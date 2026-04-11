@@ -73,8 +73,12 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         actionMessage = "Transaction payment received from customer"
     )
     public TransactionPaymentResponse createTransactionPayment(UUID transactionId, TransactionPaymentCreateRequest request) {
+        log.info("Creating transaction payment for transactionId={}, amount={}", transactionId, request.getTotalPayment());
         Transaction transaction = transactionRepository.findById(transactionId)
-            .orElseThrow(() -> new NotFoundEntityException("Transaction with ID " + transactionId + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Transaction payment creation failed, transaction not found id={}", transactionId);
+                return new NotFoundEntityException("Transaction with ID " + transactionId + " was not found");
+            });
 
         TransactionPayment transactionPayment = TransactionPayment.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -87,7 +91,10 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         transaction.setTotalUnpaid(transaction.getTotalUnpaid() - request.getTotalPayment());
         transaction.setTotalPaid(transaction.getTotalPaid() + request.getTotalPayment());
 
-        if(transaction.getTotalUnpaid() < 0) throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + transactionId + ", enter an exact amount to proceed");
+        if(transaction.getTotalUnpaid() < 0) {
+            log.debug("Payment exceeds unpaid amount for transactionId={}, totalPayment={}", transactionId, request.getTotalPayment());
+            throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + transactionId + ", enter an exact amount to proceed");
+        }
 
         Customer customer = transaction.getCustomer();
         customer.setTotalUnpaid(customer.getTotalUnpaid() - request.getTotalPayment());
@@ -107,7 +114,7 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
                 
             }    
         } catch (IOException e) {
-            log.error("Store file failed, messages: {}", e.getMessage());
+            log.error("Store file failed for transactionId={}, messages={}", transactionId, e.getMessage());
             throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
         }
  
@@ -122,11 +129,13 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
             );
         });                    
   
+        log.info("Transaction payment created paymentId={}, transactionId={}", savedTransactionPayment.getId(), transactionId);
         return transactionPaymentResponseDto;
     }
 
     @Override
     public Slice<TransactionPaymentResponse> getTransactionPaymentsByTransactionId(UUID transactionId, PaginationRequest request) {
+        log.info("Retrieving transaction payments for transactionId={}, page={}, size={}", transactionId, request.getPage(), request.getSize());
         Sort sort = Sort.by("createdAt").ascending();
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize()).withSort(sort);
 
@@ -138,8 +147,12 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
 
     @Override
     public TransactionPaymentResponse getTransactionPayment(UUID id) {
+        log.info("Retrieving transaction payment id={}", id);
         TransactionPayment transactionPayment = transactionPaymentRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Transaction Payment with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Transaction payment not found id={}", id);
+                return new NotFoundEntityException("Transaction Payment with ID " + id + " was not found");
+            });
         
         TransactionPaymentResponse transactionPaymentResponseDto = allTransactionMapper.createTransactionPaymentResponseDto(transactionPayment);
         return transactionPaymentResponseDto;
@@ -147,6 +160,7 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
 
     @Override
     public Slice<TransactionPaymentResponse> getTransactionPaymentsByRequests(TransactionPaymentGetByFilter request) {
+        log.info("Searching transaction payments with filters page={}, size={}", request.getPage(), request.getSize());
         Pageable pageable = jpaSpecGenerator.pageable(request);
 
         Specification<TransactionPayment> specification = jpaSpecGenerator.transactionPaymentSpecification(request);
@@ -164,14 +178,24 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         actionMessage = "Transaction refund settled to customer"
     )
     public TransactionPaymentResponse refundTransactionPayment(UUID transactionId, TransactionPaymentCreateRequest request) {
+        log.info("Creating refund transaction payment for transactionId={}, amount={}", transactionId, request.getTotalPayment());
         Transaction transaction = transactionRepository.findById(transactionId)
-            .orElseThrow(() -> new NotFoundEntityException("Transaction with ID " + transactionId + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Refund failed, transaction not found id={}", transactionId);
+                return new NotFoundEntityException("Transaction with ID " + transactionId + " was not found");
+            });
  
-        if (transaction.getStatus() == TransactionStatus.PENDING || transaction.getStatus() == TransactionStatus.COMPLETE ) throw new ForbiddenRequestException("Refund payment only to Transaction with status PROCESS(onGoing) or CANCELLED, check carefully");
+        if (transaction.getStatus() == TransactionStatus.PENDING || transaction.getStatus() == TransactionStatus.COMPLETE ) {
+            log.debug("Refund payment attempted on invalid transaction status transactionId={}, status={}", transactionId, transaction.getStatus());
+            throw new ForbiddenRequestException("Refund payment only to Transaction with status PROCESS(onGoing) or CANCELLED, check carefully");
+        }
 
         Long totalUnrefunded = transaction.getTotalUnrefunded();
 
-        if(request.getTotalPayment() > totalUnrefunded) throw new TransactionValidationException("Payment refund exceeds the remaining transaction unrefunded debt with ID " + transaction.getId() + ", enter an exact amount to proceed");
+        if(request.getTotalPayment() > totalUnrefunded) {
+            log.debug("Refund payment exceeds unrefunded amount transactionId={}, requestAmount={}, remaining={}", transactionId, request.getTotalPayment(), totalUnrefunded);
+            throw new TransactionValidationException("Payment refund exceeds the remaining transaction unrefunded debt with ID " + transaction.getId() + ", enter an exact amount to proceed");
+        }
 
         TransactionPayment refundTransactionPayment = TransactionPayment.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -194,7 +218,7 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         TransactionPayment savedTransactionPayment = transactionPaymentRepository.save(refundTransactionPayment);
         
         TransactionPaymentResponse transactionPaymentResponseDto = allTransactionMapper.createTransactionPaymentResponseDto(savedTransactionPayment);
-        log.info("{}", transactionPaymentResponseDto);
+        log.info("Refund payment created paymentId={}, transactionId={}", savedTransactionPayment.getId(), transactionId);
         
         MultipartFile[] files = request.getFiles();
         List<Path> paths = new ArrayList<>();
@@ -206,7 +230,7 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
                 
             }    
         } catch (IOException e) {
-            log.error("Store file failed, messages: {}", e.getMessage());
+            log.error("Store file failed for transactionId={}, messages={}", transactionId, e.getMessage());
             throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
         }
  

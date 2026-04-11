@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.aspect.annotation.ActivityLogger;
 import lumi.insert.app.core.entity.AuthToken;
 import lumi.insert.app.core.entity.Employee;
@@ -29,6 +30,7 @@ import lumi.insert.app.utils.security.JwtUtils;
 
 @Service
 @Transactional
+@Slf4j
 public class AuthTokenServiceImpl implements AuthTokenService{
 
     @Autowired
@@ -53,12 +55,22 @@ public class AuthTokenServiceImpl implements AuthTokenService{
         actionMessage = "Employee login success"
     )
     public AuthTokenResponse createAuthToken(AuthTokenCreateRequest request) {
+        log.info("Authenticating employee username={}", request.getUsername());
         Employee employee = employeeRepository.findByUsername(request.getUsername())
-            .orElseThrow(() -> new AuthenticationTokenException("Employee with username " + request.getUsername() + " is not found"));
+            .orElseThrow(() -> {
+                log.debug("Login failed, username not found={}", request.getUsername());
+                return new AuthenticationTokenException("Employee with username " + request.getUsername() + " is not found");
+            });
         
-        if(!employee.isActive()) throw new AccountExpiredException("Employee with username " + request.getUsername() + " is not active");    
+        if(!employee.isActive()) {
+            log.debug("Login failed, employee is not active, username={}", request.getUsername());
+            throw new AccountExpiredException("Employee with username " + request.getUsername() + " is not active");
+        }
 
-        if(!(passwordEncoder.matches(request.getPassword(), employee.getPassword()))) throw new BadCredentialsException("Bad credentials, wrong password!");
+        if(!(passwordEncoder.matches(request.getPassword(), employee.getPassword()))) {
+            log.debug("Login failed, password mismatch for username={}", request.getUsername());
+            throw new BadCredentialsException("Bad credentials, wrong password!");
+        }
 
         String accessToken = jwtUtils.getAccessToken(employee);
 
@@ -72,14 +84,20 @@ public class AuthTokenServiceImpl implements AuthTokenService{
             .build();
 
         AuthToken savedToken = authTokenRepository.save(authToken);
+        log.info("Login succeeded for employeeId={}, username={}", employee.getId(), request.getUsername());
         return authMapper.createDtoResponseFromEntity(accessToken, savedToken);
     }
 
     public AuthTokenResponse refreshAuthToken(String refreshToken) {
+        log.info("Refreshing auth token for refreshToken={}", refreshToken);
         AuthToken authToken = authTokenRepository.findByRefreshToken(refreshToken)
-            .orElseThrow(() -> new AuthenticationTokenException("Credentials token is not valid"));
+            .orElseThrow(() -> {
+                log.debug("Refresh failed, token not found={}", refreshToken);
+                return new AuthenticationTokenException("Credentials token is not valid");
+            });
         
         if(authToken.getExpiredAt().isBefore(LocalDateTime.now())) {
+            log.debug("Refresh token expired for authTokenId={}, employeeId={}", authToken.getId(), authToken.getEmployee().getId());
             authTokenRepository.delete(authToken);
             throw new AuthenticationTokenException("Credentials token is expired");
         }
@@ -88,6 +106,7 @@ public class AuthTokenServiceImpl implements AuthTokenService{
 
         String accessToken = jwtUtils.getAccessToken(employee);
 
+        log.info("Refresh succeeded for employeeId={}, refreshToken={}", employee.getId(), refreshToken);
         return authMapper.createDtoResponseFromEntity(accessToken, authToken);
     }
 
@@ -98,6 +117,7 @@ public class AuthTokenServiceImpl implements AuthTokenService{
         actionMessage = "Employee logout"
     )
     public void deleteRefreshToken(String refreshToken) {
+        log.info("Deleting refresh token={}", refreshToken);
         authTokenRepository.deleteByRefreshToken(refreshToken);
     }
     

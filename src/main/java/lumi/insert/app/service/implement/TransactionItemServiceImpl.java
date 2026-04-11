@@ -75,13 +75,17 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         actionMessage = "New item carted to transaction cart"
     )
     public TransactionItemResponse createTransactionItem(UUID transactionId, TransactionItemCreateRequest request) {
+        log.info("Creating transaction item for transactionId={} productId={} quantity={}", transactionId, request.getProductId(), request.getQuantity());
         Transaction transaction = transactionRepository.findById(transactionId)
             .orElseThrow(() -> new NotFoundEntityException("Transaction with ID " + transactionId + " was not found"));
         
         Product product = productRepository.findById(request.getProductId())
             .orElseThrow(() -> new NotFoundEntityException("Product with ID " + request.getProductId() + " was not found"));
 
-        if(product.getStockQuantity() < request.getQuantity()) throw new TransactionValidationException("Product stocks with ID " + request.getProductId() + " doesn't meet buyer quantity, stock left: " + product.getStockQuantity());
+        if(product.getStockQuantity() < request.getQuantity()) {
+            log.debug("Transaction item creation failed due to insufficient stock productId={} requested={} available={}", request.getProductId(), request.getQuantity(), product.getStockQuantity());
+            throw new TransactionValidationException("Product stocks with ID " + request.getProductId() + " doesn't meet buyer quantity, stock left: " + product.getStockQuantity());
+        }
  
         TransactionItem transactionItem = TransactionItem.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -115,7 +119,11 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         
         Transaction transaction = transactionItem.getTransaction();
  
-        if (transaction.getStatus() != TransactionStatus.PENDING) throw new ForbiddenRequestException("Unable to delete the item because Transaction Status is not PENDING(CART)");
+        log.info("Deleting transaction item id={}", id);
+        if (transaction.getStatus() != TransactionStatus.PENDING) {
+            log.debug("Delete failed, transaction not pending id={} status={}", transaction.getId(), transaction.getStatus());
+            throw new ForbiddenRequestException("Unable to delete the item because Transaction Status is not PENDING(CART)");
+        }
 
         transaction.setTotalItems(transaction.getTotalItems() - 1);
         transaction.setSubTotal(transaction.getSubTotal() - (transactionItem.getQuantity() * transactionItem.getPrice()));
@@ -133,6 +141,7 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         actionMessage = "Item quantity updated"
     )
     public TransactionItemResponse updateTransactionItemQuantity(UUID id, Long quantity) {
+        log.info("Updating transaction item quantity id={} newQuantity={}", id, quantity);
          TransactionItem transactionItem = transactionItemRepository.findById(id)
             .orElseThrow(() -> new NotFoundEntityException("Transaction Items with ID " + id + " was not found"));
         
@@ -142,7 +151,10 @@ public class TransactionItemServiceImpl implements TransactionItemService{
 
         Product product = transactionItem.getProduct();
 
-        if(product.getStockQuantity() < quantity) throw new TransactionValidationException("Product stocks with ID " + product.getId() + " doesn't meet buyer quantity, stock left: " + product.getStockQuantity());
+        if(product.getStockQuantity() < quantity) {
+            log.debug("Update failed, insufficient stock productId={} requested={} available={}", product.getId(), quantity, product.getStockQuantity());
+            throw new TransactionValidationException("Product stocks with ID " + product.getId() + " doesn't meet buyer quantity, stock left: " + product.getStockQuantity());
+        }
 
         Long transactionItemOldSubTotal = transactionItem.getQuantity() * transactionItem.getPrice();
 
@@ -153,11 +165,13 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         transaction.setGrandTotal(transaction.getSubTotal() - transaction.getTotalDiscount() + transaction.getTotalFee());
 
         TransactionItemResponse transactionItemResponseDto = allTransactionMapper.createTransactionItemResponseDto(transactionItem);
+        log.info("Transaction item quantity updated id={} newQuantity={}", id, quantity);
         return transactionItemResponseDto;
     }
 
     @Override
     public Slice<TransactionItemResponse> getTransactionItemsByTransactionId(UUID transactionId, PaginationRequest request) {
+        log.info("Retrieving items for transactionId={} page={} size={}", transactionId, request.getPage(), request.getSize());
         Sort sort = Sort.by("createdAt").ascending();
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize()).withSort(sort);
 
@@ -168,6 +182,7 @@ public class TransactionItemServiceImpl implements TransactionItemService{
 
     @Override
     public Slice<TransactionItemResponse> getTransactionByTransactionIdAndProductId(UUID transactionId, Long ProductId) {
+        log.info("Retrieving transaction items for transactionId={} productId={}", transactionId, ProductId);
         List<TransactionItem> searchedTransactionItem = transactionItemRepository.findByTransactionIdAndProductId(transactionId, ProductId);
         
         Slice<TransactionItem> slices = new SliceImpl<>(searchedTransactionItem);
@@ -181,14 +196,21 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         actionMessage = "Item quantity updated from transaction order"
     )
     public TransactionItemResponse refundTransactionItem(UUID id, ItemRefundRequest request) { 
+        log.info("Refunding transaction item for transactionId={} productId={} quantity={}", id, request.getProductId(), request.getQuantity());
 
         List<TransactionItem> itemsWithMatchProduct = transactionItemRepository.findByTransactionIdAndProductId(id, request.getProductId());
 
-        if(itemsWithMatchProduct.size() == 0) throw new NotFoundEntityException("Unable to find any transaction item with product id " + request.getProductId()); 
+        if(itemsWithMatchProduct.size() == 0) {
+            log.debug("Refund failed, no matching transaction item for transactionId={} productId={}", id, request.getProductId());
+            throw new NotFoundEntityException("Unable to find any transaction item with product id " + request.getProductId()); 
+        }
 
         long ttlRefundLeft = itemsWithMatchProduct.stream().mapToLong(item -> item.getQuantity()).sum();
 
-        if(ttlRefundLeft < request.getQuantity()) throw new ForbiddenRequestException("Refund quantity is more than actual bought, use valid quantity");
+        if(ttlRefundLeft < request.getQuantity()) {
+            log.debug("Refund quantity exceeds purchased quantity transactionId={} productId={} requested={} available={}", id, request.getProductId(), request.getQuantity(), ttlRefundLeft);
+            throw new ForbiddenRequestException("Refund quantity is more than actual bought, use valid quantity");
+        }
 
         TransactionItem baseTransactionItem = itemsWithMatchProduct.getFirst();
         Transaction transaction = baseTransactionItem.getTransaction();
@@ -247,11 +269,13 @@ public class TransactionItemServiceImpl implements TransactionItemService{
   
         TransactionItem savedRefundTransactionItem = transactionItemRepository.save(refundTransactionItem);
         TransactionItemResponse transactionItemResponseDto = allTransactionMapper.createTransactionItemResponseDto(savedRefundTransactionItem);
+        log.info("Refund transaction item created itemId={} transactionId={}", savedRefundTransactionItem.getId(), id);
         return transactionItemResponseDto;
     }
 
     @Override
     public TransactionItemResponse getTransactionItem(UUID id) {
+        log.info("Retrieving transaction item id={}", id);
         TransactionItem transactionItem = transactionItemRepository.findById(id)
             .orElseThrow(() -> new NotFoundEntityException("Transaction Items with ID " + id + " was not found"));
 
@@ -261,6 +285,7 @@ public class TransactionItemServiceImpl implements TransactionItemService{
 
     @Override
     public TransactionItemStatisticResponse getTransactionItemStats(LocalDateTime startDate, LocalDateTime endDate) { 
+        log.info("Gathering transaction item stats from {} to {}", startDate, endDate);
         List<ProductSale> productTopSales = transactionItemRepository.getProductTopSales(startDate, endDate);
         List<ProductRefund> productTopRefunds  = transactionItemRepository.getProductTopRefund(startDate, endDate);
 

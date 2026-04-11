@@ -58,17 +58,21 @@ public class StockCardServiceImpl implements StockCardService{
         actionMessage = "Product stock adjustment"
     )
     public StockCardResponse createStockCard(StockCardCreateRequest request) {
+        log.info("Creating stock card for productId={}, referenceId={}, type={}", request.getProductId(), request.getReferenceId(), request.getType());
         if((request.getType() == StockMove.CUSTOMER_IN.toString() || request.getType() == StockMove.SUPPLIER_IN.toString() ||
             request.getType() == StockMove.REPAIRED.toString()) && request.getQuantity() < 0L) {
+                log.debug("Invalid stock card quantity for IN type, quantity={}", request.getQuantity());
                 throw new TransactionValidationException("Stock 'IN' type should be positive quantity");
         }
 
         if((request.getType() == StockMove.CUSTOMER_OUT.toString() || request.getType() == StockMove.SUPPLIER_OUT.toString() ||
             request.getType() == StockMove.DEFECT.toString()) && request.getQuantity() > 0L) {
+                log.debug("Invalid stock card quantity for OUT type, quantity={}", request.getQuantity());
                 throw new TransactionValidationException("Stock 'OUT' type should be negative quantity");
         }
 
         if((request.getType() == StockMove.CUSTOMER_IN.toString() || request.getType() == StockMove.CUSTOMER_OUT.toString()) && !transactionItemRepository.existsById(request.getReferenceId())) {
+            log.debug("Stock card creation failed, transaction item not found referenceId={}", request.getReferenceId());
             throw new NotFoundEntityException("Transaction Items with ID " + request.getReferenceId() + " was not found");
         }
 
@@ -97,13 +101,18 @@ public class StockCardServiceImpl implements StockCardService{
         StockCard savedStockCard = stockCardRepository.save(stockCard);
         
         StockCardResponse stockCardResponse = stockCardMapper.createDtoResponseFromStockCard(savedStockCard); 
+        log.info("Stock card created stockCardId={} productId={}", savedStockCard.getId(), savedStockCard.getProduct().getId());
         return stockCardResponse;
     }
 
     @Override
     public StockCardResponse getStockCard(UUID id) {
+        log.info("Retrieving stock card id={}", id);
         StockCard stockCard = stockCardRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("StockCard with ID " + id + " was not found"));
+            .orElseThrow(() -> {
+                log.debug("Stock card not found id={}", id);
+                return new NotFoundEntityException("StockCard with ID " + id + " was not found");
+            });
 
         return stockCardMapper.createDtoResponseFromStockCard(stockCard);
     }

@@ -61,7 +61,11 @@ public class TransactionController {
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionResponse>> createTransaction(@Valid @RequestBody TransactionCreateRequest request){
+        log.debug("Transaction creation request: {}", request);
+        log.info("Create new transaction for customer with ID {}", request.getCustomerId());
+        
         TransactionResponse resultFromService = transactionService.createTransaction(request);
+        log.debug("Transaction created: {}", resultFromService);
  
         WebResponse<TransactionResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -70,6 +74,7 @@ public class TransactionController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Transaction created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
@@ -81,7 +86,9 @@ public class TransactionController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<TransactionResponse>> getTransaction(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id){
+        log.debug("Transaction search by id request: {}", id);
         TransactionResponse resultFromService = transactionService.getTransaction(id);
+        log.debug("Transaction found: {}", resultFromService);
         
         WebResponse<TransactionResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -95,7 +102,9 @@ public class TransactionController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<TransactionResponse>>> getTransactions(@ModelAttribute @Valid TransactionGetByFilter request){
+        log.debug("Transactions search request: {}", request);
         Slice<TransactionResponse> resultFromService = transactionService.searchTransactionsByRequests(request);
+        log.debug("Transactions found: {}", resultFromService);
         
         WebResponse<Slice<TransactionResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -109,28 +118,35 @@ public class TransactionController {
         produces = MediaType.APPLICATION_XML_VALUE
     )
     void exportTransactionsHistory(@ModelAttribute @Valid TransactionGetByFilter request, HttpServletResponse response) throws IOException{
+        log.debug("Transaction history export request with filter: {}", request);
+        log.info("Transaction history export request");
         request.setSize(99999000);
         Slice<TransactionResponse> resultFromService = transactionService.searchTransactionsByRequests(request);
+        log.debug("Transactions to export: {}. Converting data to Xlsx...", resultFromService);
 
         response.setContentType("application/xml");
         response.addHeader("Content-Disposition", "attachment; filename=transactionHistory" + ".xlsx");
         xlsxService.exportTransactions(resultFromService.getContent(), response.getOutputStream());
+        log.info("Transaction history export as xlxs completed successfully");
     }
 
     @Operation(summary = "Export transaction order to PDF", description = "Generates a PDF document of the transaction order with all items")
     @ApiResponse(responseCode = "200", description = "Successfully exported transaction order to PDF")
-    @ApiResponse(responseCode = "404", description = "Supply order not found")
+    @ApiResponse(responseCode = "404", description = "Transaction order not found")
     @GetMapping(
         path = "/api/transactions/{id}/pdf",
         produces = MediaType.APPLICATION_PDF_VALUE
     )
     ResponseEntity<InputStreamResource> exportTransaction(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id){
+        log.info("Transaction PDF export request for ID: {}", id);
         TransactionDetailResponse resultFromService = transactionService.getTransactionDetail(id);
+        log.debug("Transaction detail for export: {}. Converting data to Pdf...", resultFromService);
         ByteArrayInputStream pdf = pdfService.exportTransactionWithItems(resultFromService);
         
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename="+ resultFromService.invoiceId() + ".pdf");
 
+        log.info("Transaction PDF export completed for ID: {}", id);
         return ResponseEntity.ok()
             .headers(headers)
             .contentType(MediaType.APPLICATION_PDF)
@@ -146,10 +162,13 @@ public class TransactionController {
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionResponse>> processTransaction(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id){
+        log.info("Process transaction request for ID: {}", id);
         TransactionResponse resultFromService = transactionService.setTransactionToProcess(id);
+        log.debug("Transaction processed: {}", resultFromService);
  
         WebResponse<TransactionResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
+        log.info("Transaction processed successfully for ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -162,10 +181,13 @@ public class TransactionController {
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionResponse>> cancelTransaction(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id){
+        log.info("Cancel transaction request for ID: {}", id);
         TransactionResponse resultFromService = transactionService.cancelTransaction(id);
+        log.debug("Transaction cancelled: {}", resultFromService);
  
         WebResponse<TransactionResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
+        log.info("Transaction cancelled successfully for ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -178,10 +200,13 @@ public class TransactionController {
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
     ResponseEntity<WebResponse<TransactionResponse>> refreshTransaction(@Parameter(description = "Transaction ID") @PathVariable(name = "id") UUID id){
+        log.info("Refresh transaction request for ID: {}", id);
         TransactionResponse resultFromService = transactionService.refreshTransaction(id);
+        log.debug("Transaction refreshed: {}", resultFromService);
  
         WebResponse<TransactionResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
  
+        log.info("Transaction refreshed successfully for ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 }

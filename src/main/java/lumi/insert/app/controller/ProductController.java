@@ -70,10 +70,12 @@ public class ProductController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<ProductResponse>> getProduct(@Parameter(description = "Product ID") @PathVariable(value = "id") Long id){
+        log.debug("Product search by id request: {}", id);
         ProductResponse resultFromService = productService.getProductById(id);
 
         WebResponse<ProductResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Product search by id result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -84,10 +86,12 @@ public class ProductController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<SliceIndex<ProductName>>> searchProductNames(@Valid @ModelAttribute ProductGetNameRequest request){
+        log.debug("Product search by name request: {}", request);
         SliceIndex<ProductName> resultFromService = productService.searchProductNames(request);
 
         WebResponse<SliceIndex<ProductName>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Product search by name result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -98,10 +102,12 @@ public class ProductController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<ProductResponse>>> getProductByFilter(@ModelAttribute @Valid ProductGetByFilter request){
+        log.debug("Product search by filter request: {}", request);
         Slice<ProductResponse> resultFromService = productService.getProductsByRequests(request);
 
         WebResponse<Slice<ProductResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Product search by filter result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -112,10 +118,12 @@ public class ProductController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<ProductResponse>>> getProducts(@ModelAttribute PaginationRequest request){
+        log.debug("Products list request: {}", request);
         Slice<ProductResponse> resultFromService = productService.getProducts(request);
 
         WebResponse<Slice<ProductResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Products list result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -127,10 +135,12 @@ public class ProductController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<ProductStockResponse>> getProductStock(@Parameter(description = "Product ID") @PathVariable(value = "id", required = true) Long id ){
+        log.debug("Product stock request for ID: {}", id);
         ProductStockResponse resultFromService = productService.getProductStock(id);
 
         WebResponse<ProductStockResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.debug("Product stock result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -142,6 +152,8 @@ public class ProductController {
     )
     @PreAuthorize("hasAnyRole('OWNER')")
     ResponseEntity<InputStreamResource> getProductsStatistics(@Valid @ModelAttribute ProductStatisticExportRequest request){ 
+        log.info("Product statistics export request from: {} to: {}", request.getStartDate(), request.getEndDate());
+        
         if(request.getStartDate() == null) request.setStartDate(dateUtils.getFirstDateThisMonth());
         if(request.getEndDate() == null) request.setEndDate(dateUtils.getFirstDateNextMonth());
         TransactionItemStatisticResponse transactionItemStats = transactionItemService.getTransactionItemStats(request.getStartDate(), request.getEndDate());
@@ -152,6 +164,7 @@ public class ProductController {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename=product-statistic-"+ request.getStartDate() + request.getEndDate() + ".pdf");
 
+        log.info("Product statistics export completed successfully");
         return ResponseEntity.ok()
             .headers(headers)
             .contentType(MediaType.APPLICATION_PDF)
@@ -168,7 +181,11 @@ public class ProductController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<ProductResponse>> createProduct(@Valid @RequestBody ProductCreateRequest request){
+        log.debug("Product creation request: {}", request);
+        log.info("Register request for new product: {}", request.getName());
+        
         ProductResponse resultFromService = productService.createProduct(request);
+        log.debug("Product created: {}", resultFromService);
 
         WebResponse<ProductResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -177,6 +194,7 @@ public class ProductController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Product created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
@@ -189,10 +207,14 @@ public class ProductController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<ProductDeleteResponse>> activateProduct(@Parameter(description = "Product ID") @PathVariable(value = "id", required = true) Long id ){ 
+        log.info("Activate request for product with ID: {}", id);
+        log.debug("Product ID: {}. Activation request", id);
+        
         ProductDeleteResponse resultFromService = productService.activateProduct(id);
 
         WebResponse<ProductDeleteResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.info("Successfully activated product with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -205,10 +227,14 @@ public class ProductController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<ProductDeleteResponse>> deactivateProduct(@Parameter(description = "Product ID") @PathVariable(value = "id", required = true) Long id ){ 
+        log.info("Deactivate request for product with ID: {}", id);
+        log.debug("Product ID: {}. Deactivation request", id);
+        
         ProductDeleteResponse resultFromService = productService.deactivateProduct(id);
 
         WebResponse<ProductDeleteResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.info("Successfully deactivated product with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 
@@ -223,11 +249,16 @@ public class ProductController {
     )
     @PreAuthorize("hasAnyRole('WAREHOUSE')")
     ResponseEntity<WebResponse<ProductResponse>> editProduct(@Parameter(description = "Product ID") @PathVariable(value = "id", required = true) Long id, @Valid @RequestBody ProductUpdateRequest request){
+        log.info("Update request for product with ID: {}", id);
+        log.debug("Product ID: {}. Update request: {}", id, request);
+        
         request.setId(id);
         ProductResponse resultFromService = productService.updateProduct(request);
+        log.debug("Product ID: {} updated. New value: {}", id, resultFromService);
 
         WebResponse<ProductResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
+        log.info("Successfully updated product with ID: {}", id);
         return ResponseEntity.ok(wrappedResult);   
     }
 

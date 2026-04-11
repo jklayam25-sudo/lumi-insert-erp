@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.controller.wrapper.WebResponse;
 import lumi.insert.app.dto.request.PaginationRequest;
 import lumi.insert.app.dto.request.StockCardCreateRequest;
@@ -29,6 +30,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
+@Slf4j
 @Tag(name = "Stock Cards", description = "Endpoints for managing stock card records and inventory tracking")
 public class StockCardController {
 
@@ -44,7 +46,11 @@ public class StockCardController {
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     ResponseEntity<WebResponse<StockCardResponse>> createStockCardAPI(@Valid @RequestBody StockCardCreateRequest request){
+        log.debug("Stock card creation request: {}", request);
+        log.info("Register request for new stock card");
+        
         StockCardResponse resultFromService = stockCardService.createStockCard(request);
+        log.debug("Stock card created: {}", resultFromService);
 
         WebResponse<StockCardResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -53,6 +59,7 @@ public class StockCardController {
         .buildAndExpand(resultFromService.id())
         .toUri();
 
+        log.info("Stock card created successfully with ID: {}", resultFromService.getId());
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
@@ -64,7 +71,9 @@ public class StockCardController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<StockCardResponse>> getStockCardAPI(@Parameter(description = "Stock card ID") @PathVariable(name = "id") UUID id){
+        log.debug("Stock card search by id request: {}", id);
         StockCardResponse resultFromService = stockCardService.getStockCard(id);
+        log.debug("Stock card found: {}", resultFromService);
 
         WebResponse<StockCardResponse> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -78,7 +87,9 @@ public class StockCardController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<StockCardResponse>>> getStockCardsAPI(@Parameter(description = "Last stock card ID for cursor-based pagination (optional)") @RequestParam(name = "lastId", required = false) UUID lastId, @ModelAttribute PaginationRequest request){
+        log.debug("Stock cards list request with lastId: {}, pagination: {}", lastId, request);
         Slice<StockCardResponse> resultFromService = stockCardService.getStockCards(lastId, request);
+        log.debug("Stock cards found: {}", resultFromService);
 
         WebResponse<Slice<StockCardResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 
@@ -92,7 +103,9 @@ public class StockCardController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<WebResponse<Slice<StockCardResponse>>> searchStockCardsAPI(@ModelAttribute @Valid StockCardGetByFilter request){
+        log.debug("Stock cards search request with filter: {}", request);
         Slice<StockCardResponse> resultFromService = stockCardService.searchStockCards(request);
+        log.debug("Stock cards found: {}", resultFromService);
 
         WebResponse<Slice<StockCardResponse>> wrappedResult = WebResponse.getWrapper(resultFromService, null);
 

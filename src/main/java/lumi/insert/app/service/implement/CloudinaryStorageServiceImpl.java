@@ -29,6 +29,7 @@ public class CloudinaryStorageServiceImpl implements StorageService{
  
     @Override
     public CloudinaryResponse uploadImage(Path path, String folderName) throws IOException {
+        log.info("Uploading image from path={} to folder={}", path, folderName);
 
         try (InputStream inputStream = Files.newInputStream(path)) {
             String fileName = path.getFileName().toString();
@@ -43,10 +44,11 @@ public class CloudinaryStorageServiceImpl implements StorageService{
             ); 
 
             Map<?, ?> rawResponse = cloudinary.uploader().upload(inputStream.readAllBytes(), uploadOptions); 
-            return objectMapper.convertValue(rawResponse, CloudinaryResponse.class);
+            CloudinaryResponse response = objectMapper.convertValue(rawResponse, CloudinaryResponse.class);
+            log.info("Uploaded image publicId={} secureUrl={}", response.getPublicId(), response.getSecureUrl());
+            return response;
         } catch (IOException e) {
-            log.error("Upload failed, message: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Upload failed for path={} folder={} message={}", path, folderName, e.getMessage(), e);
             throw e;
         }
 
@@ -54,7 +56,7 @@ public class CloudinaryStorageServiceImpl implements StorageService{
  
     @Override
     public CloudinaryResponse uploadImageSync(byte[] files, String fileName, String folderName) throws IOException {
-        
+        log.info("Uploading image bytes with publicId={} to folder={}", fileName, folderName);
          try  { 
             Map<?, ?> uploadOptions = ObjectUtils.asMap(   
                 "overwrite", true,                  
@@ -64,10 +66,11 @@ public class CloudinaryStorageServiceImpl implements StorageService{
                 "folder", folderName
             ); 
             Map<?, ?> rawResponse = cloudinary.uploader().upload(files, uploadOptions); 
-            return objectMapper.convertValue(rawResponse, CloudinaryResponse.class);
+            CloudinaryResponse response = objectMapper.convertValue(rawResponse, CloudinaryResponse.class);
+            log.info("Uploaded image publicId={} secureUrl={}", response.getPublicId(), response.getSecureUrl());
+            return response;
         } catch (IOException e) {
-            log.error("Upload failed, message: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Upload failed for publicId={} folder={} message={}", fileName, folderName, e.getMessage(), e);
             throw e;
         }
 
@@ -75,11 +78,14 @@ public class CloudinaryStorageServiceImpl implements StorageService{
 
     @Override
     public Boolean deleteImage(String publicId) {
+        log.info("Deleting image with publicId={}", publicId);
         try {
             Map<?, ?> destroy = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-            return String.valueOf(destroy.get("result")).equals("ok"); 
+            boolean success = String.valueOf(destroy.get("result")).equals("ok");
+            log.info("Delete image publicId={} success={}", publicId, success);
+            return success; 
         } catch (IOException e) {
-            log.error("Fail to destroy image, messages: " + e.getMessage());
+            log.error("Failed to destroy image publicId={} message={}", publicId, e.getMessage(), e);
             return false;
         }
     }

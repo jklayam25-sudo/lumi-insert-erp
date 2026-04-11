@@ -63,6 +63,7 @@ public class MailSenderServiceImpl implements MailSenderService {
 
     @Override
     public void sendTransactionInvoice(TransactionInvoiceMail request) throws MessagingException { 
+        log.info("Preparing transaction invoice email to={} transactionId={}", request.email(), request.transactionId());
         Transaction data = transactionRepository.findByIdDetail(request.transactionId())
             .orElseThrow(() -> new NotFoundEntityException(""));
         
@@ -78,10 +79,12 @@ public class MailSenderServiceImpl implements MailSenderService {
         helper.addAttachment(dataDetail.customerName() + "-" + dataDetail.invoiceId() + ".pdf", new ByteArrayResource(pdfByte.readAllBytes()));
          
         sender.send(mimeMessage);
+        log.info("Transaction invoice email sent to={} transactionId={}", request.email(), request.transactionId());
     }
 
     @Override
     public void sendProductsStatistic(LocalDateTime startDate, LocalDateTime endDate) throws MessagingException { 
+        log.info("Preparing products statistic email for period {} to {}", startDate, endDate);
         TransactionItemStatisticResponse transactionItemStats = transactionItemService.getTransactionItemStats(startDate, endDate);
 
         List<ProductOutOfStock> outOfStockProducts = productService.getOutOfStockProducts();
@@ -97,6 +100,7 @@ public class MailSenderServiceImpl implements MailSenderService {
         helper.addAttachment( "Products statistics" + startDate + "-" + endDate + ".pdf", new ByteArrayResource(pdfByte.readAllBytes()));
          
         sender.send(mimeMessage);
+        log.info("Products statistics email sent for period {} to {}", startDate, endDate);
     }
     
 }

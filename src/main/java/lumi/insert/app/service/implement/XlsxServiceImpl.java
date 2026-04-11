@@ -38,6 +38,7 @@ public class XlsxServiceImpl implements XlsxService{
         actionMessage = "Transaction history exported as XLSX"
     )
     public void exportTransactions(List<TransactionResponse> datas, OutputStream outputStream) {
+        log.info("Exporting {} transactions to XLSX", datas.size());
         try (SXSSFWorkbook workbook = new SXSSFWorkbook()) { 
             SXSSFSheet sheet = workbook.createSheet("Transactions");
             SXSSFRow titleRow = sheet.createRow(0);
@@ -140,6 +141,7 @@ public class XlsxServiceImpl implements XlsxService{
         actionMessage = "Supply history exported as XLSX"
     )
     public void exportSupplies(List<SupplyResponse> datas, OutputStream outputStream) {
+        log.info("Exporting {} supplies to XLSX", datas.size());
          try (SXSSFWorkbook workbook = new SXSSFWorkbook()) { 
             SXSSFSheet sheet = workbook.createSheet("Supplies");
             SXSSFRow titleRow = sheet.createRow(0);

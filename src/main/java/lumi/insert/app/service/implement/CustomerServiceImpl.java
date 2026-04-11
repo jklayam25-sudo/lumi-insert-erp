@@ -70,7 +70,12 @@ public class CustomerServiceImpl implements CustomerService{
         actionMessage = "New customer registered"
     )
     public CustomerDetailResponse createCustomer(CustomerCreateRequest request) {
-        if(customerRepository.existsByName(request.getName())) throw new DuplicateEntityException("Customer with name " + request.getName() + " already exists");
+        log.info("Creating customer with name: {}", request.getName());
+
+        if(customerRepository.existsByName(request.getName())) {
+            log.debug("Customer creation failed - duplicate name: {}", request.getName());
+            throw new DuplicateEntityException("Customer with name " + request.getName() + " already exists");
+        }
 
         Customer customer = Customer.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -81,35 +86,61 @@ public class CustomerServiceImpl implements CustomerService{
             .build();
 
         Customer savedCustomer = customerRepository.save(customer);
+        log.debug("Customer saved to database: {}", savedCustomer);
 
-        return customerMapper.createDtoDetailResponseFromEmployee(savedCustomer);
+        CustomerDetailResponse response = customerMapper.createDtoDetailResponseFromEmployee(savedCustomer);
+        log.debug("Customer detail response created: {}", response);
+
+        return response;
     }
 
     @Override
     public CustomerDetailResponse getCustomer(UUID id) {
-        Customer customer = customerRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Customer with id " + id + " is not found"));
+        log.debug("Getting customer by ID: {}", id);
 
-        return customerMapper.createDtoDetailResponseFromEmployee(customer);
+        Customer customer = customerRepository.findById(id)
+            .orElseThrow(() -> {
+                log.debug("Customer not found with ID: {}", id);
+                return new NotFoundEntityException("Customer with id " + id + " is not found");
+            });
+
+        log.debug("Customer found: {}", customer);
+        CustomerDetailResponse response = customerMapper.createDtoDetailResponseFromEmployee(customer);
+        log.debug("Customer detail response created: {}", response);
+
+        return response;
     }
 
     @Override
     public Slice<CustomerResponse> getCustomers(CustomerGetByFilter request) {
-        Pageable pageable = jpaSpec.pageable(request);
+        log.debug("Getting customers with filter - page: {}, size: {}, name: {}", request.getPage(), request.getSize(), request.getName());
 
+        Pageable pageable = jpaSpec.pageable(request);
         Specification<Customer> customerSpecification = jpaSpec.customerSpecification(request);
 
         Slice<Customer> customers = customerRepository.findAll(customerSpecification, pageable);
-        return customers.map(customerMapper::createDtoResponseFromEmployee);
+        log.debug("Found {} customers", customers.getNumberOfElements());
+
+        Slice<CustomerResponse> response = customers.map(customerMapper::createDtoResponseFromEmployee);
+        log.debug("Customer responses created, total: {}", response.getNumberOfElements());
+
+        return response;
     }
 
     @Override
     public SliceIndex<CustomerNameResponse> searchCustomerNames(CustomerGetNameRequest request) {
+        log.debug("Searching customer names with query: {}, size: {}", request.getName(), request.getSize());
+
         if(request.getLastId() == null) request.setLastId(new UUID(0, 0));
         Pageable pageable = PageRequest.of(0, request.getSize()).withSort(Sort.by("id").ascending());
          
-        Slice<CustomerNameResponse> customersName = customerRepository.getByNameContainingIgnoreCaseAndIdAfter(request.getName(), request.getLastId(), pageable);;
-        return new SliceIndex<>(customersName);
+        Slice<CustomerNameResponse> customersName = customerRepository.getByNameContainingIgnoreCaseAndIdAfter(request.getName(), request.getLastId(), pageable);
+        log.debug("Found {} customer names", customersName.getNumberOfElements());
+
+        SliceIndex<CustomerNameResponse> response = new SliceIndex<>(customersName);
+        log.debug("Customer name search response created");
+
+        return response;
     }
 
     @Override
@@ -119,31 +150,49 @@ public class CustomerServiceImpl implements CustomerService{
         actionMessage = "Customer updated"
     )
     public CustomerDetailResponse updateCustomer(UUID id, CustomerUpdateRequest request) {
-        if(request.getName() != null && customerRepository.existsByName(request.getName())) throw new DuplicateEntityException("Customer with name " + request.getName() + " already exists");
+        log.info("Updating customer with ID: {}", id);
+
+        if(request.getName() != null && customerRepository.existsByName(request.getName())) {
+            log.debug("Customer update failed - duplicate name: {}", request.getName());
+            throw new DuplicateEntityException("Customer with name " + request.getName() + " already exists");
+        }
 
         Customer customer = customerRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Customer with id " + id + " is not found"));
+            .orElseThrow(() -> {
+                log.debug("Customer not found for update with ID: {}", id);
+                return new NotFoundEntityException("Customer with id " + id + " is not found");
+            });
 
-        customerMapper.updateEntityFromDto(request, customer); 
-        return customerMapper.createDtoDetailResponseFromEmployee(customer);
+        customerMapper.updateEntityFromDto(request, customer);
+        log.debug("Customer updated in database: {}", customer);
+
+        CustomerDetailResponse response = customerMapper.createDtoDetailResponseFromEmployee(customer);
+        log.debug("Customer detail response created: {}", response);
+
+        return response;
     }
 
     @Override
     public Boolean addCustomerPicture(UUID id, MultipartFile[] files) {
+        log.info("Adding pictures to customer with ID: {}, file count: {}", id, files.length);
 
         Customer customer = customerRepository.findById(id)
-            .orElseThrow(() -> new NotFoundEntityException("Customer with id " + id + " is not found"));
+            .orElseThrow(() -> {
+                log.debug("Customer not found for picture upload with ID: {}", id);
+                return new NotFoundEntityException("Customer with id " + id + " is not found");
+            });
             
         List<String> pictureUrl = customer.getPictureUrl();
         if(pictureUrl == null) pictureUrl = new ArrayList<>();
 
-        log.info("Customer: {}", customer);
+        log.debug("Customer found for picture upload: {}", customer.getName());
         String fileName = customer.getName() + "-";
         List<CustomerPicture> customerPictures = new ArrayList<>();
         List<String> picturesId = new ArrayList<>();
         try {
             for (MultipartFile file : files) { 
                 CloudinaryResponse upload = storageService.uploadImageSync(file.getBytes(), fileName + LocalDateTime.now() , "customer");
+                log.debug("Image uploaded successfully: {}", upload.getSecureUrl());
 
                 CustomerPicture customerPicture = CustomerPicture.builder()
                 .id(UuidCreator.getTimeOrderedEpochFast())
@@ -158,22 +207,25 @@ public class CustomerServiceImpl implements CustomerService{
             }
             customer.setPictureUrl(pictureUrl);
             customerPictureRepository.saveAll(customerPictures);
+            log.debug("All customer pictures saved to database");
+
+            log.info("Successfully added {} pictures to customer: {}", files.length, customer.getName());
+            return true;
+
         } catch (IOException e) {
-            e.printStackTrace();
-            log.error("Upload failed, messages: " + e.getMessage());
+            log.error("Upload failed for customer {} with {} files, messages: {}", customer.getName(), files.length, e.getMessage());
+            log.debug("IOException during picture upload", e);
             throw new StorageActionException("Server couldn't complete the request due to internal problem, try again or contact developer");
         } catch (Exception e) { 
-            log.error("Save to database failed, attempting to delete image at storage. Messages: {}", e.getMessage()); 
+            log.error("Save to database failed for customer {} with {} files, attempting to delete images at storage. Messages: {}", customer.getName(), files.length, e.getMessage()); 
+            log.debug("Exception during database save", e);
 
             picturesId.forEach(pictureId -> {
-                 if(!(storageService.deleteImage(pictureId))) log.error("Failed to delete image with publicId: {}", id);
+                 if(!(storageService.deleteImage(pictureId))) log.error("Failed to delete image with publicId: {}", pictureId);
             }); 
 
             throw new DatabaseInternalException("Server couldn't complete the request due to internal problem, try again or contact developer");
-        }
-        
-        return true;
-
+        } 
     }
-    
+
 }

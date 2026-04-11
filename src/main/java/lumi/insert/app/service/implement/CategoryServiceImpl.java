@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.aspect.annotation.ActivityLogger;
 import lumi.insert.app.core.entity.Category;
 import lumi.insert.app.core.entity.nondatabase.ActivityAction;
@@ -25,6 +26,7 @@ import lumi.insert.app.service.CategoryService;
 
 @Service
 @Transactional
+@Slf4j
 public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
@@ -40,6 +42,7 @@ public class CategoryServiceImpl implements CategoryService {
         actionMessage = "Category created"
     )
     public CategoryResponse createCategory(CategoryCreateRequest request) {
+        log.info("Creating category with name: {}", request.getName());
 
         if(categoryRepository.existsByName(request.getName())){
             throw  new DuplicateEntityException("Category with name " + request.getName() + " already exists");
@@ -49,8 +52,10 @@ public class CategoryServiceImpl implements CategoryService {
                 .build();
 
             Category savedCategory = categoryRepository.save(newCategory);
+            log.debug("Category saved to database: {}", savedCategory);
 
             CategoryResponse response = categoryMapper.createDtoResponseFromCategory(savedCategory);
+            log.debug("Category response created: {}", response);
 
             return response;
         }
@@ -63,6 +68,8 @@ public class CategoryServiceImpl implements CategoryService {
         actionMessage = "Category name updated"
     )
     public CategoryResponse updateCategoryName(CategoryUpdateRequest request) {
+        log.info("Updating category name for ID: {} to: {}", request.getId(), request.getName());
+
         if(categoryRepository.existsByName(request.getName())){
             throw  new DuplicateEntityException("Category with name " + request.getName() + " already exists");
         } else {
@@ -70,8 +77,10 @@ public class CategoryServiceImpl implements CategoryService {
         
         searchedCategory.setName(request.getName());
         Category savedCategory = categoryRepository.save(searchedCategory);
+        log.debug("Category updated in database: {}", savedCategory);
 
         CategoryResponse response = categoryMapper.createDtoResponseFromCategory(savedCategory);
+        log.debug("Category response created: {}", response);
         return response;
         }
     }
@@ -83,13 +92,17 @@ public class CategoryServiceImpl implements CategoryService {
         actionMessage = "Category status set to active"
     )
     public CategoryResponse activateCategory(Long id) {
+        log.info("Activating category with ID: {}", id);
+
         Category searchedCategory = categoryRepository.findById(id).orElseThrow(() -> new NotFoundEntityException("Category with ID " + id + " was not found"));
         if(searchedCategory.getIsActive()) throw new BoilerplateRequestException("Category with ID " + id + " already active");
 
         searchedCategory.setIsActive(true);
         Category savedCategory = categoryRepository.save(searchedCategory);
+        log.debug("Category activated in database: {}", savedCategory);
 
         CategoryResponse response = categoryMapper.createDtoResponseFromCategory(savedCategory);
+        log.debug("Category response created: {}", response);
         return response;
     }
 
@@ -100,32 +113,45 @@ public class CategoryServiceImpl implements CategoryService {
         actionMessage = "Category status set to inactive"
     )
     public CategoryResponse deactivateCategory(Long id) {
+        log.info("Deactivating category with ID: {}", id);
+
         Category searchedCategory = categoryRepository.findById(id).orElseThrow(() -> new NotFoundEntityException("Category with ID " + id + " was not found"));
         if(!searchedCategory.getIsActive()) throw new BoilerplateRequestException("Category with ID " + id + " already inactive");
 
         searchedCategory.setIsActive(false);
         Category savedCategory = categoryRepository.save(searchedCategory);
+        log.debug("Category deactivated in database: {}", savedCategory);
         
         CategoryResponse response = categoryMapper.createDtoResponseFromCategory(savedCategory);
+        log.debug("Category response created: {}", response);
         return response;
     }
 
     @Override
     public CategoryResponse getCategoryById(Long id) {
+        log.debug("Getting category by ID: {}", id);
+
         Category searchedCategory = categoryRepository.findById(id).orElseThrow(() -> new NotFoundEntityException("Category with ID " + id + " was not found"));
+        log.debug("Category found: {}", searchedCategory);
 
         CategoryResponse response = categoryMapper.createDtoResponseFromCategory(searchedCategory);
+        log.debug("Category response created: {}", response);
 
         return response;
     }
 
     @Override
     public Slice<CategoryResponse> getCategories(PaginationRequest request) {
+        log.debug("Getting categories with pagination - page: {}, size: {}", request.getPage(), request.getSize());
+
         Sort sort = Sort.by("name").ascending();
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize()).withSort(sort);
 
         Slice<Category> searchedCategories = categoryRepository.findAllByIsActiveTrue(pageable);
+        log.debug("Found {} categories", searchedCategories.getNumberOfElements());
+
         Slice<CategoryResponse> response = searchedCategories.map(categoryMapper::createDtoResponseFromCategory);
+        log.debug("Category responses created, total: {}", response.getNumberOfElements());
 
         return response;
     }

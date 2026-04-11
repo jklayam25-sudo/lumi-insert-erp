@@ -26,8 +26,7 @@ public class AuditorAwareImpl implements AuditorAware<String>{
 
     }
 
-    public Optional<String> getAuditorIpAddress(){
-        log.info(".");
+    public Optional<String> getAuditorIpAddress(){ 
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
         .map(auth -> {
             if (auth.getPrincipal() instanceof EmployeeLogin){
