@@ -21,13 +21,16 @@ import lumi.insert.app.dto.response.TransactionResponse;
 public interface AllTransactionMapper {
     
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+    @Mapping(target = "customerId", source = "transaction.customer.id")
     @Mapping(target = "messages", source = "messages")
     TransactionResponse createTransactionResponseDto(Transaction transaction, List<String> messages);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+    @Mapping(target = "customerId", source = "customer.id")
     TransactionResponse createTransactionResponseDto(Transaction transaction);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+    @Mapping(target = "customerId", source = "customer.id")
     TransactionDetailResponse createTransactionDetailResponseDto(Transaction transaction);
 
     @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
