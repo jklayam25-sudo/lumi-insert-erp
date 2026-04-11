@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import lumi.insert.app.activitycore.entity.ActivityLog;
+import lumi.insert.app.activitycore.entity.nondatabase.ActivityLogMessage;
 import lumi.insert.app.core.entity.nondatabase.EntityList;
 import lumi.insert.app.core.entity.nondatabase.TransactionInvoiceMail;
 import lumi.insert.app.core.entity.nondatabase.UploadStorageMessage;
@@ -35,7 +36,7 @@ public class MessageProducerTest {
         .actionMessage("a message")
         .build();
 
-        messageProducerService.sendActivityLog(activityLog); 
+        messageProducerService.sendActivityLog(new ActivityLogMessage(activityLog)); 
         ArgumentCaptor<ActivityLog> argumentCaptor = ArgumentCaptor.forClass(ActivityLog.class);
 
         verify(rabbitTemplate, times(1)).convertAndSend(anyString(), anyString(), argumentCaptor.capture());
