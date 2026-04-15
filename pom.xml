@@ -170,6 +170,12 @@
 				<groupId>org.apache.logging.log4j</groupId>
 				<artifactId>log4j-layout-template-json</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>1.19.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
@@ -226,18 +232,18 @@
 					</excludes>
 				</configuration>
 			</plugin>
-			<plugin>
-        <groupId>org.flywaydb</groupId>
-          <artifactId>flyway-maven-plugin</artifactId>
-						<configuration>
-              <url>jdbc:postgresql://${DB_HOST}:5432/</url>
-              <user></user>
-              <password></password>
-              <schemas>
-                <schema>public</schema>
-              </schemas>
-          	</configuration>
-      </plugin>
+			<!-- <plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+								<configuration>
+					<url>jdbc:postgresql://${DB_HOST}:5432/</url>
+					<user></user>
+					<password></password>
+					<schemas>
+						<schema>public</schema>
+					</schemas>
+					</configuration>
+			</plugin> -->
 		</plugins>
 	</build>
 
