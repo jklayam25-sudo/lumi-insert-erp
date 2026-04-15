@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -13,7 +14,7 @@ public record SupplyPaymentResponse(
     UUID supplyId, 
     
     @Schema(description = "Total amount paid to the supplier or refunded from them", example = "2500000")
-    Long totalPayment, 
+    BigDecimal totalPayment, 
     
     @Schema(description = "Source account or entity making the payment (e.g., Company Petty Cash)", example = "Main Office Cash")
     String paymentFrom, 

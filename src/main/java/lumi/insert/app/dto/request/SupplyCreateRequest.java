@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.request;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -44,11 +45,11 @@ public class SupplyCreateRequest {
     @NotNull(message = "totalFee cannot be empty")
     @Min(value = 0, message = "totalFee cannot below 0")
     @Schema(description = "Additional fees/charges", example = "50000")
-    private Long totalFee;
+    private BigDecimal totalFee;
 
     @NotNull(message = "totalDiscount cannot be empty")
     @Min(value = 0, message = "totalDiscount cannot below 0")
     @Schema(description = "Total discount amount", example = "10000")
-    private Long totalDiscount;
+    private BigDecimal totalDiscount;
  
 }

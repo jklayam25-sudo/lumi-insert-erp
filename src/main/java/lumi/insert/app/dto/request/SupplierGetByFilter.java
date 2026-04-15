@@ -9,6 +9,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
@@ -36,32 +39,32 @@ public class SupplierGetByFilter extends PaginationRequest{
     @Builder.Default
     @Min(value = 0, message = "minTotalItems minimal value is 0")
     @Schema(description = "Minimum number of supplier transaction", example = "0")
-    Long minTotalTransaction = 0L;
+    BigDecimal minTotalTransaction = BigDecimal.valueOf(0);
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalItems minimal value is 0")
     @Schema(description = "Maximum number of supplier transaction", example = "150")
-    Long maxTotalTransaction = 9999990L;
+    BigDecimal maxTotalTransaction = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Min(value = 0, message = "minGrandTotal minimal value is 0")
     @Schema(description = "Minimum unpaid amount to supplier", example = "0")
-    Long minTotalUnpaid = 0L;
+    BigDecimal minTotalUnpaid = BigDecimal.valueOf(0);
 
     @Builder.Default
     @Min(value = 0, message = "maxGrandTotal minimal value is 0")
     @Schema(description = "Maximum unpaid amount to supplier", example = "20000000")
-    Long maxTotalUnpaid = 9999999999990L;
+    BigDecimal maxTotalUnpaid = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Min(value = 0, message = "minTotalUnpaid minimal value is 0")
     @Schema(description = "Minimum paid amount to supplier", example = "0")
-    Long minTotalPaid = 0L;
+    BigDecimal minTotalPaid = BigDecimal.valueOf(0);
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalUnpaid minimal value is 0")
     @Schema(description = "Maximum paid amount to supplier", example = "100000000")
-    Long maxTotalPaid = 9999999999990L;
+    BigDecimal maxTotalPaid = BigDecimal.valueOf(99999999990L);
 
     @Builder.Default
     @Pattern(regexp = "createdAt|updatedAt|totalTransaction|totalUnpaid|totalPaid|name", message = "check documentation for sortBy specification")

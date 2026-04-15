@@ -1,5 +1,6 @@
 package lumi.insert.app.core.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List; 
 import java.util.Optional;
@@ -22,7 +23,7 @@ import lumi.insert.app.dto.response.ProductName;
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product>{
 
     @Query(value = "SELECT p.stockQuantity FROM products p WHERE p.id = :id")
-    Optional<Long> getStockById(@Param("id") Long id); 
+    Optional<BigDecimal> getStockById(@Param("id") Long id); 
 
     Set<Product> findAllByNameContaining(String name);
 

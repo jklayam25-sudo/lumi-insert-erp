@@ -1,13 +1,14 @@
 package lumi.insert.app.dto.request;
-
+ 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Builder; 
+import lombok.Data;  
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -25,42 +26,42 @@ public class SupplyGetByFilter extends PaginationRequest{
     @Builder.Default
     @Min(value = 0, message = "minTotalItems minimal value is 0")
     @Schema(description = "Minimum number of supply items", example = "1")
-    Long minTotalItems = 0L;
+    BigDecimal minTotalItems = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalItems minimal value is 0")
     @Schema(description = "Maximum number of supply items", example = "200")
-    Long maxTotalItems = 9999990L;
+    BigDecimal maxTotalItems = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Min(value = 0, message = "minGrandTotal minimal value is 0")
     @Schema(description = "Minimum supply grand total", example = "500000")
-    Long minGrandTotal = 0L;
+    BigDecimal minGrandTotal = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxGrandTotal minimal value is 0")
     @Schema(description = "Maximum supply grand total", example = "100000000")
-    Long maxGrandTotal = 9999999999990L;
+    BigDecimal maxGrandTotal = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Min(value = 0, message = "minTotalUnpaid minimal value is 0")
     @Schema(description = "Minimum unpaid supply amount", example = "0")
-    Long minTotalUnpaid = 0L;
+    BigDecimal minTotalUnpaid = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalUnpaid minimal value is 0")
     @Schema(description = "Maximum unpaid supply amount", example = "20000000")
-    Long maxTotalUnpaid = 9999999999990L;
+    BigDecimal maxTotalUnpaid = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Min(value = 0, message = "minTotalPaid minimal value is 0")
     @Schema(description = "Minimum paid supply amount", example = "0")
-    Long minTotalPaid = 0L;
+    BigDecimal minTotalPaid = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalPaid minimal value is 0")
     @Schema(description = "Maximum paid supply amount", example = "100000000")
-    Long maxTotalPaid = 9999999999990L;
+    BigDecimal maxTotalPaid = BigDecimal.valueOf(9999999999990L);
 
     @Schema(description = "Filter by supply status", example = "COMPLETED")
     SupplyStatus status;

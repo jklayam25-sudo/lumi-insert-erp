@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder; 
@@ -15,16 +16,16 @@ public record ProductResponse (
     String name, 
     
     @Schema(description = "The cost price (Capital) paid to the supplier", example = "45000")
-    Long basePrice, 
+    BigDecimal basePrice, 
     
     @Schema(description = "The price at which the product is sold to customers", example = "65000")
-    Long sellPrice, 
+    BigDecimal sellPrice, 
     
     @Schema(description = "Current available quantity in the warehouse", example = "150")
-    Long stockQuantity, 
+    BigDecimal stockQuantity, 
     
     @Schema(description = "The threshold level to trigger a restock alert", example = "10")
-    Long stockMinimum, 
+    BigDecimal stockMinimum, 
     
     @Schema(description = "Simplified category information this product belongs to")
     CategorySimpleResponse category, 

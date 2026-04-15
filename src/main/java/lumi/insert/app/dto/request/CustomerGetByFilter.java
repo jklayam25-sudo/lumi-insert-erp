@@ -9,6 +9,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
@@ -46,22 +49,22 @@ public class CustomerGetByFilter extends PaginationRequest{
     @Builder.Default
     @Min(value = 0, message = "minGrandTotal minimal value is 0")
     @Schema(description = "Minimum unpaid amount from customer", example = "0")
-    Long minTotalUnpaid = 0L;
+    BigDecimal minTotalUnpaid = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxGrandTotal minimal value is 0")
     @Schema(description = "Maximum unpaid amount from customer", example = "10000000")
-    Long maxTotalUnpaid = 9999999999990L;
+    BigDecimal maxTotalUnpaid = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Min(value = 0, message = "minTotalUnpaid minimal value is 0")
     @Schema(description = "Minimum paid amount from customer", example = "0")
-    Long minTotalPaid = 0L;
+    BigDecimal minTotalPaid = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalUnpaid minimal value is 0")
     @Schema(description = "Maximum paid amount from customer", example = "50000000")
-    Long maxTotalPaid = 9999999999990L;
+    BigDecimal maxTotalPaid = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Pattern(regexp = "createdAt|updatedAt|totalTransaction|totalUnpaid|totalPaid|name", message = "check documentation for sortBy specification")

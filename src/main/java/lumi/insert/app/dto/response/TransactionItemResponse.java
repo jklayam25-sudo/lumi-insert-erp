@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,10 +24,10 @@ public record TransactionItemResponse(
     String description, 
     
     @Schema(description = "Unit price of the product at the time of transaction", example = "35000")
-    Long price, 
+    BigDecimal price, 
     
     @Schema(description = "Quantity of the product purchased", example = "2")
-    Long quantity, 
+    BigDecimal quantity, 
     
     @Schema(description = "Timestamp when the item was added to the transaction")
     LocalDateTime createdAt, 

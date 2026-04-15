@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
@@ -22,7 +25,7 @@ public class ItemRefundRequest {
     @NotNull(message = "quantity cannot be empty")
     @Min(value = 1, message = "quantity cannot below 1")
     @Schema(description = "Quantity to refund", example = "5")
-    private Long quantity;
+    private BigDecimal quantity;
 
     @Schema(description = "Refund reason or description", example = "Damaged product")
     private String description;

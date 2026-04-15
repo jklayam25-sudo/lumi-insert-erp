@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,28 +28,28 @@ public record TransactionResponse(
     Long totalItems, 
     
     @Schema(description = "Additional service fees applied", example = "5000")
-    Long totalFee, 
+    BigDecimal totalFee, 
     
     @Schema(description = "Total discount amount applied", example = "10000")
-    Long totalDiscount, 
+    BigDecimal totalDiscount, 
     
     @Schema(description = "Amount before tax and fees", example = "100000")
-    Long subTotal, 
+    BigDecimal subTotal, 
     
     @Schema(description = "Final amount to be paid by the customer", example = "95000")
-    Long grandTotal, 
+    BigDecimal grandTotal, 
     
     @Schema(description = "Remaining balance that hasn't been paid", example = "0")
-    Long totalUnpaid, 
+    BigDecimal totalUnpaid, 
     
     @Schema(description = "Total amount already paid by the customer", example = "95000")
-    Long totalPaid, 
+    BigDecimal totalPaid, 
     
     @Schema(description = "Remaining balance eligible for refund", example = "95000")
-    Long totalUnrefunded, 
+    BigDecimal totalUnrefunded, 
     
     @Schema(description = "Total amount already refunded to the customer", example = "0")
-    Long totalRefunded, 
+    BigDecimal totalRefunded, 
     
     @Schema(description = "Current state of the transaction", example = "PAID")
     TransactionStatus status, 

@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -17,16 +18,16 @@ public class ProductCreateResponse implements Identifiable {
     private String name;
 
     @Schema(description = "Initial cost price saved in the system", example = "75000")
-    private Long basePrice;
+    private BigDecimal basePrice;
 
     @Schema(description = "Initial selling price saved in the system", example = "95000")
-    private Long sellPrice;
+    private BigDecimal sellPrice;
 
     @Schema(description = "Starting inventory level for this product", example = "24")
-    private Long stockQuantity;
+    private BigDecimal stockQuantity;
 
     @Schema(description = "Safety stock threshold for low-stock alerts", example = "5")
-    private Long stockMinimum;
+    private BigDecimal stockMinimum;
 
     @Schema(description = "Simplified category details linked to the new product")
     private CategorySimpleResponse category;

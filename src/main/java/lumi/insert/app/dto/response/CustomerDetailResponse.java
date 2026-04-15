@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -25,10 +26,10 @@ public record CustomerDetailResponse(
     Long totalTransaction, 
     
     @Schema(description = "Total outstanding debt/unpaid balance from this customer", example = "150000")
-    Long totalUnpaid, 
+    BigDecimal totalUnpaid, 
     
     @Schema(description = "Total lifetime amount paid by this customer", example = "5250000")
-    Long totalPaid, 
+    BigDecimal totalPaid, 
     
     @Schema(description = "Status indicating if the customer account is active", example = "true")
     Boolean isActive

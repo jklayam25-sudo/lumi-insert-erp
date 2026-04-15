@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.request;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -27,12 +28,12 @@ public class TransactionPaymentGetByFilter extends PaginationRequest{
     @Builder.Default
     @Min(value = 0, message = "minTotalPayment minimal value is 0")
     @Schema(description = "Minimum payment amount", example = "50000")
-    Long minTotalPayment = 0L;
+    BigDecimal minTotalPayment = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalPayment minimal value is 0")
     @Schema(description = "Maximum payment amount", example = "5000000")
-    Long maxTotalPayment = 9999999999990L;
+    BigDecimal maxTotalPayment = BigDecimal.valueOf(9999999999990L);
 
     @Schema(description = "Start date for payment range", example = "2024-01-01T00:00:00")
     LocalDateTime minCreatedAt;
