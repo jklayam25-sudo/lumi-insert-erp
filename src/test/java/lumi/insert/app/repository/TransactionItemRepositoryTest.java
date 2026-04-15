@@ -25,6 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Customer;
 import lumi.insert.app.core.entity.Product;
@@ -46,7 +47,7 @@ import lumi.insert.app.utils.generator.InvoiceGenerator;
 @Transactional
 @Import({InvoiceGenerator.class, AuditorAwareImpl.class })
 @ActiveProfiles("test")
-public class TransactionItemRepositoryTest {
+public class TransactionItemRepositoryTest  extends TestContainerTest {
 
     @Autowired
     TransactionRepository transactionRepository;
@@ -256,7 +257,7 @@ public class TransactionItemRepositoryTest {
 
         assertEquals(1, productSales.size());
         assertEquals(savedProduct.getName(), productSales.getFirst().productName());
-        assertEquals(transactionItem.getQuantity() + transactionItem2.getQuantity(), productSales.getFirst().totalSold());
+        assertEquals(transactionItem.getQuantity().add(transactionItem2.getQuantity()).longValue(), productSales.getFirst().totalSold().longValue());
     }
 
     @Test
@@ -285,7 +286,7 @@ public class TransactionItemRepositoryTest {
        .product(savedProduct)
        .productName(savedProduct.getName())
        .price(savedProduct.getBasePrice())
-       .quantity(-savedProduct.getStockQuantity())
+       .quantity(savedProduct.getStockQuantity().negate())
        .build();
 
        TransactionItem transactionItem2 = TransactionItem.builder()
@@ -294,7 +295,7 @@ public class TransactionItemRepositoryTest {
        .product(savedProduct)
        .productName(savedProduct.getName())
        .price(savedProduct.getBasePrice())
-       .quantity(-savedProduct.getStockQuantity())
+       .quantity(savedProduct.getStockQuantity().negate())
        .build();
 
         transactionItemRepository.saveAllAndFlush(List.of(transactionItem, transactionItem2));
@@ -303,7 +304,7 @@ public class TransactionItemRepositoryTest {
 
         assertEquals(1, productSales.size());
         assertEquals(savedProduct.getName(), productSales.getFirst().productName());
-        assertEquals(transactionItem.getQuantity() + transactionItem2.getQuantity(), productSales.getFirst().totalRefunded());
+        assertEquals(transactionItem.getQuantity().add(transactionItem2.getQuantity()).longValue(), productSales.getFirst().totalRefunded().longValue());
     }
 
 }

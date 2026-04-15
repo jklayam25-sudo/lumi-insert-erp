@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime; 
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +33,7 @@ import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Product;
 import lumi.insert.app.core.entity.Supplier;
@@ -56,7 +58,7 @@ import lumi.insert.app.utils.generator.JpaSpecGenerator;
 @Slf4j
 @Import({JpaSpecGenerator.class, AuditorAwareImpl.class})
 @ActiveProfiles("test")
-public class SupplyRepositoryTest {
+public class SupplyRepositoryTest  extends TestContainerTest {
     
     @Autowired
     SupplyRepository supplyRepository;
@@ -116,7 +118,7 @@ public class SupplyRepositoryTest {
 
         Supply savedSupply = supplyRepository.save(supply);
 
-        assertEquals(0, savedSupply.getGrandTotal());
+        assertTrue(BigDecimal.ZERO.compareTo(savedSupply.getGrandTotal()) == 0);
         assertEquals(SupplyStatus.UNPAID, savedSupply.getStatus());
         assertEquals(invoiceId, savedSupply.getInvoiceId());
         assertNotNull(savedSupply.getId());
@@ -216,7 +218,7 @@ public class SupplyRepositoryTest {
         Supply matchSupply = Supply.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(matchInvoiceId)
-        .totalPaid(150L)
+        .totalPaid(BigDecimal.valueOf(150L))
         .supplier(setupSupplier)
         .supplierName(setupSupplier.getName())
         .build();
@@ -226,7 +228,7 @@ public class SupplyRepositoryTest {
         Supply unmatchSupply2 = Supply.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(invoiceGenerator.generate())
-        .totalPaid(350L)
+        .totalPaid(BigDecimal.valueOf(350L))
         .supplier(setupSupplier)
         .supplierName(setupSupplier.getName())
         .build();
@@ -237,7 +239,7 @@ public class SupplyRepositoryTest {
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(invoiceGenerator.generate())
         .status(SupplyStatus.CANCELLED)
-        .totalPaid(150L)
+        .totalPaid(BigDecimal.valueOf(150L))
         .supplier(setupSupplier)
         .supplierName(setupSupplier.getName())
         .build();
@@ -248,8 +250,8 @@ public class SupplyRepositoryTest {
 
         SupplyGetByFilter request = SupplyGetByFilter.builder()
         .status(SupplyStatus.UNPAID)
-        .minTotalPaid(100L)
-        .maxTotalPaid(200L)
+        .minTotalPaid(BigDecimal.valueOf(100L))
+        .maxTotalPaid(BigDecimal.valueOf(200L))
         .minCreatedAt(LocalDateTime.of(2020, 1, 10, 10, 10))
         .maxCreatedAt(LocalDateTime.of(2027, 1, 10, 10, 10))
         .build();
@@ -282,7 +284,7 @@ public class SupplyRepositoryTest {
         Supply matchSupply = Supply.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(matchInvoiceId)
-        .totalPaid(150L)
+        .totalPaid(BigDecimal.valueOf(150L))
         .supplier(setupSupplier)
         .supplierName(setupSupplier.getName())
         .build();
@@ -292,7 +294,7 @@ public class SupplyRepositoryTest {
         Supply unmatchSupply2 = Supply.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(invoiceGenerator.generate())
-        .totalPaid(350L)
+        .totalPaid(BigDecimal.valueOf(350L))
         .supplier(savedSupplier2)
         .supplierName(savedSupplier2.getName())
         .build();

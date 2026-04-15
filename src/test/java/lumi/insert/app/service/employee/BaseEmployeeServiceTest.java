@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -21,6 +22,7 @@ import lumi.insert.app.service.implement.EmployeeServiceImpl;
 import lumi.insert.app.mapper.EmployeeMapperImpl;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 public abstract class BaseEmployeeServiceTest {
     
     @InjectMocks

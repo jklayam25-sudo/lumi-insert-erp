@@ -3,7 +3,8 @@ package lumi.insert.app.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-  
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Customer;
 import lumi.insert.app.core.entity.Transaction;
@@ -44,7 +46,7 @@ import lumi.insert.app.utils.generator.JpaSpecGenerator;
 @Transactional
 @Import({InvoiceGenerator.class, JpaSpecGenerator.class, AuditorAwareImpl.class}) 
 @ActiveProfiles("test")
-public class TransactionPaymentRepositoryTest {
+public class TransactionPaymentRepositoryTest  extends TestContainerTest {
 
     @Autowired
     TransactionRepository transactionRepository;
@@ -96,7 +98,7 @@ public class TransactionPaymentRepositoryTest {
         TransactionPayment transactionPayment = TransactionPayment.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .transaction(savedTransaction)
-        .totalPayment(1000L)
+        .totalPayment(BigDecimal.valueOf(1000L))
         .paymentFrom("Incart Global Lte - 2432131")
         .paymentTo("PT. Juke Ner - BCA 14123124")
         .build();
@@ -127,7 +129,7 @@ public class TransactionPaymentRepositoryTest {
             TransactionPayment transactionPayment = TransactionPayment.builder()
                 .id(UuidCreator.getTimeOrderedEpochFast())
                 .transaction(savedTransaction)
-                .totalPayment(1000L * i)
+                .totalPayment(BigDecimal.valueOf(1000L * i))
                 .paymentFrom("Incart Global Lte - 2432131")
                 .paymentTo("PT. Juke Ner - BCA 14123124")
                 .build();
@@ -139,7 +141,7 @@ public class TransactionPaymentRepositoryTest {
 
         assertEquals(2, searchedItem.getNumberOfElements());
         assertTrue(searchedItem.hasNext());
-        assertEquals(1000L, searchedItem.getContent().getLast().getTotalPayment());
+        assertTrue(BigDecimal.valueOf(1000L).compareTo(searchedItem.getContent().getLast().getTotalPayment()) == 0);
     }
 
     @Test
@@ -168,7 +170,7 @@ public class TransactionPaymentRepositoryTest {
         .id(UuidCreator.getTimeOrderedEpochFast())
         .paymentFrom("from")
         .paymentTo("to")
-        .totalPayment(1500L)
+        .totalPayment(BigDecimal.valueOf(1500L))
         .transaction(savedTransaction)
         .build();
 
@@ -176,15 +178,15 @@ public class TransactionPaymentRepositoryTest {
         .id(UuidCreator.getTimeOrderedEpochFast())
         .paymentFrom("from")
         .paymentTo("to")
-        .totalPayment(2100L)
+        .totalPayment(BigDecimal.valueOf(2100L))
         .transaction(savedTransaction)
         .build();
 
         transactionPaymentRepository.saveAllAndFlush(List.of(transactionPaymentSuccess, transactionPaymentFail));
 
         TransactionPaymentGetByFilter request = TransactionPaymentGetByFilter.builder()
-        .minTotalPayment(1000L)
-        .maxTotalPayment(2000L)
+        .minTotalPayment(BigDecimal.valueOf(1000L))
+        .maxTotalPayment(BigDecimal.valueOf(2000L))
         .build();
 
         Pageable pageable = jpaSpecGenerator.pageable(request);
@@ -193,7 +195,7 @@ public class TransactionPaymentRepositoryTest {
 
         Slice<TransactionPayment> transactionPayments = transactionPaymentRepository.findAll(specification, pageable);
         assertEquals(1, transactionPayments.getNumberOfElements());
-        assertEquals(1500L, transactionPayments.getContent().getFirst().getTotalPayment());
+        assertTrue(BigDecimal.valueOf(1500L).compareTo(transactionPayments.getContent().getFirst().getTotalPayment()) == 0);
     }
 
     @Test
@@ -221,7 +223,7 @@ public class TransactionPaymentRepositoryTest {
         .id(UuidCreator.getTimeOrderedEpochFast())
         .paymentFrom("from")
         .paymentTo("to")
-        .totalPayment(1500L)
+        .totalPayment(BigDecimal.valueOf(1500L))
         .transaction(savedTransaction.getFirst())
         .build();
 
@@ -229,15 +231,15 @@ public class TransactionPaymentRepositoryTest {
         .id(UuidCreator.getTimeOrderedEpochFast())
         .paymentFrom("from")
         .paymentTo("to")
-        .totalPayment(2100L)
+        .totalPayment(BigDecimal.valueOf(2100L))
         .transaction(savedTransaction.getLast())
         .build();
 
         transactionPaymentRepository.saveAllAndFlush(List.of(transactionPaymentSuccess, transactionPaymentFail));
 
         TransactionPaymentGetByFilter request = TransactionPaymentGetByFilter.builder()
-        .minTotalPayment(1000L)
-        .maxTotalPayment(3000L)
+        .minTotalPayment(BigDecimal.valueOf(1000L))
+        .maxTotalPayment(BigDecimal.valueOf(3000L))
         .transactionId(savedTransaction.getLast().getId())
         .build();
 
@@ -247,7 +249,7 @@ public class TransactionPaymentRepositoryTest {
 
         Slice<TransactionPayment> transactionPayments = transactionPaymentRepository.findAll(specification, pageable);
         assertEquals(1, transactionPayments.getNumberOfElements());
-        assertEquals(2100L, transactionPayments.getContent().getFirst().getTotalPayment());
+        assertTrue(BigDecimal.valueOf(2100L).compareTo(transactionPayments.getContent().getFirst().getTotalPayment()) == 0);
     }
 
 }

@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Employee;
 import lumi.insert.app.core.entity.Memo;
@@ -32,7 +33,7 @@ import lumi.insert.app.core.repository.MemoViewRepository;
 @Transactional 
 @ActiveProfiles("test")
 @Import({AuditorAwareImpl.class})
-public class MemoViewRepositoryTest {
+public class MemoViewRepositoryTest  extends TestContainerTest {
     
     @Autowired
     MemoRepository memoRepository;

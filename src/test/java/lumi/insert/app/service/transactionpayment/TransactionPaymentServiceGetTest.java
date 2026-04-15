@@ -2,10 +2,12 @@ package lumi.insert.app.service.transactionpayment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,12 +33,12 @@ public class TransactionPaymentServiceGetTest extends BaseTransactionPaymentServ
     @Test
     @DisplayName("Should return TransactionPaymentResponce when transaction payment found")
     public void getTransactionPayment_validId_returnTransactionPaymentDTO(){
-        setupTransactionPayment.setTotalPayment(1000L);
+        setupTransactionPayment.setTotalPayment(BigDecimal.valueOf(1000L));
         when(transactionPaymentRepositoryMock.findById(setupTransactionPayment.getId())).thenReturn(Optional.of(setupTransactionPayment));
 
         TransactionPaymentResponse result = transactionPaymentServiceMock.getTransactionPayment(setupTransactionPayment.getId());
         assertEquals(setupTransactionPayment.getId(), result.id());
-        assertEquals(1000L, result.totalPayment());
+        assertTrue(BigDecimal.valueOf(1000L).compareTo(result.totalPayment()) == 0);
     }
 
     @Test
@@ -50,20 +52,20 @@ public class TransactionPaymentServiceGetTest extends BaseTransactionPaymentServ
     @Test
     @DisplayName("Should return Slice of TransactionPaymentResponce when transaction payment with containing trx id found")
     public void getTransactionPaymentByTrxId_validTrxId_returnSliceTransactionPaymentDTO(){
-        setupTransactionPayment.setTotalPayment(1000L);
+        setupTransactionPayment.setTotalPayment(BigDecimal.valueOf(1000L));
         Slice<TransactionPayment> slices = new SliceImpl<>(List.of(setupTransactionPayment));
         when(transactionPaymentRepositoryMock.findAllByTransactionId(eq(setupTransactionPayment.getId()), any())).thenReturn(slices);
 
         Slice<TransactionPaymentResponse> result = transactionPaymentServiceMock.getTransactionPaymentsByTransactionId(setupTransactionPayment.getId(), PaginationRequest.builder().build());
         assertEquals(setupTransactionPayment.getId(), result.getContent().getFirst().id());
-        assertEquals(1000L, result.getContent().getFirst().totalPayment());
+        assertTrue(BigDecimal.valueOf(1000L).compareTo(result.getContent().getFirst().totalPayment()) == 0);
         assertEquals(1, result.getNumberOfElements());
     }
 
     @Test
     @DisplayName("Should return Slice of TransactionPaymentResponce when transaction payment with containing trx id found")
     public void getTransactionPaymentsByRequest_validTrxId_returnSliceTransactionPaymentDTO(){
-        setupTransactionPayment.setTotalPayment(1000L);
+        setupTransactionPayment.setTotalPayment(BigDecimal.valueOf(1000L));
         Page<TransactionPayment> slices = new PageImpl<TransactionPayment>((List.of(setupTransactionPayment)));
         when(jpaSpecGenerator.pageable(any())).thenReturn(PageRequest.of(0, 10));
         when(jpaSpecGenerator.transactionPaymentSpecification(any())).thenReturn(Specification.anyOf(List.of()));
@@ -71,7 +73,7 @@ public class TransactionPaymentServiceGetTest extends BaseTransactionPaymentServ
 
         Slice<TransactionPaymentResponse> result = transactionPaymentServiceMock.getTransactionPaymentsByRequests(TransactionPaymentGetByFilter.builder().build());
         assertEquals(setupTransactionPayment.getId(), result.getContent().getFirst().id());
-        assertEquals(1000L, result.getContent().getFirst().totalPayment());
+        assertTrue(BigDecimal.valueOf(1000L).compareTo(result.getContent().getFirst().totalPayment()) == 0);
         assertEquals(1, result.getNumberOfElements());
     }
 }

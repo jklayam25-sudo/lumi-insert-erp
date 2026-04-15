@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class StockCardCreateControllerTest extends BaseStockCardControllerTest{
@@ -40,7 +41,7 @@ public class StockCardCreateControllerTest extends BaseStockCardControllerTest{
         .andExpect(jsonPath("$.data.productId").value(stockCardResponse.productId()))
         .andExpect(jsonPath("$.data.id").value(stockCardResponse.id().toString()))
         .andExpect(jsonPath("$.errors").isEmpty());
-        verify(stockCardService, times(1)).createStockCard(argThat(arg -> arg.getQuantity() == -5L && arg.getType().equals("CUSTOMER_OUT")));
+        verify(stockCardService, times(1)).createStockCard(argThat(arg -> arg.getQuantity().compareTo(BigDecimal.valueOf(-5L)) == 0 && arg.getType().equals("CUSTOMER_OUT")));
     }
 
     @Test

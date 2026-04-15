@@ -1,5 +1,7 @@
 package lumi.insert.app.service.stockcard;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -49,8 +51,8 @@ public abstract class BaseStockCardServiceTest {
         setupProduct = Product.builder()
                 .id(999L)
                 .name("Test product")
-                .stockQuantity(10L)
-                .basePrice(19000L)
+                .stockQuantity(BigDecimal.valueOf(10L))
+                .basePrice(BigDecimal.valueOf(19000L))
                 .build();
 
         setupTransactionItem = TransactionItem.builder()

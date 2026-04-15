@@ -8,6 +8,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,7 +33,7 @@ public class SupplyPaymentCreateRequest {
     @NotNull(message = "totalPayment must not be null")
     @Min(value = 1, message = "totalPayment minimal value is 1")
     @Schema(description = "Payment amount", example = "500000")
-    Long totalPayment;
+    BigDecimal totalPayment;
 
     @NotNull(message = "files must not be null")
     @Schema(description = "File(image) to be store")

@@ -24,7 +24,8 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder; 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -47,6 +48,7 @@ import lumi.insert.app.service.StorageService;
 import lumi.insert.app.service.implement.MailSenderServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 public class MessageConsumerTest {
     
     @Mock

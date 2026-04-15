@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List; 
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Product;
 import lumi.insert.app.core.entity.StockCard;
@@ -41,7 +43,7 @@ import lumi.insert.app.utils.generator.JpaSpecGenerator;
 @Import({JpaSpecGenerator.class, AuditorAwareImpl.class})
 @ActiveProfiles("test")
 
-public class StockCardRepositoryTest {
+public class StockCardRepositoryTest  extends TestContainerTest {
     
     @Autowired
     StockCardRepository stockCardRepository;
@@ -68,7 +70,7 @@ public class StockCardRepositoryTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(employeeLogin, null, null);
         SecurityContextHolder.getContext().setAuthentication(auth);
         
-        product = productRepository.saveAndFlush(Product.builder().name("Shoes").basePrice(1000L).sellPrice(1100L).stockQuantity(10L).build());
+        product = productRepository.saveAndFlush(Product.builder().name("Shoes").basePrice(BigDecimal.valueOf(1000L)).sellPrice(BigDecimal.valueOf(1100L)).stockQuantity(BigDecimal.valueOf(10L)).build());
     }
 
     @Test
@@ -78,12 +80,12 @@ public class StockCardRepositoryTest {
         .referenceId(UuidCreator.getTimeOrderedEpochFast())
         .product(product)
         .productName(product.getName())
-        .quantity(-5L)
-        .oldStock(10L)
-        .newStock(5L)
+        .quantity(BigDecimal.valueOf(-5L))
+        .oldStock(BigDecimal.valueOf(10L))
+        .newStock(BigDecimal.valueOf(5L))
         .type(StockMove.SALE)
-        .oldPrice(1000L)
-        .newPrice(1000L)
+        .oldPrice(BigDecimal.valueOf(1000L))
+        .newPrice(BigDecimal.valueOf(1000L))
         .build();
 
         StockCard stockCard2 = StockCard.builder()
@@ -91,12 +93,12 @@ public class StockCardRepositoryTest {
         .referenceId(UuidCreator.getTimeOrderedEpochFast())
         .product(product)
         .productName(product.getName())
-        .quantity(-5L)
-        .oldStock(10L)
-        .newStock(5L)
+        .quantity(BigDecimal.valueOf(-5L))
+        .oldStock(BigDecimal.valueOf(10L))
+        .newStock(BigDecimal.valueOf(5L))
         .type(StockMove.SALE)
-        .oldPrice(1000L)
-        .newPrice(1000L)
+        .oldPrice(BigDecimal.valueOf(1000L))
+        .newPrice(BigDecimal.valueOf(1000L))
         .build();
 
         stockCardRepository.saveAndFlush(stockCard1);
@@ -114,11 +116,12 @@ public class StockCardRepositoryTest {
         .referenceId(UuidCreator.getTimeOrderedEpochFast())
         .product(product)
         .productName(product.getName())
-        .quantity(-5L)
-        .oldStock(10L)
-        .newStock(5L)
+        .quantity(BigDecimal.valueOf(-5L))
+        .oldStock(BigDecimal.valueOf(10L))
+        .newStock(BigDecimal.valueOf(5L))
         .type(StockMove.SALE)
-        .oldPrice(1000L).newPrice(1000L)
+        .oldPrice(BigDecimal.valueOf(1000L))
+        .newPrice(BigDecimal.valueOf(1000L))
         .build();
 
         StockCard stockCard2 = StockCard.builder()
@@ -126,12 +129,12 @@ public class StockCardRepositoryTest {
         .referenceId(UuidCreator.getTimeOrderedEpochFast())
         .product(product)
         .productName(product.getName())
-        .quantity(-5L)
-        .oldStock(10L)
-        .newStock(5L)
+        .quantity(BigDecimal.valueOf(-5L))
+        .oldStock(BigDecimal.valueOf(10L))
+        .newStock(BigDecimal.valueOf(5L))
         .type(StockMove.SALE)
-        .oldPrice(1000L)
-        .newPrice(1000L)
+        .oldPrice(BigDecimal.valueOf(1000L))
+        .newPrice(BigDecimal.valueOf(1000L))
         .build();
 
         StockCard saveAndFlush = stockCardRepository.saveAndFlush(stockCard1);
@@ -149,12 +152,12 @@ public class StockCardRepositoryTest {
         .referenceId(UuidCreator.getTimeOrderedEpochFast())
         .product(product)
         .productName(product.getName())
-        .quantity(-5L)
-        .oldStock(10L)
-        .newStock(5L)
+        .quantity(BigDecimal.valueOf(-5L))
+        .oldStock(BigDecimal.valueOf(10L))
+        .newStock(BigDecimal.valueOf(5L))
         .type(StockMove.PURCHASE)
-        .oldPrice(1000L)
-        .newPrice(1000L)
+        .oldPrice(BigDecimal.valueOf(1000L))
+        .newPrice(BigDecimal.valueOf(1000L))
         .build();
 
         StockCard stockCard2 = StockCard.builder()
@@ -162,12 +165,12 @@ public class StockCardRepositoryTest {
         .referenceId(UuidCreator.getTimeOrderedEpochFast())
         .product(product)
         .productName(product.getName())
-        .quantity(-5L)
-        .oldStock(10L)
-        .newStock(5L)
+        .quantity(BigDecimal.valueOf(-5L))
+        .oldStock(BigDecimal.valueOf(10L))
+        .newStock(BigDecimal.valueOf(5L))
         .type(StockMove.SALE)
-        .oldPrice(1000L)
-        .newPrice(1000L)
+        .oldPrice(BigDecimal.valueOf(1000L))
+        .newPrice(BigDecimal.valueOf(1000L))
         .build();
 
         List<StockCard> saveAllAndFlush = stockCardRepository.saveAllAndFlush(List.of(stockCard1, stockCard2));;

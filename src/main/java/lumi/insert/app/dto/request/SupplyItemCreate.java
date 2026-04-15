@@ -1,5 +1,7 @@
 package lumi.insert.app.dto.request;
 
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -21,12 +23,12 @@ public class SupplyItemCreate {
     @NotNull(message = "price cannot be empty")
     @Min(value = 0, message = "price cannot below 0")
     @Schema(description = "Base price from supplier", example = "500")
-    private Long price;
+    private BigDecimal price;
 
     @NotNull(message = "quantity cannot be empty")
     @Min(value = 0, message = "quantity cannot below 0")
     @Schema(description = "Quantity of the product", example = "5")
-    private Long quantity;
+    private BigDecimal quantity;
 
     private String description;
 }

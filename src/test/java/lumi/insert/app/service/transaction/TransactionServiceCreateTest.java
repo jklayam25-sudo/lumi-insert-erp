@@ -3,11 +3,13 @@ package lumi.insert.app.service.transaction;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 
@@ -37,7 +39,7 @@ public class TransactionServiceCreateTest extends BaseTransactionServiceTest{
         TransactionResponse transaction = transactionServiceMock.createTransaction(TransactionCreateRequest.builder().customerId(customer.getId()).build());
  
         assertNotNull(transaction.invoiceId());
-        assertEquals(0, transaction.grandTotal());
+        assertTrue(BigDecimal.ZERO.compareTo(transaction.grandTotal()) == 0);
         assertEquals(TransactionStatus.PENDING, transaction.status());
     }
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +27,10 @@ public class ProductServiceEditTest extends BaseProductServiceTest {
 
         Product mockProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         Product savedProduct = productRepository.save(mockProduct);
@@ -37,18 +38,18 @@ public class ProductServiceEditTest extends BaseProductServiceTest {
         ProductUpdateRequest productEditRequest = ProductUpdateRequest.builder()
         .id(savedProduct.getId())
         .name("NIKE Jordan Low 4")
-        .basePrice(11000L)
-        .sellPrice(13000L)
-        .stockMinimum(2L)
+        .basePrice(BigDecimal.valueOf(11000L))
+        .sellPrice(BigDecimal.valueOf(13000L))
+        .stockMinimum(BigDecimal.valueOf(2L))
         .build();
 
         ProductResponse editedProduct = productService.updateProduct(productEditRequest);
 
         assertEquals("NIKE Jordan Low 4", editedProduct.name());
-        assertEquals(11000L, editedProduct.basePrice());
-        assertEquals(13000L, editedProduct.sellPrice());
-        assertEquals(50L, editedProduct.stockQuantity());
-        assertEquals(2L, editedProduct.stockMinimum());
+        assertTrue(BigDecimal.valueOf(11000L).compareTo(editedProduct.basePrice()) == 0);
+        assertTrue(BigDecimal.valueOf(13000L).compareTo(editedProduct.sellPrice()) == 0);
+        assertTrue(BigDecimal.valueOf(50L).compareTo(editedProduct.stockQuantity()) == 0);
+        assertTrue(BigDecimal.valueOf(2L).compareTo(editedProduct.stockMinimum()) == 0);
         assertEquals(savedProduct.getId(), editedProduct.id());
     }
 
@@ -59,9 +60,9 @@ public class ProductServiceEditTest extends BaseProductServiceTest {
         ProductUpdateRequest productEditRequest = ProductUpdateRequest.builder()
         .id(1L)
         .name("NIKE Jordan Low 4")
-        .basePrice(11000L)
-        .sellPrice(13000L)
-        .stockMinimum(2L)
+        .basePrice(BigDecimal.valueOf(11000L))
+        .sellPrice(BigDecimal.valueOf(13000L))
+        .stockMinimum(BigDecimal.valueOf(2L))
         .build();
 
         assertThrows(NotFoundEntityException.class, () -> productServiceMock.updateProduct(productEditRequest));
@@ -80,10 +81,10 @@ public class ProductServiceEditTest extends BaseProductServiceTest {
 
         Product mockProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         Product savedProduct = productRepository.save(mockProduct);
@@ -115,10 +116,10 @@ public class ProductServiceEditTest extends BaseProductServiceTest {
 
         Product mockProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .category(savedCategory)
         .build();
 
@@ -146,10 +147,10 @@ public class ProductServiceEditTest extends BaseProductServiceTest {
 
         Product mockProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .category(savedCategory)
         .isActive(false)
         .build();

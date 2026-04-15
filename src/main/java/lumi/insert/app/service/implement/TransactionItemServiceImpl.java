@@ -1,6 +1,7 @@
 package lumi.insert.app.service.implement;
  
  
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -82,7 +83,7 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         Product product = productRepository.findById(request.getProductId())
             .orElseThrow(() -> new NotFoundEntityException("Product with ID " + request.getProductId() + " was not found"));
 
-        if(product.getStockQuantity() < request.getQuantity()) {
+        if(product.getStockQuantity().compareTo(request.getQuantity()) < 0) {
             log.debug("Transaction item creation failed due to insufficient stock productId={} requested={} available={}", request.getProductId(), request.getQuantity(), product.getStockQuantity());
             throw new TransactionValidationException("Product stocks with ID " + request.getProductId() + " doesn't meet buyer quantity, stock left: " + product.getStockQuantity());
         }
@@ -99,9 +100,11 @@ public class TransactionItemServiceImpl implements TransactionItemService{
 
         transactionItemRepository.save(transactionItem);
         
+        BigDecimal addedSubtotal = transactionItem.getQuantity().multiply(transactionItem.getPrice());
+
         transaction.setTotalItems(transaction.getTotalItems() + 1);
-        transaction.setSubTotal(transaction.getSubTotal() + (transactionItem.getQuantity() * transactionItem.getPrice()));
-        transaction.setGrandTotal(transaction.getSubTotal() - transaction.getTotalDiscount() - transaction.getTotalFee());
+        transaction.setSubTotal(transaction.getSubTotal().add(addedSubtotal));
+        transaction.setGrandTotal(transaction.getSubTotal().subtract(transaction.getTotalDiscount()).add(transaction.getTotalFee()));
         
         TransactionItemResponse transactionItemResponseDto = allTransactionMapper.createTransactionItemResponseDto(transactionItem);
         return transactionItemResponseDto;
@@ -124,10 +127,11 @@ public class TransactionItemServiceImpl implements TransactionItemService{
             log.debug("Delete failed, transaction not pending id={} status={}", transaction.getId(), transaction.getStatus());
             throw new ForbiddenRequestException("Unable to delete the item because Transaction Status is not PENDING(CART)");
         }
+        BigDecimal deletedSubtotal = transactionItem.getQuantity().multiply(transactionItem.getPrice());
 
         transaction.setTotalItems(transaction.getTotalItems() - 1);
-        transaction.setSubTotal(transaction.getSubTotal() - (transactionItem.getQuantity() * transactionItem.getPrice()));
-        transaction.setGrandTotal(transaction.getSubTotal() - transaction.getTotalDiscount() - transaction.getTotalFee());
+        transaction.setSubTotal(transaction.getSubTotal().subtract(deletedSubtotal));
+        transaction.setGrandTotal(transaction.getGrandTotal().subtract(deletedSubtotal));
 
         transactionItemRepository.delete(transactionItem);
         TransactionItemDelete transactionItemDeleteResponseDto = allTransactionMapper.createTransactionItemDeleteResponseDto(transactionItem);
@@ -140,7 +144,7 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         action = ActivityAction.TRANSACTION_ITEM_UPDATED,
         actionMessage = "Item quantity updated"
     )
-    public TransactionItemResponse updateTransactionItemQuantity(UUID id, Long quantity) {
+    public TransactionItemResponse updateTransactionItemQuantity(UUID id, BigDecimal quantity) {
         log.info("Updating transaction item quantity id={} newQuantity={}", id, quantity);
          TransactionItem transactionItem = transactionItemRepository.findById(id)
             .orElseThrow(() -> new NotFoundEntityException("Transaction Items with ID " + id + " was not found"));
@@ -151,18 +155,20 @@ public class TransactionItemServiceImpl implements TransactionItemService{
 
         Product product = transactionItem.getProduct();
 
-        if(product.getStockQuantity() < quantity) {
+        if(product.getStockQuantity().compareTo(quantity) < 0) {
             log.debug("Update failed, insufficient stock productId={} requested={} available={}", product.getId(), quantity, product.getStockQuantity());
             throw new TransactionValidationException("Product stocks with ID " + product.getId() + " doesn't meet buyer quantity, stock left: " + product.getStockQuantity());
         }
 
-        Long transactionItemOldSubTotal = transactionItem.getQuantity() * transactionItem.getPrice();
+        BigDecimal transactionItemOldSubTotal = transactionItem.getQuantity().multiply(transactionItem.getPrice());
 
         transactionItem.setPrice(product.getSellPrice());
         transactionItem.setQuantity(quantity);
 
-        transaction.setSubTotal((transaction.getSubTotal() - transactionItemOldSubTotal) + (transactionItem.getQuantity() * transactionItem.getPrice()));
-        transaction.setGrandTotal(transaction.getSubTotal() - transaction.getTotalDiscount() + transaction.getTotalFee());
+        BigDecimal transactionItemNewSubTotal = transactionItem.getQuantity().multiply(transactionItem.getPrice());
+
+        transaction.setSubTotal(transaction.getSubTotal().subtract(transactionItemOldSubTotal).add(transactionItemNewSubTotal));
+        transaction.setGrandTotal(transaction.getGrandTotal().subtract(transactionItemOldSubTotal).add(transactionItemNewSubTotal));
 
         TransactionItemResponse transactionItemResponseDto = allTransactionMapper.createTransactionItemResponseDto(transactionItem);
         log.info("Transaction item quantity updated id={} newQuantity={}", id, quantity);
@@ -205,9 +211,11 @@ public class TransactionItemServiceImpl implements TransactionItemService{
             throw new NotFoundEntityException("Unable to find any transaction item with product id " + request.getProductId()); 
         }
 
-        long ttlRefundLeft = itemsWithMatchProduct.stream().mapToLong(item -> item.getQuantity()).sum();
+        BigDecimal ttlRefundLeft = itemsWithMatchProduct.stream()
+            .map(item -> item.getQuantity())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if(ttlRefundLeft < request.getQuantity()) {
+        if(ttlRefundLeft.compareTo(request.getQuantity()) < 0) {
             log.debug("Refund quantity exceeds purchased quantity transactionId={} productId={} requested={} available={}", id, request.getProductId(), request.getQuantity(), ttlRefundLeft);
             throw new ForbiddenRequestException("Refund quantity is more than actual bought, use valid quantity");
         }
@@ -220,32 +228,32 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         Product product = baseTransactionItem.getProduct();;
         Customer customer = transaction.getCustomer(); 
 
-        Long oldStock = product.getStockQuantity();
+        BigDecimal oldStock = product.getStockQuantity();
 
-        product.setStockQuantity(product.getStockQuantity() + request.getQuantity());
+        product.setStockQuantity(product.getStockQuantity().add(request.getQuantity()));
 
-        Long customerRefund = request.getQuantity() * baseTransactionItem.getPrice();
+        BigDecimal customerRefund = request.getQuantity().multiply(baseTransactionItem.getPrice());
 
-        if(transaction.getTotalUnpaid() - customerRefund < 0){
-            customer.setTotalUnpaid(customer.getTotalUnpaid() - transaction.getTotalUnpaid());
-            Long balanceLeft = customerRefund - transaction.getTotalUnpaid();
-            customer.setTotalUnrefunded(customer.getTotalUnrefunded() + balanceLeft);
-            customer.setTotalPaid(customer.getTotalPaid() - balanceLeft);
+        if(transaction.getTotalUnpaid().subtract(customerRefund).compareTo(BigDecimal.ZERO) < 0){
+            customer.setTotalUnpaid(customer.getTotalUnpaid().subtract(transaction.getTotalUnpaid()));
+            BigDecimal balanceLeft = customerRefund.subtract(transaction.getTotalUnpaid());
+            customer.setTotalUnrefunded(customer.getTotalUnrefunded().add(balanceLeft));
+            customer.setTotalPaid(customer.getTotalPaid().subtract(balanceLeft));
 
-            transaction.setTotalUnrefunded(transaction.getTotalUnrefunded() + balanceLeft);
-            transaction.setTotalUnpaid(0L);
-            transaction.setTotalPaid(transaction.getTotalPaid() - balanceLeft);
+            transaction.setTotalUnrefunded(transaction.getTotalUnrefunded().add(balanceLeft));
+            transaction.setTotalUnpaid(BigDecimal.ZERO);
+            transaction.setTotalPaid(transaction.getTotalPaid().subtract(balanceLeft));
             transaction.setStatus(TransactionStatus.PROCESS);
 
         } else {
-            transaction.setTotalUnpaid(transaction.getTotalUnpaid() - customerRefund);
-            customer.setTotalUnpaid(customer.getTotalUnpaid() - customerRefund);
+            transaction.setTotalUnpaid(transaction.getTotalUnpaid().subtract(customerRefund));
+            customer.setTotalUnpaid(customer.getTotalUnpaid().subtract(customerRefund));
         }
 
         TransactionItem refundTransactionItem = TransactionItem.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
             .price(baseTransactionItem.getPrice())
-            .quantity(-request.getQuantity())
+            .quantity(request.getQuantity().negate())
             .description("REFUND: " + product.getName())
             .product(product)
             .transaction(transaction)

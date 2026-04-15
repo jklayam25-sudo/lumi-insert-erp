@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -40,12 +41,12 @@ public class StockCardGetServiceTest extends BaseStockCardServiceTest{
         .referenceId(setupTransactionItem.getId())
         .product(setupProduct)
         .productName(setupProduct.getName())
-        .quantity(-5L)
-        .oldStock(10L)
-        .newStock(5L)
+        .quantity(BigDecimal.valueOf(-5L))
+        .oldStock(BigDecimal.valueOf(10L))
+        .newStock(BigDecimal.valueOf(5L))
         .type(StockMove.SALE)
-        .oldPrice(1000L)
-        .newPrice(1000L)
+        .oldPrice(BigDecimal.valueOf(1000L))
+        .newPrice(BigDecimal.valueOf(1000L))
         .build();
 
         when(stockCardRepository.findById(any(UUID.class))).thenReturn(Optional.of(stockCard));
@@ -96,12 +97,12 @@ public class StockCardGetServiceTest extends BaseStockCardServiceTest{
         .referenceId(setupTransactionItem.getId())
         .product(setupProduct)
         .productName(setupProduct.getName())
-        .quantity(-5L)
-        .oldStock(10L)
-        .newStock(5L)
+        .quantity(BigDecimal.valueOf(-5L))
+        .oldStock(BigDecimal.valueOf(10L))
+        .newStock(BigDecimal.valueOf(5L))
         .type(StockMove.SALE)
-        .oldPrice(1000L)
-        .newPrice(1000L)
+        .oldPrice(BigDecimal.valueOf(1000L))
+        .newPrice(BigDecimal.valueOf(1000L))
         .build();
 
         Page<StockCard> slices = new PageImpl<>(List.of(stockCard));

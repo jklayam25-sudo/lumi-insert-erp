@@ -1,11 +1,14 @@
 package lumi.insert.app.service.transactionitem;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -22,6 +25,7 @@ import lumi.insert.app.service.implement.TransactionItemServiceImpl;
 import lumi.insert.app.mapper.AllTransactionMapperImpl;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 public abstract class BaseTransactionItemServiceTest {
     
     @InjectMocks
@@ -54,8 +58,8 @@ public abstract class BaseTransactionItemServiceTest {
     void setUp(){
         setupProduct = Product.builder()
         .id(999L)
-        .stockQuantity(10L)
-        .sellPrice(19000L)
+        .stockQuantity(BigDecimal.valueOf(10L))
+        .sellPrice(BigDecimal.valueOf(19000L))
         .build();
 
         setupTransaction = Transaction.builder()

@@ -1,8 +1,10 @@
 package lumi.insert.app.core.repository.projection;
 
+import java.math.BigDecimal;
+
 public record ProductOutOfStock(
     Long id,
     String name,
-    Long stockQuantity,
-    Long stockMinimum
+    BigDecimal stockQuantity,
+    BigDecimal stockMinimum
 ) {}

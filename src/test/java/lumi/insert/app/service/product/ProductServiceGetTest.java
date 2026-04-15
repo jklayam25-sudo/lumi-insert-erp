@@ -12,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional; 
@@ -40,10 +41,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
     @Test
     @DisplayName("Should return ProductStockResponse when getting stock with valid ID")
     public void getProductStock_validId_returnProductStockResponse(){
-        when(productRepositoryMock.getStockById(1L)).thenReturn(Optional.of(50L));
+        when(productRepositoryMock.getStockById(1L)).thenReturn(Optional.of(BigDecimal.valueOf(50L)));
         ProductStockResponse productStock = productServiceMock.getProductStock(1L);
 
-        assertEquals(50L, productStock.stockQuantity());
+        assertTrue(BigDecimal.valueOf(50L).compareTo(productStock.stockQuantity()) == 0);
         assertEquals(1L, productStock.id());
 
         verify(productRepositoryMock, times(1)).getStockById(1L);
@@ -117,10 +118,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
     public void getProductById_validIdNoCategory_returnProductResponseDTO() {
         Product mockProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .id(1L)
         .build();
 
@@ -130,10 +131,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
         verify(productMapper, times(1)).createDtoResponseFromProduct(mockProduct);
 
         assertEquals("NIKE Jordan Low 3", productById.name());
-        assertEquals(10000L, productById.basePrice());
-        assertEquals(12000L, productById.sellPrice());
-        assertEquals(50L, productById.stockQuantity());
-        assertEquals(5L, productById.stockMinimum());
+        assertTrue(BigDecimal.valueOf(10000L).compareTo(productById.basePrice()) == 0);
+        assertTrue(BigDecimal.valueOf(12000L).compareTo(productById.sellPrice()) == 0);
+        assertTrue(BigDecimal.valueOf(50L).compareTo(productById.stockQuantity()) == 0);
+        assertTrue(BigDecimal.valueOf(5L).compareTo(productById.stockMinimum()) == 0);
         assertEquals(1L, productById.id());
         assertNull(productById.category());
     }
@@ -148,10 +149,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
 
         Product mockProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .category(mockCategory)
         .id(1L)
         .build();
@@ -163,10 +164,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
 
         verify(productMapper, times(1)).createDtoResponseFromProduct(mockProduct);
         assertEquals("NIKE Jordan Low 3", productById.name());
-        assertEquals(10000L, productById.basePrice());
-        assertEquals(12000L, productById.sellPrice());
-        assertEquals(50L, productById.stockQuantity());
-        assertEquals(5L, productById.stockMinimum());
+        assertTrue(BigDecimal.valueOf(10000L).compareTo(productById.basePrice()) == 0);
+        assertTrue(BigDecimal.valueOf(12000L).compareTo(productById.sellPrice()) == 0);
+        assertTrue(BigDecimal.valueOf(50L).compareTo(productById.stockQuantity()) == 0);
+        assertTrue(BigDecimal.valueOf(5L).compareTo(productById.stockMinimum()) == 0);
         assertEquals(1L, productById.id());
         assertEquals(2L, productById.category().id());
         assertEquals("Shoes", productById.category().name());
@@ -190,10 +191,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
             Product dumpProduct = Product.builder()
             .id(ids)
             .name("Product " + i)
-            .basePrice(1000L * i)
-            .sellPrice(1200L * i)
-            .stockQuantity(10L * i)
-            .stockMinimum(1L * i)
+            .basePrice(BigDecimal.valueOf(1000L * i))
+            .sellPrice(BigDecimal.valueOf(1200L * i))
+            .stockQuantity(BigDecimal.valueOf(10L * i))
+            .stockMinimum(BigDecimal.valueOf(1L * i))
             .build();
 
             products.add(dumpProduct);
@@ -233,10 +234,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
         for ( int i = 1; i <= 12; i++ ) {
             Product dumpProduct = Product.builder()
             .name("Product " + i)
-            .basePrice(1000L * i)
-            .sellPrice(1200L * i)
-            .stockQuantity(10L * i)
-            .stockMinimum(1L * i)
+            .basePrice(BigDecimal.valueOf(1000L * i))
+            .sellPrice(BigDecimal.valueOf(1200L * i))
+            .stockQuantity(BigDecimal.valueOf(10L * i))
+            .stockMinimum(BigDecimal.valueOf(1L * i))
             .build();
 
             productRepository.save(dumpProduct);
@@ -250,10 +251,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
 
          Product dumpProduct = Product.builder()
             .name("Prodoteus XIJ ")
-            .basePrice(5999L)
-            .sellPrice(5999L)
-            .stockQuantity(10L)
-            .stockMinimum(0L)
+            .basePrice(BigDecimal.valueOf(5999L))
+            .sellPrice(BigDecimal.valueOf(5999L))
+            .stockQuantity(BigDecimal.valueOf(10L))
+            .stockMinimum(BigDecimal.valueOf(0L))
             .category(saveAndFlush)
             .build();
 
@@ -261,10 +262,10 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
 
         Product dumpProductInactive = Product.builder()
             .name("Product XIJ ")
-            .basePrice(5999L)
-            .sellPrice(5999L)
-            .stockQuantity(10L)
-            .stockMinimum(0L)
+            .basePrice(BigDecimal.valueOf(5999L))
+            .sellPrice(BigDecimal.valueOf(5999L))
+            .stockQuantity(BigDecimal.valueOf(10L))
+            .stockMinimum(BigDecimal.valueOf(0L))
             .isActive(true)
             .build();
 
@@ -272,8 +273,8 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
 
         ProductGetByFilter productGetByFilter = ProductGetByFilter.builder()
         .name("prod")
-        .minPrice(2000L)
-        .maxPrice(6000L)
+        .minPrice(BigDecimal.valueOf(2000L))
+        .maxPrice(BigDecimal.valueOf(6000L))
         .page(0)
         .size(5)
         .sortBy("sellPrice")
@@ -285,8 +286,8 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
         Sort sort = Sort.by("sellPrice").ascending();
         assertEquals(1, productsByRequests.getNumberOfElements());
         assertEquals(sort, productsByRequests.getSort());
-        assertEquals(5999L, productsByRequests.getContent().getFirst().sellPrice());
-        assertEquals(5999L, productsByRequests.getContent().getLast().sellPrice());
+        assertTrue(BigDecimal.valueOf(5999L).compareTo(productsByRequests.getContent().getFirst().sellPrice()) == 0);
+        assertTrue(BigDecimal.valueOf(5999L).compareTo(productsByRequests.getContent().getLast().sellPrice()) == 0);
     }
 
     @Test
@@ -296,8 +297,8 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
 
         ProductGetByFilter productGetByFilter = ProductGetByFilter.builder()
         .name("prod")
-        .minPrice(2000L)
-        .maxPrice(6000L)
+        .minPrice(BigDecimal.valueOf(2000L))
+        .maxPrice(BigDecimal.valueOf(6000L))
         .page(0)
         .size(5)
         .sortBy("sellPrice")
@@ -311,7 +312,7 @@ public class ProductServiceGetTest extends BaseProductServiceTest{
     @Test
     @DisplayName("Should return realtime List of productOutOfStock")
     public void getOutOfStockProducts_foundData_returnListProjection(){
-        when(productRepositoryMock.findAllOutOfStockProduct()).thenReturn(List.of(new ProductOutOfStock(1L, "Shoes", 0L , 0L)));
+        when(productRepositoryMock.findAllOutOfStockProduct()).thenReturn(List.of(new ProductOutOfStock(1L, "Shoes", BigDecimal.ZERO , BigDecimal.ZERO)));
 
         List<ProductOutOfStock> outOfStockProducts = productServiceMock.getOutOfStockProducts();
         assertEquals(1, outOfStockProducts.size());

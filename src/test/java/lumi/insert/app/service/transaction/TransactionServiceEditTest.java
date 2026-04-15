@@ -2,11 +2,13 @@ package lumi.insert.app.service.transaction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyIterable;
 import static org.mockito.ArgumentMatchers.eq; 
 import static org.mockito.Mockito.when;
- 
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -100,14 +102,14 @@ public class TransactionServiceEditTest extends BaseTransactionServiceTest{
     @DisplayName("Should cancel and add product stock when cancelTrx complete")
     public void cancelTransaction_validRequest_returnDtoAndReverseProduct() {
         setupTransaction.setCustomer(setupCustomer);
-        setupProduct.setStockQuantity(1L);
-        setupProduct.setSellPrice(1000L);
+        setupProduct.setStockQuantity(BigDecimal.valueOf(1L));
+        setupProduct.setSellPrice(BigDecimal.valueOf(1000L));
 
         setupTransactionItem.setProduct(setupProduct);
-        setupTransactionItem.setQuantity(4L);
+        setupTransactionItem.setQuantity(BigDecimal.valueOf(4L));
         setupTransactionItem.setPrice(setupProduct.getSellPrice());
 
-        setupTransaction.setTotalPaid(4000L);
+        setupTransaction.setTotalPaid(BigDecimal.valueOf(4000L));
         setupTransaction.getTransactionItems().add(setupTransactionItem);
         setupTransaction.setStatus(TransactionStatus.COMPLETE);
 
@@ -117,53 +119,67 @@ public class TransactionServiceEditTest extends BaseTransactionServiceTest{
         when(stockCardRepositoryMock.saveAll(anyIterable())).thenAnswer(arg -> arg.getArgument(0));
 
         TransactionResponse cancelTransaction = transactionServiceMock.cancelTransaction(UuidCreator.getTimeOrderedEpochFast());
+        
         assertEquals(TransactionStatus.CANCELLED, cancelTransaction.status());
-        assertEquals(0L, cancelTransaction.totalPaid());
-        assertEquals(4000L, cancelTransaction.totalUnrefunded());
+        assertTrue(BigDecimal.valueOf(0L).compareTo(cancelTransaction.totalPaid()) == 0);
+        assertTrue(BigDecimal.valueOf(4000L).compareTo(cancelTransaction.totalUnrefunded()) == 0);
     }
 
     @Test
     @DisplayName("Should refresh and add calculate base on newer update")
     public void refreshTransaction_validRequest_returnDtoAndRefreshTransaction() {
-        setupProduct.setStockQuantity(3L);
-        setupProduct.setSellPrice(1000L);
+        setupProduct.setStockQuantity(BigDecimal.valueOf(3L));
+        setupProduct.setSellPrice(BigDecimal.valueOf(1000L));
 
         setupTransactionItem.setProduct(setupProduct);
-        setupTransactionItem.setQuantity(2L);
-        setupTransactionItem.setPrice(setupProduct.getSellPrice() - 200);
+        setupTransactionItem.setQuantity(BigDecimal.valueOf(2L));
+        // Using BigDecimal arithmetic for (price - 200)
+        setupTransactionItem.setPrice(setupProduct.getSellPrice().subtract(BigDecimal.valueOf(200L)));
 
-        setupTransaction.setGrandTotal(1600L);
+        setupTransaction.setGrandTotal(BigDecimal.valueOf(1600L));
         setupTransaction.getTransactionItems().add(setupTransactionItem);
         setupTransaction.setStatus(TransactionStatus.PENDING);
 
-        ProductRefreshProjection productRefreshProjection = new ProductRefreshProjection(setupProduct.getId(), setupProduct.getSellPrice(), setupProduct.getStockQuantity());
+        ProductRefreshProjection productRefreshProjection = new ProductRefreshProjection(
+            setupProduct.getId(), 
+            setupProduct.getSellPrice(), 
+            setupProduct.getStockQuantity()
+        );
+        
         when(productRepositoryMock.searchIdUpdatedAtMoreThan(eq(List.of(1L)), any())).thenReturn(List.of(productRefreshProjection));
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionResponse refreshTransaction = transactionServiceMock.refreshTransaction(UuidCreator.getTimeOrderedEpochFast()); 
-        assertEquals(2000L, refreshTransaction.grandTotal()); 
+        
+        assertTrue(BigDecimal.valueOf(2000L).compareTo(refreshTransaction.grandTotal()) == 0); 
     }
 
     @Test
     @DisplayName("Should refresh and add calculate base on newer update CASE: STOCK 0")
     public void refreshTransaction_outOfStock_returnDtoAndRefreshTransaction() {
-        setupProduct.setStockQuantity(0L);
-        setupProduct.setSellPrice(1000L);
+        setupProduct.setStockQuantity(BigDecimal.valueOf(0L));
+        setupProduct.setSellPrice(BigDecimal.valueOf(1000L));
 
         setupTransactionItem.setProduct(setupProduct);
-        setupTransactionItem.setQuantity(2L);
-        setupTransactionItem.setPrice(setupProduct.getSellPrice() - 200);
+        setupTransactionItem.setQuantity(BigDecimal.valueOf(2L));
+        setupTransactionItem.setPrice(setupProduct.getSellPrice().subtract(BigDecimal.valueOf(200L)));
 
-        setupTransaction.setGrandTotal(1600L);
+        setupTransaction.setGrandTotal(BigDecimal.valueOf(1600L));
         setupTransaction.getTransactionItems().add(setupTransactionItem);
         setupTransaction.setStatus(TransactionStatus.PENDING);
 
-        ProductRefreshProjection productRefreshProjection = new ProductRefreshProjection(setupProduct.getId(), setupProduct.getSellPrice(), setupProduct.getStockQuantity());
+        ProductRefreshProjection productRefreshProjection = new ProductRefreshProjection(
+            setupProduct.getId(), 
+            setupProduct.getSellPrice(), 
+            setupProduct.getStockQuantity()
+        );
+        
         when(productRepositoryMock.searchIdUpdatedAtMoreThan(eq(List.of(1L)), any())).thenReturn(List.of(productRefreshProjection));
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionResponse refreshTransaction = transactionServiceMock.refreshTransaction(UuidCreator.getTimeOrderedEpochFast()); 
-        assertEquals(0L, refreshTransaction.grandTotal()); 
+        
+        assertTrue(BigDecimal.valueOf(0L).compareTo(refreshTransaction.grandTotal()) == 0); 
         assertEquals("Product stock lesser than " + 2 + ", transaction quantity decreased to 0", refreshTransaction.messages().getFirst()); 
     }
 

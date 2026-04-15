@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayInputStream; 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class ProductControllerGetTest extends BaseProductControllerTest{
         ProductResponse productResponse = ProductResponse.builder()
         .id(1L)
         .name("ProductMock")
-        .basePrice(1000L)
+        .basePrice(BigDecimal.valueOf(1000L))
         .build();
 
         when(productService.getProductById(1L)).thenReturn(productResponse);
@@ -59,7 +60,7 @@ public class ProductControllerGetTest extends BaseProductControllerTest{
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.name").value(productResponse.name()))
-        .andExpect(jsonPath("$.data.basePrice").value(1000L));
+        .andExpect(jsonPath("$.data.basePrice").value(BigDecimal.valueOf(1000L)));
     }
 
     @Test
@@ -158,7 +159,7 @@ public class ProductControllerGetTest extends BaseProductControllerTest{
         assertEquals("Pro", value.getName());
         assertEquals(null, value.getCategoryId());
         assertEquals("sellPrice", value.getSortBy());
-        assertEquals(100000, value.getMaxPrice());
+        assertTrue(BigDecimal.valueOf(100000).compareTo(value.getMaxPrice()) == 0);
     }
 
     @Test
@@ -271,7 +272,7 @@ public class ProductControllerGetTest extends BaseProductControllerTest{
     public void getProductStockAPI_validRequest_return200StatusAndDtoStockResponse() throws Exception{
         ProductStockResponse productStockResponse = ProductStockResponse.builder()
         .id(1L)
-        .stockQuantity(100L)
+        .stockQuantity(BigDecimal.valueOf(100L))
         .build();
 
         when(productService.getProductStock(anyLong())).thenReturn(productStockResponse);
@@ -282,7 +283,7 @@ public class ProductControllerGetTest extends BaseProductControllerTest{
         )
         .andDo(print())
         .andExpect(status().isOk()) 
-        .andExpect(jsonPath("$.data.stockQuantity").value(100L))
+        .andExpect(jsonPath("$.data.stockQuantity").value(BigDecimal.valueOf(100L)))
         .andExpect(jsonPath("$.errors").isEmpty());
     }
 
@@ -320,7 +321,7 @@ public class ProductControllerGetTest extends BaseProductControllerTest{
     public void getProductsStatisticsAPI_validRequest_return200StatusAndPdf() throws Exception{
         ByteArrayInputStream bais = new ByteArrayInputStream("pdfBinary".getBytes());
 
-        TransactionItemStatisticResponse transactionItemStatisticResponse = TransactionItemStatisticResponse.builder().productRefunds(List.of(new ProductRefund("Shoes", 1L))).productSales(List.of()).build();
+        TransactionItemStatisticResponse transactionItemStatisticResponse = TransactionItemStatisticResponse.builder().productRefunds(List.of(new ProductRefund("Shoes", BigDecimal.valueOf(1L)))).productSales(List.of()).build();
 
         when(transactionItemService.getTransactionItemStats(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(transactionItemStatisticResponse);
         when(productService.getOutOfStockProducts()).thenReturn(List.of());

@@ -15,6 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.core.repository.CategoryRepository;
@@ -27,8 +28,8 @@ import lumi.insert.app.mapper.ProductMapperImpl;
 
 @SpringBootTest
 @Transactional
-@ExtendWith(MockitoExtension.class)
-public abstract class BaseProductServiceTest {
+@ExtendWith(MockitoExtension.class) 
+public abstract class BaseProductServiceTest extends TestContainerTest {
 
     @Autowired
     ProductRepository productRepository;
@@ -47,7 +48,7 @@ public abstract class BaseProductServiceTest {
 
     @Mock
     CategoryRepository categoryRepositoryMock;
-
+ 
     @Spy 
     ProductMapper productMapper = new ProductMapperImpl();
 

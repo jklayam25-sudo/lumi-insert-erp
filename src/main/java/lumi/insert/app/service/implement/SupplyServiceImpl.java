@@ -1,5 +1,7 @@
 package lumi.insert.app.service.implement;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +99,7 @@ public class SupplyServiceImpl implements SupplyService{
             throw new NotFoundEntityException("Product with id " + listOfProductId.toString() + " not found!");
         } 
 
-        Long subTotal = items.stream().mapToLong(item -> item.getPrice() * item.getQuantity()).sum();
+        BigDecimal subTotal = items.stream().map(item -> item.getPrice().multiply(item.getQuantity())).reduce(BigDecimal.ZERO, BigDecimal::add);
         log.debug("Supply subtotal calculated: {}", subTotal);
 
         Supply supply = Supply.builder()
@@ -108,8 +110,8 @@ public class SupplyServiceImpl implements SupplyService{
             .supplierName(supplier.getName())
             .totalItems(Long.valueOf(items.size()))
             .subTotal(subTotal)
-            .grandTotal(subTotal - request.getTotalDiscount() + request.getTotalFee())
-            .totalUnpaid(subTotal - request.getTotalDiscount() + request.getTotalFee())
+            .grandTotal(subTotal.subtract(request.getTotalDiscount()).add(request.getTotalFee()))
+            .totalUnpaid(subTotal.subtract(request.getTotalDiscount()).add(request.getTotalFee()))
             .totalFee(request.getTotalFee())
             .totalDiscount(request.getTotalDiscount())
             .build();
@@ -125,8 +127,8 @@ public class SupplyServiceImpl implements SupplyService{
         for (SupplyItemCreate item : items) {
             Product product = mappedProduct.get(item.getProductId());
             
-            Long oldPrice = product.getBasePrice();
-            Long oldStock = product.getStockQuantity();
+            BigDecimal oldPrice = product.getBasePrice();
+            BigDecimal oldStock = product.getStockQuantity();
 
             SupplyItem supplyItem = SupplyItem.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -139,8 +141,18 @@ public class SupplyServiceImpl implements SupplyService{
 
             itemsToAdd.add(supplyItem);
             
-            product.setBasePrice(((oldPrice * product.getStockQuantity()) + (supplyItem.getPrice() * supplyItem.getQuantity())) / (product.getStockQuantity() + supplyItem.getQuantity()));
-            product.setStockQuantity(product.getStockQuantity() + supplyItem.getQuantity());
+            BigDecimal oldSubTotal = oldPrice.multiply(oldStock);
+            BigDecimal supplySubTotal = supplyItem.getPrice().multiply(supplyItem.getQuantity());
+            BigDecimal newStock = product.getStockQuantity().add(supplyItem.getQuantity());
+
+            // set Product base price base on avg formula (total value from old stock + total value from supply divided by new stock)
+            product.setBasePrice( 
+                oldSubTotal
+                    .add(supplySubTotal)
+                    .divide(newStock, 4, RoundingMode.HALF_UP)
+            );
+
+            product.setStockQuantity(newStock);
 
             StockCard stockCard = StockCard.builder() 
                 .id(UuidCreator.getTimeOrderedEpochFast())
@@ -166,7 +178,7 @@ public class SupplyServiceImpl implements SupplyService{
         log.debug("Saved {} stock cards", stockCardsToAdd.size());
 
         supplier.addTransaction();
-        supplier.setTotalUnpaid(supplier.getTotalUnpaid() + savedSupply.getTotalUnpaid());
+        supplier.setTotalUnpaid(supplier.getTotalUnpaid().add(savedSupply.getTotalUnpaid()));
         SupplyResponse response = allSupplyMapper.createSimpleDTO(savedSupply);
         log.debug("Supply order created successfully: {}", response);
         return response;
@@ -205,10 +217,12 @@ public class SupplyServiceImpl implements SupplyService{
 
         List<SupplyItem> supplyItems = supply.getSupplyItems();
         
-        Map<Long, Long> listRefunded = supplyItems.stream()
-            .filter(item -> item.getQuantity() < 0)
+        Map<Long, BigDecimal> listRefunded = supplyItems.stream()
+            .filter(item -> item.getQuantity().compareTo(BigDecimal.ZERO) < 0)
             .collect(Collectors
-                .groupingBy(item -> item.getProduct().getId(), Collectors.summingLong(item -> item.getQuantity()))
+                .groupingBy(
+                    item -> item.getProduct().getId(), 
+                    Collectors.reducing(BigDecimal.ZERO, SupplyItem::getQuantity, BigDecimal::add))
             );
 
         List<SupplyItem> reverseToAdd = new ArrayList<>();
@@ -216,23 +230,23 @@ public class SupplyServiceImpl implements SupplyService{
         List<StockCard> stockCardToAdd = new ArrayList<>();
         
         for (SupplyItem item : supplyItems) {
-            if(item.getQuantity() < 0) { 
+            if(item.getQuantity().compareTo(BigDecimal.ZERO) < 0) { 
                 continue;
             }; 
 
             Product product = item.getProduct();
-            Long oldStock = product.getStockQuantity();
-            Long oldPrice = product.getBasePrice();
+            BigDecimal oldStock = product.getStockQuantity();
+            BigDecimal oldPrice = product.getBasePrice();
 
-            Long alreadyRefundedProduct = listRefunded.get(product.getId());
-            alreadyRefundedProduct = alreadyRefundedProduct != null ? alreadyRefundedProduct : 0L;
+            BigDecimal alreadyRefundedProduct = listRefunded.get(product.getId());
+            alreadyRefundedProduct = alreadyRefundedProduct != null ? alreadyRefundedProduct : BigDecimal.ZERO;
 
-            if(oldStock < (item.getQuantity() + alreadyRefundedProduct)) throw new TransactionValidationException("Unable to cancel supply items, product with id " + product.getId() + " doesn't have enough stock to refund, stock left: " + product.getStockQuantity());
+            if(oldStock.compareTo((item.getQuantity().add(alreadyRefundedProduct))) < 0) throw new TransactionValidationException("Unable to cancel supply items, product with id " + product.getId() + " doesn't have enough stock to refund, stock left: " + product.getStockQuantity());
             
             SupplyItem reverseItem = SupplyItem.builder()
                 .id(UuidCreator.getTimeOrderedEpochFast())
                 .price(item.getPrice())
-                .quantity(-(item.getQuantity() + alreadyRefundedProduct))
+                .quantity(item.getQuantity().add(alreadyRefundedProduct).negate())
                 .description("CANCELLED ")
                 .product(item.getProduct())
                 .supply(item.getSupply())
@@ -240,10 +254,20 @@ public class SupplyServiceImpl implements SupplyService{
 
             reverseToAdd.add(reverseItem);
 
-            if((product.getStockQuantity() - Math.abs(reverseItem.getQuantity())) != 0) {
-                product.setBasePrice(((oldPrice * product.getStockQuantity() - reverseItem.getPrice() * Math.abs(reverseItem.getQuantity())))  / (product.getStockQuantity() - Math.abs(reverseItem.getQuantity())));
+            BigDecimal oldSubTotal = oldPrice.multiply(oldStock);
+            BigDecimal supplySubTotal = reverseItem.getPrice().multiply(reverseItem.getQuantity());
+            BigDecimal newStock = product.getStockQuantity().add(reverseItem.getQuantity());
+ 
+            // Calculate Product average base price if stock is not 0 
+            if(product.getStockQuantity().subtract(reverseItem.getQuantity().abs()).compareTo(BigDecimal.ZERO) != 0) {
+                product.setBasePrice( 
+                    oldSubTotal
+                        .add(supplySubTotal)
+                        .divide(newStock, 4, RoundingMode.HALF_UP)
+                ); 
             }
-            product.setStockQuantity(product.getStockQuantity() + reverseItem.getQuantity());
+
+            product.setStockQuantity(newStock);
 
             stockCardToAdd.add(StockCard.builder() 
                 .id(UuidCreator.getTimeOrderedEpochFast())
@@ -266,14 +290,14 @@ public class SupplyServiceImpl implements SupplyService{
         log.debug("Saved {} refund stock cards", stockCardToAdd.size());
         
         Supplier supplier = supply.getSupplier();
-        supplier.setTotalUnpaid(supplier.getTotalUnpaid() - supply.getTotalUnpaid());
-        supplier.setTotalPaid(supplier.getTotalPaid() - supply.getTotalPaid());
-        supplier.setTotalUnrefunded(supplier.getTotalUnrefunded() + supply.getTotalPaid());
+        supplier.setTotalUnpaid(supplier.getTotalUnpaid().subtract(supply.getTotalUnpaid()));
+        supplier.setTotalPaid(supplier.getTotalPaid().subtract(supply.getTotalPaid()));
+        supplier.setTotalUnrefunded(supplier.getTotalUnrefunded().add(supply.getTotalPaid()));
 
         supply.setStatus(SupplyStatus.CANCELLED);
-        supply.setTotalUnrefunded(supply.getTotalPaid() + supply.getTotalUnrefunded());
-        supply.setTotalUnpaid(0L);
-        supply.setTotalPaid(0L); 
+        supply.setTotalUnrefunded(supply.getTotalPaid().add(supply.getTotalUnrefunded()));
+        supply.setTotalUnpaid(BigDecimal.ZERO);
+        supply.setTotalPaid(BigDecimal.ZERO); 
 
         SupplyResponse response = allSupplyMapper.createSimpleDTO(supply);
         log.debug("Supply cancellation response created: {}", response);
@@ -315,32 +339,40 @@ public class SupplyServiceImpl implements SupplyService{
 
         allSupplyMapper.updateSupply(request, supply);
 
-        if(request.getTotalDiscount() == null) request.setTotalDiscount(0L);
-        if(request.getTotalFee() == null) request.setTotalFee(0L);
-        if(request.getTotalDiscount() != 0 || request.getTotalFee() != 0){
+        if(request.getTotalDiscount() == null) request.setTotalDiscount(BigDecimal.ZERO);
+        if(request.getTotalFee() == null) request.setTotalFee(BigDecimal.ZERO);
+        if(request.getTotalDiscount().compareTo(BigDecimal.ZERO) != 0 || request.getTotalFee().compareTo(BigDecimal.ZERO) != 0){
             log.debug("Updating supply totals for ID: {}, discount: {}, fee: {}", id, request.getTotalDiscount(), request.getTotalFee());
-            Long totalChange = request.getTotalDiscount() - request.getTotalFee();
-            Long oldTotalUnpaid = supply.getTotalUnpaid();
-            Long oldTotalPaid = supply.getTotalPaid();
-            Long oldTotalUnrefunded = supply.getTotalUnrefunded();
+            BigDecimal totalChange = request.getTotalDiscount().subtract(request.getTotalFee());
+            BigDecimal oldTotalUnpaid = supply.getTotalUnpaid();
+            BigDecimal oldTotalPaid = supply.getTotalPaid();
+            BigDecimal oldTotalUnrefunded = supply.getTotalUnrefunded();
 
-            supply.setGrandTotal(supply.getSubTotal() - totalChange);
+            supply.setGrandTotal(supply.getSubTotal().subtract(totalChange));
             
-            supply.setTotalUnpaid(oldTotalUnpaid - totalChange);
-            Long changeTotalUnpaid = supply.getTotalUnpaid();
+            // Possible to have negate value
+            supply.setTotalUnpaid(oldTotalUnpaid.subtract(totalChange));
+            BigDecimal changeTotalUnpaid = supply.getTotalUnpaid();
 
-            if(changeTotalUnpaid < 0){
-                supply.setTotalUnpaid(0L);
-                supply.setTotalPaid(oldTotalPaid - Math.abs(changeTotalUnpaid));
-                supply.setTotalUnrefunded(oldTotalUnrefunded + Math.abs(changeTotalUnpaid));
+            // Calculate if unpaid is negate(surplus) > allocate surplus to unrefunded 
+            if(changeTotalUnpaid.compareTo(BigDecimal.ZERO) < 0){
+                supply.setTotalUnpaid(BigDecimal.ZERO);
+                supply.setTotalPaid(oldTotalPaid.subtract(changeTotalUnpaid.abs()));
+                supply.setTotalUnrefunded(oldTotalUnrefunded.add(changeTotalUnpaid.abs()));
            }
 
-           if(supply.getTotalUnpaid() == 0) supply.setStatus(SupplyStatus.COMPLETE);
+           if(supply.getTotalUnpaid().compareTo(BigDecimal.ZERO) == 0) supply.setStatus(SupplyStatus.COMPLETE);
 
+           // Calculate supplier payment detail
            Supplier supplier = supply.getSupplier();
-           supplier.setTotalUnpaid(supplier.getTotalUnpaid() + (changeTotalUnpaid - oldTotalUnpaid));
-           supplier.setTotalPaid(supplier.getTotalPaid() + (supply.getTotalPaid() - oldTotalPaid));
-           supplier.setTotalUnrefunded(supplier.getTotalUnrefunded() + (supply.getTotalUnrefunded() - oldTotalUnrefunded));
+
+           BigDecimal deltaUnpaid = oldTotalUnpaid.subtract(supply.getTotalUnpaid());
+           BigDecimal deltaPaid = oldTotalPaid.subtract(supply.getTotalPaid());
+           BigDecimal deltaUnrefunded = oldTotalUnrefunded.subtract(supply.getTotalUnrefunded());
+
+           supplier.setTotalUnpaid(supplier.getTotalUnpaid().subtract(deltaUnpaid));
+           supplier.setTotalPaid(supplier.getTotalPaid().subtract(deltaPaid));
+           supplier.setTotalUnrefunded(supplier.getTotalUnrefunded().subtract(deltaUnrefunded));
         }
 
         return allSupplyMapper.createSimpleDTO(supply);
@@ -360,10 +392,12 @@ public class SupplyServiceImpl implements SupplyService{
             log.debug("No supply items found for refund request supply ID: {}, product ID: {}", id, request.getProductId());
             throw new NotFoundEntityException("Unable to find any supply item with product id " + request.getProductId());
         }
-        long priceFromSupplier = matchItems.getLast().getPrice();
-        long ttlQuantiyLeft = matchItems.stream().mapToLong(item -> item.getQuantity()).sum();
+        BigDecimal priceFromSupplier = matchItems.getLast().getPrice();
+        BigDecimal ttlQuantiyLeft = matchItems.stream()
+            .map(item -> item.getQuantity())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if(ttlQuantiyLeft < request.getQuantity()) {
+        if(ttlQuantiyLeft.compareTo(request.getQuantity()) < 0) {
             log.debug("Refund request quantity {} exceeds remaining refundable stock {} for supply ID: {}", request.getQuantity(), ttlQuantiyLeft, id);
             throw new ForbiddenRequestException("refund quantity exceeds the remaining refundedable stock with quantity: " + ttlQuantiyLeft + ", enter an exact amount to proceed");
         }
@@ -376,32 +410,42 @@ public class SupplyServiceImpl implements SupplyService{
         }
 
         Product product = matchItems.getFirst().getProduct();
-        if(product.getStockQuantity() < request.getQuantity()) {
+
+        if(product.getStockQuantity().compareTo(request.getQuantity()) < 0 ) {
             log.debug("Refund request failed - insufficient stock for product ID: {}. requested {}, available {}", product.getId(), request.getQuantity(), product.getStockQuantity());
             throw new TransactionValidationException("Unable to cancel supply items, product with id " + product.getId() + " doesn't have enough stock to refund, stock left: " + product.getStockQuantity());
         }
 
-        Long oldPrice = product.getBasePrice();
-        Long oldStock = product.getStockQuantity();
-
-        if((product.getStockQuantity() - Math.abs(request.getQuantity())) != 0) {
-            product.setBasePrice(((oldPrice * product.getStockQuantity() - priceFromSupplier * Math.abs(request.getQuantity())))  / (product.getStockQuantity() - Math.abs(request.getQuantity())));
-        }
- 
-        Long oldTotalUnpaid = supply.getTotalUnpaid();
-        Long oldTotalPaid = supply.getTotalPaid();
-        Long oldTotalUnrefunded = supply.getTotalUnrefunded();
-
-        product.setStockQuantity(oldStock - request.getQuantity());
-        
         SupplyItem supplyItem = SupplyItem.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
             .price(priceFromSupplier)
-            .quantity(-request.getQuantity())
+            .quantity(request.getQuantity().negate())
             .description("REFUNDED ")
             .product(product)
             .supply(supply)
             .build();
+
+        BigDecimal oldPrice = product.getBasePrice();
+        BigDecimal oldStock = product.getStockQuantity();
+
+        BigDecimal oldSubTotal = oldPrice.multiply(oldStock);
+        BigDecimal supplySubTotal = priceFromSupplier.multiply(request.getQuantity());
+        BigDecimal newStock = product.getStockQuantity().add(supplyItem.getQuantity());
+ 
+        // Calculate Product average base price if stock is not 0 
+        if(product.getStockQuantity().subtract(request.getQuantity().abs()).compareTo(BigDecimal.ZERO) != 0) {
+            product.setBasePrice( 
+                oldSubTotal
+                    .subtract(supplySubTotal)
+                    .divide(newStock, 4, RoundingMode.HALF_UP)
+            ); 
+        } 
+
+        product.setStockQuantity(oldStock.subtract(request.getQuantity())); 
+ 
+        BigDecimal oldTotalUnpaid = supply.getTotalUnpaid();
+        BigDecimal oldTotalPaid = supply.getTotalPaid();
+        BigDecimal oldTotalUnrefunded = supply.getTotalUnrefunded(); 
 
         StockCard stockCard = StockCard.builder() 
             .id(UuidCreator.getTimeOrderedEpochFast())
@@ -417,23 +461,31 @@ public class SupplyServiceImpl implements SupplyService{
             .description("Supply Cancelled, Product refunded. Status: SUPPLIER_OUT(OUT)")
             .build();
 
-        Long totalChange = priceFromSupplier * request.getQuantity();
+        BigDecimal totalChange = priceFromSupplier.multiply(request.getQuantity());
 
-        supply.setTotalUnpaid(supply.getTotalUnpaid() - totalChange);
-        Long changeTotalUnpaid = supply.getTotalUnpaid();
+        // Possible to have negate value
+        supply.setTotalUnpaid(supply.getTotalUnpaid().subtract(totalChange));
+        BigDecimal changeTotalUnpaid = supply.getTotalUnpaid();
         
-        if(changeTotalUnpaid < 0){
-            supply.setTotalUnpaid(0L);
-            supply.setTotalPaid(oldTotalPaid - Math.abs(changeTotalUnpaid));
-            supply.setTotalUnrefunded(oldTotalUnrefunded + Math.abs(changeTotalUnpaid));
+        // Calculate if unpaid is negate(surplus) > allocate surplus to unrefunded 
+        if(changeTotalUnpaid.compareTo(BigDecimal.ZERO) < 0){
+            supply.setTotalUnpaid(BigDecimal.ZERO);
+            supply.setTotalPaid(oldTotalPaid.subtract(changeTotalUnpaid.abs()));
+            supply.setTotalUnrefunded(oldTotalUnrefunded.add(changeTotalUnpaid.abs()));
         }
 
-        if(supply.getTotalUnpaid() == 0) supply.setStatus(SupplyStatus.COMPLETE);
+        if(supply.getTotalUnpaid().compareTo(BigDecimal.ZERO) == 0) supply.setStatus(SupplyStatus.COMPLETE);
 
+        // Calculate supplier payment detail
         Supplier supplier = supply.getSupplier();
-        supplier.setTotalUnpaid(supplier.getTotalUnpaid() + (changeTotalUnpaid - oldTotalUnpaid));
-        supplier.setTotalPaid(supplier.getTotalPaid() + (supply.getTotalPaid() - oldTotalPaid));
-        supplier.setTotalUnrefunded(supplier.getTotalUnrefunded() + (supply.getTotalUnrefunded() - oldTotalUnrefunded));
+
+        BigDecimal deltaUnpaid = oldTotalUnpaid.subtract(supply.getTotalUnpaid());
+        BigDecimal deltaPaid = oldTotalPaid.subtract(supply.getTotalPaid());
+        BigDecimal deltaUnrefunded = oldTotalUnrefunded.subtract(supply.getTotalUnrefunded());
+
+        supplier.setTotalUnpaid(supplier.getTotalUnpaid().subtract(deltaUnpaid));
+        supplier.setTotalPaid(supplier.getTotalPaid().subtract(deltaPaid));
+        supplier.setTotalUnrefunded(supplier.getTotalUnrefunded().subtract(deltaUnrefunded));
 
         stockCardRepository.save(stockCard);
         supplyItemRepository.save(supplyItem);

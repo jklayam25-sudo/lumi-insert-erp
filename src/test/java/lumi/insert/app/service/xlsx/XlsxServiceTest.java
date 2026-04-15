@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -23,6 +25,7 @@ import lumi.insert.app.dto.response.SupplyResponse;
 import lumi.insert.app.dto.response.TransactionResponse;
 import lumi.insert.app.service.implement.XlsxServiceImpl;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 public class XlsxServiceTest {
     
@@ -38,14 +41,14 @@ public class XlsxServiceTest {
             null, 
             "TEST LTE.", 
             1L, 
-            2L, 
-            3L, 
-            4L, 
-            5L, 
-            6L, 
-            7L, 
-            8L,
-             9L, 
+            BigDecimal.valueOf(2L),
+            BigDecimal.valueOf(3L), 
+            BigDecimal.valueOf(4L), 
+            BigDecimal.valueOf(5L), 
+            BigDecimal.valueOf(6L), 
+            BigDecimal.valueOf(7L), 
+            BigDecimal.valueOf(8L),
+            BigDecimal.valueOf(9L), 
              TransactionStatus.COMPLETE, 
              null, 
              null, 
@@ -73,14 +76,14 @@ public class XlsxServiceTest {
             null ,
             "TEST LTE.", 
             2L, 
-            3L, 
-            4L, 
-            5L, 
-            6L, 
-            7L, 
-            8L,
-             9L,
-             10L, 
+            BigDecimal.valueOf(3L), 
+            BigDecimal.valueOf(4L), 
+            BigDecimal.valueOf(5L), 
+            BigDecimal.valueOf(6L), 
+            BigDecimal.valueOf(7L), 
+            BigDecimal.valueOf(8L),
+            BigDecimal.valueOf(9L),
+            BigDecimal.valueOf(10L), 
              SupplyStatus.COMPLETE, 
              null, 
              null, 

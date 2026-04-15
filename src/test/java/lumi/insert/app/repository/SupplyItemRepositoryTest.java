@@ -24,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Product;
 import lumi.insert.app.core.entity.Supplier;
@@ -43,7 +44,7 @@ import lumi.insert.app.utils.generator.InvoiceGenerator;
 @Transactional
 @Import({InvoiceGenerator.class, AuditorAwareImpl.class })
 @ActiveProfiles("test")
-public class SupplyItemRepositoryTest {
+public class SupplyItemRepositoryTest  extends TestContainerTest {
 
     @Autowired
     SupplyRepository supplyRepository;

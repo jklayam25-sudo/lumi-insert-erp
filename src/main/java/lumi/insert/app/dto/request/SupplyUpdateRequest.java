@@ -4,6 +4,9 @@ package lumi.insert.app.dto.request;
 import jakarta.validation.constraints.Min;  
 import lombok.Builder;
 import lombok.Data;
+
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
@@ -19,10 +22,10 @@ public class SupplyUpdateRequest {
  
     @Min(value = 1, message = "totalFee cannot below 0")
     @Schema(description = "Updated additional fees", example = "75000")
-    private Long totalFee;
+    private BigDecimal totalFee;
 
     @Min(value = 1, message = "totalDiscount cannot below 0")
     @Schema(description = "Updated discount amount", example = "15000")
-    private Long totalDiscount;
+    private BigDecimal totalDiscount;
  
 }

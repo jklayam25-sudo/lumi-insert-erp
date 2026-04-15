@@ -50,7 +50,7 @@ public class ActivityLogAspectTest {
         when(auditorAwareImpl.getCurrentAuditor()).thenReturn(Optional.of("0.1.2.3")); 
 
         ProductResponse productResponse = new ProductResponse(1L, null, null, null, null, null, null, null, null);
-        activityLogAspect.afterMethod(null, activityLogger, productResponse);
+        activityLogAspect.afterMethod(joinPoint, activityLogger, productResponse);
 
         verify(messageProducerService, times(1)).sendActivityLog(argThat(arg -> arg.getEntityId().equals(String.valueOf(1L)) && arg.getAction() == ActivityAction.PRODUCT_CREATED));
     }

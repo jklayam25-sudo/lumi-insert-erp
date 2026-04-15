@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
  
@@ -24,19 +25,19 @@ public record StockCardResponse(
     String productName, 
     
     @Schema(description = "The amount of stock changed in this movement", example = "10")
-    Long quantity, 
+    BigDecimal quantity, 
     
     @Schema(description = "Stock level before this movement", example = "50")
-    Long oldStock, 
+    BigDecimal oldStock, 
     
     @Schema(description = "Stock level after this movement", example = "60")
-    Long newStock, 
+    BigDecimal newStock, 
     
     @Schema(description = "Cost or selling price before this movement", example = "12000")
-    Long oldPrice, 
+    BigDecimal oldPrice, 
     
     @Schema(description = "Cost or selling price applied to this movement", example = "12500")
-    Long newPrice, 
+    BigDecimal newPrice, 
     
     @Schema(description = "The nature of the movement (e.g., IN, OUT, ADJUSTMENT)", example = "IN")
     StockMove type, 

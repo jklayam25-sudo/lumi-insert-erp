@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map; 
@@ -31,13 +32,13 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
     @DisplayName("should return Supply Response when create succesfully")
     public void createSupplyAPI_validRequest_shouldReturnCreatedEntity() throws Exception{
         when(supplyService.createSupply(any(SupplyCreateRequest.class))).thenReturn(supplyResponse);
-        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, 10L, null));
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, BigDecimal.valueOf(100L), BigDecimal.valueOf(10L), null));
 
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV")
-        .totalFee(0L)
-        .totalDiscount(0L)
+        .totalFee(BigDecimal.valueOf(0L))
+        .totalDiscount(BigDecimal.valueOf(0L))
         .supplyItems(items)
         .build();
 
@@ -59,13 +60,13 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
     @WithMockUser(username = "admin", roles = "OWNER") 
     public void createSupplyAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
         when(supplyService.createSupply(any(SupplyCreateRequest.class))).thenReturn(supplyResponse);
-        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, 10L, null));
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, BigDecimal.valueOf(100L), BigDecimal.valueOf(10L), null));
 
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV")
-        .totalFee(0L)
-        .totalDiscount(0L)
+        .totalFee(BigDecimal.valueOf(0L))
+        .totalDiscount(BigDecimal.valueOf(0L))
         .supplyItems(items)
         .build();
 
@@ -79,20 +80,19 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.data.invoiceId").value(supplyResponse.invoiceId()))
         .andExpect(jsonPath("$.errors").isEmpty());
-
-      }
+    }
 
     @Test
     @WithMockUser(username = "admin", roles = "FINANCE") 
     public void createSupplyAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
         when(supplyService.createSupply(any(SupplyCreateRequest.class))).thenReturn(supplyResponse);
-        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, 10L, null));
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, BigDecimal.valueOf(100L), BigDecimal.valueOf(10L), null));
 
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV")
-        .totalFee(0L)
-        .totalDiscount(0L)
+        .totalFee(BigDecimal.valueOf(0L))
+        .totalDiscount(BigDecimal.valueOf(0L))
         .supplyItems(items)
         .build();
 
@@ -106,19 +106,18 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.data").isEmpty())
         .andExpect(jsonPath("$.errors").value("Access denied, require an authority"));  
-
-      }
+    }
 
     @Test
     @DisplayName("should return errors NotNull when request param is not valid")
     public void createSupplyAPI_nullCustomerId_shouldReturnNotNullError() throws Exception{ 
-        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, 10L, null));
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, BigDecimal.valueOf(100L), BigDecimal.valueOf(10L), null));
 
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV")
-        .totalFee(-10L)
-        .totalDiscount(0L)
+        .totalFee(BigDecimal.valueOf(-10L))
+        .totalDiscount(BigDecimal.valueOf(0L))
         .supplyItems(items)
         .build();
 
@@ -137,12 +136,12 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
     @Test
     @DisplayName("should return errors NotNull when request param is not valid")
     public void createSupplyAPI_emptyHeaderParam_shouldReturnNotNullError() throws Exception{ 
-        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, 10L, null));
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, BigDecimal.valueOf(100L), BigDecimal.valueOf(10L), null));
 
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV") 
-        .totalDiscount(0L)
+        .totalDiscount(BigDecimal.valueOf(0L))
         .supplyItems(items)
         .build();
 
@@ -185,8 +184,8 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV")
-        .totalFee(0L)
-        .totalDiscount(0L) 
+        .totalFee(BigDecimal.valueOf(0L))
+        .totalDiscount(BigDecimal.valueOf(0L)) 
         .build();
 
         mockMvc.perform(
@@ -206,13 +205,13 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
     public void createSupplyAPI_invalidParamOfItems_shouldReturnCreatedEntity() throws Exception{
         when(supplyService.createSupply(any(SupplyCreateRequest.class))).thenReturn(supplyResponse);
 
-        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, null, null));
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, BigDecimal.valueOf(100L), null, null));
 
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV")
-        .totalFee(0L)
-        .totalDiscount(0L)
+        .totalFee(BigDecimal.valueOf(0L))
+        .totalDiscount(BigDecimal.valueOf(0L))
         .supplyItems(items)
         .build();
 
@@ -232,13 +231,13 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
     @DisplayName("should return Supply Response when create succesfully")
     public void createSupplyAPI_minusProductQuantityAtItems_shouldReturnCreatedEntity() throws Exception{
         when(supplyService.createSupply(any(SupplyCreateRequest.class))).thenReturn(supplyResponse);
-        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, -10L, null));
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, BigDecimal.valueOf(100L), BigDecimal.valueOf(-10L), null));
 
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV")
-        .totalFee(0L)
-        .totalDiscount(0L)
+        .totalFee(BigDecimal.valueOf(0L))
+        .totalDiscount(BigDecimal.valueOf(0L))
         .supplyItems(items)
         .build();
 
@@ -259,13 +258,13 @@ public class SupplyControllerCreateTest extends BaseSupplyControllerTest{
     public void createSupplyAPI_invalidSupplierId_shouldReturnErrors() throws Exception{
         when(supplyService.createSupply(any(SupplyCreateRequest.class))).thenThrow(new NotFoundEntityException("Supplier with id is not found"));
 
-        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, 100L, 10L, null));
+        List<SupplyItemCreate> items = List.of(new SupplyItemCreate(1L, BigDecimal.valueOf(100L), BigDecimal.valueOf(10L), null));
 
         SupplyCreateRequest request = SupplyCreateRequest.builder()
         .supplierId(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId("INV")
-        .totalFee(0L)
-        .totalDiscount(0L)
+        .totalFee(BigDecimal.valueOf(0L))
+        .totalDiscount(BigDecimal.valueOf(0L))
         .supplyItems(items)
         .build();
 

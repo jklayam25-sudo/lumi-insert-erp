@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class SupplyControllerGetTest extends BaseSupplyControllerTest{
     @DisplayName("should return Supply Response when request Trx id is valid")
     public void getSupplyAPI_validId_shouldReturnEntity() throws Exception{
         List<SupplyItemResponse> items = new ArrayList<>();
-        SupplyItemResponse supplyItemResponse = new SupplyItemResponse(UuidCreator.getTimeOrderedEpochFast(), new ProductName(1L, "Product"), 10L, 10L, null);
+        SupplyItemResponse supplyItemResponse = new SupplyItemResponse(UuidCreator.getTimeOrderedEpochFast(), new ProductName(1L, "Product"), BigDecimal.valueOf(10L), BigDecimal.valueOf(10L), null);
         items.add(supplyItemResponse);
         items.add(supplyItemResponse);
 
@@ -208,14 +209,14 @@ public class SupplyControllerGetTest extends BaseSupplyControllerTest{
             null ,
             "TEST LTE.", 
             2L, 
-            3L, 
-            4L, 
-            5L, 
-            6L, 
-            7L, 
-            8L,
-             9L,
-             10L, 
+            BigDecimal.valueOf(3L), 
+            BigDecimal.valueOf(4L), 
+            BigDecimal.valueOf(5L), 
+            BigDecimal.valueOf(6L), 
+            BigDecimal.valueOf(7L), 
+            BigDecimal.valueOf(8L),
+             BigDecimal.valueOf(9L),
+             BigDecimal.valueOf(10L), 
              SupplyStatus.COMPLETE, 
              null, 
              null, 

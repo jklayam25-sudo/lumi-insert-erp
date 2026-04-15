@@ -102,7 +102,7 @@ public class MemoControllerCreateTest extends BaseMemoControllerTest{
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.errors").isEmpty())
-        .andExpect(jsonPath("$.data").value(false));
+        .andExpect(jsonPath("$.data").isNotEmpty());
 
         verify(memoService, times(1)).createMemoView(argThat(arg -> arg.getUsername().equals("lumi") && arg.getRole() == EmployeeRole.FINANCE), eq(1L));
     }

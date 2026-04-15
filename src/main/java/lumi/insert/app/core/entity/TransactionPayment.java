@@ -1,4 +1,6 @@
 package lumi.insert.app.core.entity;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +18,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,7 +46,7 @@ public class TransactionPayment extends BaseAuditing{
     private Transaction transaction;
 
     @Column(nullable = false)
-    private Long totalPayment;
+    private BigDecimal totalPayment;
 
     @Column(nullable = false)
     private String paymentFrom;
@@ -64,4 +68,10 @@ public class TransactionPayment extends BaseAuditing{
     @NotAudited
     private List<TransactionPaymentPicture> transactionPaymentPictures = new ArrayList<>();
 
+    @PrePersist
+    @PreUpdate
+    void normalizeDecimal(){
+        this.totalPayment = this.totalPayment.setScale(4, RoundingMode.HALF_UP); 
+    }
 }
+

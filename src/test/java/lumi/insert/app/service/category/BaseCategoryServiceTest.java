@@ -6,8 +6,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.core.repository.CategoryRepository;
 import lumi.insert.app.mapper.CategoryMapper;
 import lumi.insert.app.service.CategoryService;
@@ -16,7 +18,8 @@ import lumi.insert.app.service.implement.CategoryServiceImpl;
 @SpringBootTest
 @Transactional
 @ExtendWith(MockitoExtension.class)
-public abstract class BaseCategoryServiceTest {
+@ActiveProfiles("test")
+public abstract class BaseCategoryServiceTest extends TestContainerTest{
     @InjectMocks
     CategoryServiceImpl categoryServiceMock;
 

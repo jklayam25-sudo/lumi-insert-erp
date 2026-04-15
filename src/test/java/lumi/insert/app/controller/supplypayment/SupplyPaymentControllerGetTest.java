@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.util.List;
  
 import org.junit.jupiter.api.DisplayName;
@@ -108,7 +109,7 @@ public class SupplyPaymentControllerGetTest extends BaseSupplyPaymentControllerT
     @DisplayName("Should return slice of supplyPayment DTO when supply found/valid")
     void searchSupplyPaymentsFilterAPI_validRequest_shouldReturnSliceEntityDTO() throws Exception{
         Slice<SupplyPaymentResponse> slice = new SliceImpl<SupplyPaymentResponse>(List.of(supplyPaymentResponse));
-        when(supplyPaymentService.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().supplyId(supplyPaymentResponse.supplyId()).minTotalPayment(5000L).build())).thenReturn(slice);
+        when(supplyPaymentService.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().supplyId(supplyPaymentResponse.supplyId()).minTotalPayment(BigDecimal.valueOf(5000L)).build())).thenReturn(slice);
 
         mockMvc.perform(
             get("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/search?minTotalPayment=5000")
@@ -125,7 +126,7 @@ public class SupplyPaymentControllerGetTest extends BaseSupplyPaymentControllerT
     @DisplayName("Should return error missmatch when request param type missmatch")
     void searchSupplyPaymentsFilterAPI_missmatchParam_shouldReturnSliceEntityDTO() throws Exception{
         Slice<SupplyPaymentResponse> slice = new SliceImpl<SupplyPaymentResponse>(List.of(supplyPaymentResponse));
-        when(supplyPaymentService.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().supplyId(supplyPaymentResponse.supplyId()).minTotalPayment(5000L).build())).thenReturn(slice);
+        when(supplyPaymentService.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().supplyId(supplyPaymentResponse.supplyId()).minTotalPayment(BigDecimal.valueOf(5000L)).build())).thenReturn(slice);
 
         mockMvc.perform(
             get("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/search?minTotalPayment=true")
@@ -140,7 +141,7 @@ public class SupplyPaymentControllerGetTest extends BaseSupplyPaymentControllerT
     @DisplayName("Should return error badrequest  when param filter totalpayment is lower than 0")
     void searchSupplyPaymentsFilterAPI_minTotalPaymentMinus_shouldReturnSliceEntityDTO() throws Exception{
         Slice<SupplyPaymentResponse> slice = new SliceImpl<SupplyPaymentResponse>(List.of(supplyPaymentResponse));
-        when(supplyPaymentService.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().supplyId(supplyPaymentResponse.supplyId()).minTotalPayment(5000L).build())).thenReturn(slice);
+        when(supplyPaymentService.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().supplyId(supplyPaymentResponse.supplyId()).minTotalPayment(BigDecimal.valueOf(5000L)).build())).thenReturn(slice);
 
         mockMvc.perform(
             get("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/search?minTotalPayment=-5000")
@@ -155,7 +156,7 @@ public class SupplyPaymentControllerGetTest extends BaseSupplyPaymentControllerT
     @DisplayName("Should return error badrequest  when param filter totalpayment is lower than 0")
     void searchSupplyPaymentsFilterAPI_wrongSortByValue_shouldReturnSliceEntityDTO() throws Exception{
         Slice<SupplyPaymentResponse> slice = new SliceImpl<SupplyPaymentResponse>(List.of(supplyPaymentResponse));
-        when(supplyPaymentService.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().supplyId(supplyPaymentResponse.supplyId()).minTotalPayment(5000L).build())).thenReturn(slice);
+        when(supplyPaymentService.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().supplyId(supplyPaymentResponse.supplyId()).minTotalPayment(BigDecimal.valueOf(5000L)).build())).thenReturn(slice);
 
         mockMvc.perform(
             get("/api/supplies/" + supplyPaymentResponse.supplyId() + "/payments/search?minTotalPayment=5000&sortBy=cc")

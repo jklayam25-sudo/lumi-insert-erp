@@ -1,5 +1,7 @@
 package lumi.insert.app.core.entity;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +18,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,35 +50,35 @@ public class Supply extends BaseAuditing{
 
     @Builder.Default
     @NotAudited
-    private Long totalFee = 0L;
+    private BigDecimal totalFee = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long totalDiscount = 0L;
+    private BigDecimal totalDiscount = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long subTotal = 0L;
+    private BigDecimal subTotal = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long grandTotal = 0L;
+    private BigDecimal grandTotal = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long totalUnpaid = 0L;
+    private BigDecimal totalUnpaid = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long totalPaid = 0L;
+    private BigDecimal totalPaid = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long totalUnrefunded = 0L;
+    private BigDecimal totalUnrefunded = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long totalRefunded = 0L;
+    private BigDecimal totalRefunded = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -102,4 +106,18 @@ public class Supply extends BaseAuditing{
     @NotAudited
     private List<SupplyPayment> supplyPayments = new ArrayList<>();
     
+    @PrePersist
+    @PreUpdate
+    void normalizeDecimal(){
+        this.totalFee = this.totalFee.setScale(4, RoundingMode.HALF_UP);
+        this.totalDiscount = this.totalDiscount.setScale(4, RoundingMode.HALF_UP);
+        this.subTotal = this.subTotal.setScale(4, RoundingMode.HALF_UP);
+        this.grandTotal = this.grandTotal.setScale(4, RoundingMode.HALF_UP);
+
+        this.totalUnpaid = this.totalUnpaid.setScale(4, RoundingMode.HALF_UP);
+        this.totalPaid = this.totalPaid.setScale(4, RoundingMode.HALF_UP);
+        this.totalUnrefunded = this.totalUnrefunded.setScale(4, RoundingMode.HALF_UP);
+        this.totalRefunded = this.totalRefunded.setScale(4, RoundingMode.HALF_UP);
+    }
 }
+

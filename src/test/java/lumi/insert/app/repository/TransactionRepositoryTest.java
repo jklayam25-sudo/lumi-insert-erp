@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime; 
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +33,7 @@ import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Customer;
 import lumi.insert.app.core.entity.Product;
@@ -55,7 +58,7 @@ import lumi.insert.app.utils.generator.JpaSpecGenerator;
 @Slf4j
 @Import({JpaSpecGenerator.class, AuditorAwareImpl.class})
 @ActiveProfiles("test")
-public class TransactionRepositoryTest {
+public class TransactionRepositoryTest  extends TestContainerTest {
     
     @Autowired
     TransactionRepository transactionRepository;
@@ -116,7 +119,7 @@ public class TransactionRepositoryTest {
 
       Transaction savedTransaction = transactionRepository.save(transaction);
 
-      assertEquals(0, savedTransaction.getGrandTotal());
+      assertTrue(BigDecimal.ZERO.compareTo(savedTransaction.getGrandTotal()) == 0);
       assertEquals(TransactionStatus.PENDING, savedTransaction.getStatus());
       assertEquals(invoiceId, savedTransaction.getInvoiceId());
       assertNotNull(savedTransaction.getId());
@@ -216,7 +219,7 @@ public class TransactionRepositoryTest {
         Transaction matchTransaction = Transaction.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(matchInvoiceId)
-        .totalPaid(150L)
+        .totalPaid(BigDecimal.valueOf(150L))
         .customer(setupCustomer)
         .customerName(setupCustomer.getName())
         .build();
@@ -226,7 +229,7 @@ public class TransactionRepositoryTest {
         Transaction unmatchTransaction2 = Transaction.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(invoiceGenerator.generate())
-        .totalPaid(350L)
+        .totalPaid(BigDecimal.valueOf(350L))
         .customer(setupCustomer)
         .customerName(setupCustomer.getName())
         .build();
@@ -237,7 +240,7 @@ public class TransactionRepositoryTest {
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(invoiceGenerator.generate())
         .status(TransactionStatus.CANCELLED)
-        .totalPaid(150L)
+        .totalPaid(BigDecimal.valueOf(150L))
         .customer(setupCustomer)
         .customerName(setupCustomer.getName())
         .build();
@@ -248,8 +251,8 @@ public class TransactionRepositoryTest {
 
         TransactionGetByFilter request = TransactionGetByFilter.builder() 
         .status(TransactionStatus.PENDING)
-        .minTotalPaid(100L)
-        .maxTotalPaid(200L)
+        .minTotalPaid(BigDecimal.valueOf(100L))
+        .maxTotalPaid(BigDecimal.valueOf(200L))
         .minCreatedAt(LocalDateTime.of(2020, 1, 10, 10, 10))
         .maxCreatedAt(LocalDateTime.of(2027, 1, 10, 10, 10))
         .build();
@@ -283,7 +286,7 @@ public class TransactionRepositoryTest {
         Transaction matchTransaction = Transaction.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(matchInvoiceId)
-        .totalPaid(150L)
+        .totalPaid(BigDecimal.valueOf(150L))
         .customer(setupCustomer)
         .customerName(setupCustomer.getName())
         .build();
@@ -293,7 +296,7 @@ public class TransactionRepositoryTest {
         Transaction unmatchTransaction2 = Transaction.builder()
         .id(UuidCreator.getTimeOrderedEpochFast())
         .invoiceId(invoiceGenerator.generate())
-        .totalPaid(350L)
+        .totalPaid(BigDecimal.valueOf(350L))
         .customer(savedCustomer2)
         .customerName(setupCustomer.getName())
         .build();

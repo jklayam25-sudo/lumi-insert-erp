@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -96,8 +97,8 @@ public class SupplierServiceGetTest extends BaseSupplierServiceTest{
 
         SupplierGetByFilter request = SupplierGetByFilter.builder()
         .isActive(false)
-        .minTotalUnpaid(1000L)
-        .maxTotalUnpaid(1500L)
+        .minTotalUnpaid(BigDecimal.valueOf(1000L))
+        .maxTotalUnpaid(BigDecimal.valueOf(1500L))
         .build();
 
         Slice<SupplierDetailResponse> Supplier = supplierServiceMock.getSuppliers(request);
@@ -112,8 +113,8 @@ public class SupplierServiceGetTest extends BaseSupplierServiceTest{
 
         SupplierGetByFilter request = SupplierGetByFilter.builder()
         .isActive(false)
-        .minTotalUnpaid(1000L)
-        .maxTotalUnpaid(1500L)
+        .minTotalUnpaid(BigDecimal.valueOf(1000L))
+        .maxTotalUnpaid(BigDecimal.valueOf(1500L))
         .build();
 
         Slice<SupplierDetailResponse> Supplier = supplierServiceMock.getSuppliers(request);

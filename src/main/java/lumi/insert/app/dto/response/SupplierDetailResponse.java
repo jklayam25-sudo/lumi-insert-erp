@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -22,10 +23,10 @@ public record SupplierDetailResponse(
     Long totalTransaction, 
     
     @Schema(description = "Total amount currently owed to this supplier (Accounts Payable)", example = "4500000")
-    Long totalUnpaid, 
+    BigDecimal totalUnpaid, 
     
     @Schema(description = "Total lifetime amount paid to this supplier", example = "125000000")
-    Long totalPaid, 
+    BigDecimal totalPaid, 
     
     @Schema(description = "Status indicating if the supplier is currently enabled for new orders", example = "true")
     Boolean isActive

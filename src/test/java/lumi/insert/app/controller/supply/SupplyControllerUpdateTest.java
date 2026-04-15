@@ -11,7 +11,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
- 
+
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -230,7 +231,7 @@ public class SupplyControllerUpdateTest extends BaseSupplyControllerTest{
         .andExpect(jsonPath("$.data.invoiceId").value(supplyResponse.invoiceId()))
         .andExpect(jsonPath("$.errors").isEmpty());
 
-        verify(supplyService, times(1)).refundSupplyItem(eq(supplyResponse.id()), argThat( arg -> arg.getProductId() == 1L && arg.getQuantity() == 10L));
+        verify(supplyService, times(1)).refundSupplyItem(eq(supplyResponse.id()), argThat( arg -> arg.getProductId() == 1L && arg.getQuantity().compareTo(BigDecimal.TEN) == 0));
     }
 
     @Test 
@@ -249,7 +250,7 @@ public class SupplyControllerUpdateTest extends BaseSupplyControllerTest{
         .andExpect(jsonPath("$.data.invoiceId").value(supplyResponse.invoiceId()))
         .andExpect(jsonPath("$.errors").isEmpty());
 
-        verify(supplyService, times(1)).refundSupplyItem(eq(supplyResponse.id()), argThat( arg -> arg.getProductId() == 1L && arg.getQuantity() == 10L));
+        verify(supplyService, times(1)).refundSupplyItem(eq(supplyResponse.id()), argThat( arg -> arg.getProductId() == 1L && arg.getQuantity().compareTo(BigDecimal.TEN) == 0));
     }
 
     @Test 

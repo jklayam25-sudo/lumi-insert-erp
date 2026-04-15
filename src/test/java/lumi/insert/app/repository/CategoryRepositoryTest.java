@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,8 @@ import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Category;
 import lumi.insert.app.core.entity.Product;
@@ -36,7 +39,7 @@ import lumi.insert.app.core.repository.ProductRepository;
 @ActiveProfiles("test")
 @Slf4j
 @Import({AuditorAwareImpl.class})
-public class CategoryRepositoryTest {
+public class CategoryRepositoryTest extends TestContainerTest {
     
     @Autowired
     CategoryRepository categoryRepository;
@@ -83,19 +86,19 @@ public class CategoryRepositoryTest {
 
         Product dumpCategoriedProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .category(savedCategory)
         .build();
 
         Product dumpProduct = Product.builder()
         .name("PUMA Running Pro")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         Product savedCategoriedProduct = productRepository.save(dumpCategoriedProduct);

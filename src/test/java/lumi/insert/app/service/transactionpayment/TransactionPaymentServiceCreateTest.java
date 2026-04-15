@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.Optional; 
 
 import org.junit.jupiter.api.DisplayName;
@@ -25,54 +26,53 @@ import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
 import lumi.insert.app.exception.TransactionValidationException;
 
-public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentServiceTest{
+public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentServiceTest {
     
     @Test
     @DisplayName("Should calcute Transaction total , return TransactionPaymentResponse DTO when creating transaction payment is successful")
     public void createTransactionPayment_validRequest_returnTransactionPaymentResponse(){
         setupTransaction.setCustomer(setupCustomer);
-        setupTransaction.setTotalUnpaid(1000000L);
+        setupTransaction.setTotalUnpaid(BigDecimal.valueOf(1000000L));
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentFrom("BCA - XXXXXX")
-        .paymentTo("SG BANK - 12XXXXXX")
-        .totalPayment(523000L)
-        .files(new MultipartFile[]{})
-        .build();
+            .paymentFrom("BCA - XXXXXX")
+            .paymentTo("SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(523000L))
+            .files(new MultipartFile[]{})
+            .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
 
         TransactionPaymentResponse transactionPayment = transactionPaymentServiceMock.createTransactionPayment(setupTransaction.getId(), request);
 
-        assertEquals(523000L, transactionPayment.totalPayment());
+        assertTrue(BigDecimal.valueOf(523000L).compareTo(transactionPayment.totalPayment()) == 0);
         assertEquals(request.getPaymentFrom(), transactionPayment.paymentFrom());
         assertEquals(setupTransaction.getId(), transactionPayment.transactionId());
-        assertEquals(477000L, setupTransaction.getTotalUnpaid());
-        assertEquals(523000L, setupTransaction.getTotalPaid()); 
-        
+        assertTrue(BigDecimal.valueOf(477000L).compareTo(setupTransaction.getTotalUnpaid()) == 0);
+        assertTrue(BigDecimal.valueOf(523000L).compareTo(setupTransaction.getTotalPaid()) == 0); 
     }
 
     @Test
     @DisplayName("Should set transaction complete and calcute Transaction total , return TransactionPaymentResponse DTO when creating transaction payment is successful")
     public void createTransactionPayment_fullPayment_returnTransactionPaymentResponse(){
         setupTransaction.setCustomer(setupCustomer);
-        setupTransaction.setTotalUnpaid(1000000L);
+        setupTransaction.setTotalUnpaid(BigDecimal.valueOf(1000000L));
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentFrom("BCA - XXXXXX")
-        .paymentTo("SG BANK - 12XXXXXX")
-        .totalPayment(1000000L)
-        .files(new MultipartFile[]{})
-        .build();
+            .paymentFrom("BCA - XXXXXX")
+            .paymentTo("SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(1000000L))
+            .files(new MultipartFile[]{})
+            .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
 
         transactionPaymentServiceMock.createTransactionPayment(setupTransaction.getId(), request);
   
-        assertEquals(0L, setupTransaction.getTotalUnpaid());
-        assertEquals(1000000L, setupTransaction.getTotalPaid()); 
+        assertTrue(BigDecimal.valueOf(0L).compareTo(setupTransaction.getTotalUnpaid()) == 0);
+        assertTrue(BigDecimal.valueOf(1000000L).compareTo(setupTransaction.getTotalPaid()) == 0); 
         assertEquals(TransactionStatus.COMPLETE, setupTransaction.getStatus());
     }
 
@@ -81,21 +81,21 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
     public void createTransactionPayment_invalidId_throwNotFoundError(){ 
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundEntityException.class, () -> transactionPaymentServiceMock.createTransactionPayment(null, null));
+        assertThrows(NotFoundEntityException.class, () -> transactionPaymentServiceMock.createTransactionPayment(null, TransactionPaymentCreateRequest.builder().build()));
     }
 
     @Test
     @DisplayName("Should thrown transactionValidate error when transaction total debt/unpaid lesser than request total payment < Overpayment")
     public void createTransactionPayment_overPayment_throwTransactionValidateError(){
-        setupTransaction.setTotalUnpaid(10000L);
+        setupTransaction.setTotalUnpaid(BigDecimal.valueOf(10000L));
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentFrom("BCA - XXXXXX")
-        .paymentTo("SG BANK - 12XXXXXX")
-        .totalPayment(523000L)
-        .files(new MultipartFile[]{})
-        .build();
+            .paymentFrom("BCA - XXXXXX")
+            .paymentTo("SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(523000L))
+            .files(new MultipartFile[]{})
+            .build();
 
         assertThrows(TransactionValidationException.class, ()-> transactionPaymentServiceMock.createTransactionPayment(setupTransaction.getId(), request));
     }
@@ -103,15 +103,15 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
     @Test 
     public void createTransactionPayment_uploadImage_shouldPublishEvent(){
         setupTransaction.setCustomer(setupCustomer);
-        setupTransaction.setTotalUnpaid(1000000L);
+        setupTransaction.setTotalUnpaid(BigDecimal.valueOf(1000000L));
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentFrom("BCA - XXXXXX")
-        .paymentTo("SG BANK - 12XXXXXX")
-        .totalPayment(523000L)
-        .files(new MultipartFile[]{new MockMultipartFile("test", "ff".getBytes())})
-        .build();
+            .paymentFrom("BCA - XXXXXX")
+            .paymentTo("SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(523000L))
+            .files(new MultipartFile[]{new MockMultipartFile("test", "ff".getBytes())})
+            .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
 
@@ -122,7 +122,6 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
 
         UploadStorageMessage value = capture.getValue();
         assertEquals(EntityList.TRANSACTION_PAYMENT, value.entity());
-        
     }
 
     @Test
@@ -130,26 +129,26 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
     public void refundTransactionPayment_nonFullPayment_returnTransactionPaymentResponse(){
         setupTransaction.setCustomer(setupCustomer);
 
-        setupTransaction.setTotalUnrefunded(1000000L);
-        setupTransaction.setTotalRefunded(12000L);
+        setupTransaction.setTotalUnrefunded(BigDecimal.valueOf(1000000L));
+        setupTransaction.setTotalRefunded(BigDecimal.valueOf(12000L));
         setupTransaction.setStatus(TransactionStatus.PROCESS);
 
         setupTransactionPayment.setTransaction(setupTransaction);
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentTo("BCA - XXXXXX")
-        .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
-        .totalPayment(900000L)
-        .files(new MultipartFile[]{})
-        .build();
+            .paymentTo("BCA - XXXXXX")
+            .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(900000L))
+            .files(new MultipartFile[]{})
+            .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
 
-        TransactionPaymentResponse refundTransactionPayment = transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request);;
+        TransactionPaymentResponse refundTransactionPayment = transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request);
   
-        assertEquals(100000L, setupTransaction.getTotalUnrefunded());
-        assertEquals(912000L, setupTransaction.getTotalRefunded()); 
+        assertTrue(BigDecimal.valueOf(100000L).compareTo(setupTransaction.getTotalUnrefunded()) == 0);
+        assertTrue(BigDecimal.valueOf(912000L).compareTo(setupTransaction.getTotalRefunded()) == 0); 
         assertEquals(TransactionStatus.PROCESS, setupTransaction.getStatus());
         assertTrue(refundTransactionPayment.isForRefund());
     }
@@ -158,23 +157,23 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
     public void refundTransactionPayment_uploadImage_shouldPublishEvent(){
         setupTransaction.setCustomer(setupCustomer);
 
-        setupTransaction.setTotalUnrefunded(1000000L);
-        setupTransaction.setTotalRefunded(12000L);
+        setupTransaction.setTotalUnrefunded(BigDecimal.valueOf(1000000L));
+        setupTransaction.setTotalRefunded(BigDecimal.valueOf(12000L));
         setupTransaction.setStatus(TransactionStatus.PROCESS);
 
         setupTransactionPayment.setTransaction(setupTransaction);
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentTo("BCA - XXXXXX")
-        .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
-        .totalPayment(900000L)
-        .files(new MultipartFile[]{new MockMultipartFile("Test", "ff".getBytes())})
-        .build();
+            .paymentTo("BCA - XXXXXX")
+            .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(900000L))
+            .files(new MultipartFile[]{new MockMultipartFile("Test", "ff".getBytes())})
+            .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
 
-        transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request);;
+        transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request);
   
         ArgumentCaptor<UploadStorageMessage> capture = ArgumentCaptor.forClass(UploadStorageMessage.class);
         verify(eventPublisher, times(1)).publishEvent(capture.capture());
@@ -187,26 +186,26 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
     @DisplayName("Should set transaction complete and calcute Transaction refund debt , return TransactionPaymentResponse DTO when creating refund transaction payment is successful")
     public void refundTransactionPayment_fullPayment_returnTransactionPaymentResponse(){
         setupTransaction.setCustomer(setupCustomer);
-        setupTransaction.setTotalUnrefunded(1000000L);
-        setupTransaction.setTotalRefunded(12000L);
+        setupTransaction.setTotalUnrefunded(BigDecimal.valueOf(1000000L));
+        setupTransaction.setTotalRefunded(BigDecimal.valueOf(12000L));
         setupTransaction.setStatus(TransactionStatus.CANCELLED);
 
         setupTransactionPayment.setTransaction(setupTransaction);
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentTo("BCA - XXXXXX")
-        .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
-        .totalPayment(1000000L)
-        .files(new MultipartFile[]{})
-        .build();
+            .paymentTo("BCA - XXXXXX")
+            .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(1000000L))
+            .files(new MultipartFile[]{})
+            .build();
 
         when(transactionPaymentRepositoryMock.save(any())).thenAnswer((res) -> res.getArgument(0));
 
-        TransactionPaymentResponse refundTransactionPayment = transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request);;
+        TransactionPaymentResponse refundTransactionPayment = transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request);
   
-        assertEquals(0L, setupTransaction.getTotalUnrefunded());
-        assertEquals(1012000L, setupTransaction.getTotalRefunded()); 
+        assertTrue(BigDecimal.valueOf(0L).compareTo(setupTransaction.getTotalUnrefunded()) == 0);
+        assertTrue(BigDecimal.valueOf(1012000L).compareTo(setupTransaction.getTotalRefunded()) == 0); 
         assertEquals(TransactionStatus.COMPLETE, setupTransaction.getStatus());
         assertTrue(refundTransactionPayment.isForRefund());
     }
@@ -217,11 +216,11 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.empty());
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentTo("BCA - XXXXXX")
-        .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
-        .totalPayment(1000000L)
-        .files(new MultipartFile[]{})
-        .build();
+            .paymentTo("BCA - XXXXXX")
+            .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(1000000L))
+            .files(new MultipartFile[]{})
+            .build();
 
         assertThrows(NotFoundEntityException.class, () -> transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request));
     }
@@ -234,11 +233,11 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentTo("BCA - XXXXXX")
-        .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
-        .totalPayment(1000000L)
-        .files(new MultipartFile[]{})
-        .build();
+            .paymentTo("BCA - XXXXXX")
+            .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(1000000L))
+            .files(new MultipartFile[]{})
+            .build();
 
         assertThrows(ForbiddenRequestException.class, () -> transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request));
     }
@@ -246,19 +245,19 @@ public class TransactionPaymentServiceCreateTest extends BaseTransactionPaymentS
     @Test
     @DisplayName("Should throw TransactionValidation when creating over payment refund")
     public void refundTransactionPayment_overPayment_returnTransactionPaymentResponse(){
-        setupTransaction.setTotalUnrefunded(1000000L);
-        setupTransaction.setTotalRefunded(12000L);
+        setupTransaction.setTotalUnrefunded(BigDecimal.valueOf(1000000L));
+        setupTransaction.setTotalRefunded(BigDecimal.valueOf(12000L));
         setupTransaction.setStatus(TransactionStatus.CANCELLED);
 
         setupTransactionPayment.setTransaction(setupTransaction);
         when(transactionRepositoryMock.findById(any())).thenReturn(Optional.of(setupTransaction));
 
         TransactionPaymentCreateRequest request = TransactionPaymentCreateRequest.builder()
-        .paymentTo("BCA - XXXXXX")
-        .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
-        .totalPayment(109900000L)
-        .files(new MultipartFile[]{})
-        .build();
+            .paymentTo("BCA - XXXXXX")
+            .paymentFrom("OUR COMPANY.SG BANK - 12XXXXXX")
+            .totalPayment(BigDecimal.valueOf(109900000L))
+            .files(new MultipartFile[]{})
+            .build();
  
         assertThrows(TransactionValidationException.class, () -> transactionPaymentServiceMock.refundTransactionPayment(setupTransactionPayment.getId(), request));
     }

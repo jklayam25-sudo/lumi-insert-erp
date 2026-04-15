@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional; 
@@ -30,6 +31,7 @@ import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Product;
 import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
@@ -47,7 +49,7 @@ import lumi.insert.app.utils.generator.JpaSpecGenerator;
 @Slf4j 
 @ActiveProfiles("test")
 @Import({JpaSpecGenerator.class, AuditorAwareImpl.class})
-public class ProductRepositoryTest {
+public class ProductRepositoryTest  extends TestContainerTest {
 
     @Autowired
     ProductRepository productRepository;
@@ -72,10 +74,10 @@ public class ProductRepositoryTest {
     public void testSaveProduct() {
         Product dumpProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         Product savedProduct = productRepository.save(dumpProduct);
@@ -85,10 +87,10 @@ public class ProductRepositoryTest {
         if( byId.isPresent() ) {
             Product foundProduct = byId.get();
             assertEquals("NIKE Jordan Low 3", foundProduct.getName());
-            assertEquals(10000L, foundProduct.getBasePrice());
-            assertEquals(12000L, foundProduct.getSellPrice());
-            assertEquals(50L, foundProduct.getStockQuantity());
-            assertEquals(5L, foundProduct.getStockMinimum());
+            assertTrue(BigDecimal.valueOf(10000L).compareTo(foundProduct.getBasePrice()) == 0);
+            assertTrue(BigDecimal.valueOf(12000L).compareTo(foundProduct.getSellPrice()) == 0);
+            assertTrue(BigDecimal.valueOf(50L).compareTo(foundProduct.getStockQuantity()) == 0);
+            assertTrue(BigDecimal.valueOf(5L).compareTo(foundProduct.getStockMinimum()) == 0);
         } else {
             Assertions.fail("Product not found");
         }
@@ -98,43 +100,43 @@ public class ProductRepositoryTest {
     public void testGetStockById() {
         Product dumpProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         Product savedProduct = productRepository.save(dumpProduct);
 
-        Optional<Long> stockProjection = productRepository.getStockById(savedProduct.getId());
+        Optional<BigDecimal> stockProjection = productRepository.getStockById(savedProduct.getId());
 
-        assertEquals(50L, stockProjection.get());
+        assertTrue(BigDecimal.valueOf(50L).compareTo(stockProjection.get()) == 0);
     }
 
     @Test
     public void testFindAllByName() {
         Product dumpProduct1 = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         Product dumpProduct2 = Product.builder()
         .name("NIKE Kyrie 5")
-        .basePrice(11000L)
-        .sellPrice(13000L)
-        .stockQuantity(30L)
-        .stockMinimum(3L)
+        .basePrice(BigDecimal.valueOf(11000L))
+        .sellPrice(BigDecimal.valueOf(13000L))
+        .stockQuantity(BigDecimal.valueOf(30L))
+        .stockMinimum(BigDecimal.valueOf(3L))
         .build();
 
         Product dumpProductInactive = Product.builder()
         .name("NIKE Jordan Low Inactive")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .isActive(false)
         .build();
 
@@ -157,18 +159,18 @@ public class ProductRepositoryTest {
     public void testFindAllByName_lastId_foundEntity() {
         Product dumpProduct1 = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         Product dumpProduct2 = Product.builder()
         .name("NIKE Kyrie 5")
-        .basePrice(11000L)
-        .sellPrice(13000L)
-        .stockQuantity(30L)
-        .stockMinimum(3L)
+        .basePrice(BigDecimal.valueOf(11000L))
+        .sellPrice(BigDecimal.valueOf(13000L))
+        .stockQuantity(BigDecimal.valueOf(30L))
+        .stockMinimum(BigDecimal.valueOf(3L))
         .build(); 
 
         productRepository.save(dumpProduct1);
@@ -190,10 +192,10 @@ public class ProductRepositoryTest {
         for ( int i = 1; i <= 12; i++ ) {
             Product dumpProduct = Product.builder()
             .name("Product " + i)
-            .basePrice(1000L * i)
-            .sellPrice(1200L * i)
-            .stockQuantity(10L * i)
-            .stockMinimum(1L * i)
+            .basePrice(BigDecimal.valueOf(1000L * i))
+            .sellPrice(BigDecimal.valueOf(1200L * i))
+            .stockQuantity(BigDecimal.valueOf(10L * i))
+            .stockMinimum(BigDecimal.valueOf(1L * i))
             .build();
 
             productRepository.save(dumpProduct);
@@ -235,10 +237,10 @@ public class ProductRepositoryTest {
     public void testExistsByName() {
         Product dumpProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         productRepository.save(dumpProduct);
@@ -252,7 +254,7 @@ public class ProductRepositoryTest {
 
     @Test
     public void testGetStockByIdNotFound() {
-        Optional<Long> stockProjection = productRepository.getStockById(999L);
+        Optional<BigDecimal> stockProjection = productRepository.getStockById(999L);
         assertEquals(null, stockProjection.orElse(null));
     }
 
@@ -261,10 +263,10 @@ public class ProductRepositoryTest {
         for ( int i = 1; i <= 12; i++ ) {
             Product dumpProduct = Product.builder()
             .name("Product " + i)
-            .basePrice(1000L * i)
-            .sellPrice(1200L * i)
-            .stockQuantity(10L * i)
-            .stockMinimum(1L * i)
+            .basePrice(BigDecimal.valueOf(1000L * i))
+            .sellPrice(BigDecimal.valueOf(1200L * i))
+            .stockQuantity(BigDecimal.valueOf(10L * i))
+            .stockMinimum(BigDecimal.valueOf(1L * i))
             .build();
 
             productRepository.save(dumpProduct);
@@ -274,8 +276,8 @@ public class ProductRepositoryTest {
         .sortBy("sellPrice")
         .sortDirection("ASC")
         .name("pro")
-        .minPrice(0L)
-        .maxPrice(5000L)
+        .minPrice(BigDecimal.ZERO)
+        .maxPrice(BigDecimal.valueOf(5000L))
         .build();
 
         Pageable pageable = jpaSpecGenerator.pageable(request);
@@ -285,7 +287,7 @@ public class ProductRepositoryTest {
 
         System.out.println(result.getContent());
         assertEquals(4, result.getNumberOfElements());
-        assertEquals(4800L, result.getContent().getLast().getSellPrice());
+        assertTrue(BigDecimal.valueOf(4800L).compareTo(result.getContent().getLast().getSellPrice()) == 0);
     }
 
     @Test
@@ -296,10 +298,10 @@ public class ProductRepositoryTest {
         for ( int i = 1; i <= 2; i++ ) {
             Product dumpProduct = Product.builder()
             .name("Product " + i)
-            .basePrice(1000L * i)
-            .sellPrice(1200L * i)
-            .stockQuantity(10L * i)
-            .stockMinimum(1L * i)
+            .basePrice(BigDecimal.valueOf(1000L * i))
+            .sellPrice(BigDecimal.valueOf(1200L * i))
+            .stockQuantity(BigDecimal.valueOf(10L * i))
+            .stockMinimum(BigDecimal.valueOf(1L * i))
             .build();
 
             Product saved = productRepository.save(dumpProduct);
@@ -308,7 +310,7 @@ public class ProductRepositoryTest {
        List<ProductRefreshProjection> searchIdUpdatedAtMoreThan = productRepository.searchIdUpdatedAtMoreThan(ids, time);
        log.info("x{}", searchIdUpdatedAtMoreThan.getLast());
        assertEquals(2, searchIdUpdatedAtMoreThan.size());
-       assertEquals(2400L, searchIdUpdatedAtMoreThan.getLast().sellPrice());
+       assertTrue(BigDecimal.valueOf(2400L).compareTo(searchIdUpdatedAtMoreThan.getLast().sellPrice()) == 0);
     }
     
     @Test
@@ -318,10 +320,10 @@ public class ProductRepositoryTest {
         for ( int i = 1; i <= 2; i++ ) {
             Product dumpProduct = Product.builder()
             .name("Product " + i)
-            .basePrice(1000L * i)
-            .sellPrice(1200L * i)
-            .stockQuantity(10L * i)
-            .stockMinimum(1L * i)
+            .basePrice(BigDecimal.valueOf(1000L * i))
+            .sellPrice(BigDecimal.valueOf(1200L * i))
+            .stockQuantity(BigDecimal.valueOf(10L * i))
+            .stockMinimum(BigDecimal.valueOf(1L * i))
             .build();
 
             Product saved = productRepository.save(dumpProduct);
@@ -339,10 +341,10 @@ public class ProductRepositoryTest {
         for ( int i = 1; i <= 2; i++ ) {
             Product dumpProduct = Product.builder()
             .name("Product " + i)
-            .basePrice(1000L * i)
-            .sellPrice(1200L * i)
-            .stockQuantity(10L * i)
-            .stockMinimum(1L * i)
+            .basePrice(BigDecimal.valueOf(1000L * i))
+            .sellPrice(BigDecimal.valueOf(1200L * i))
+            .stockQuantity(BigDecimal.valueOf(10L * i))
+            .stockMinimum(BigDecimal.valueOf(1L * i))
             .build();
 
             Product saved = productRepository.save(dumpProduct);
@@ -350,24 +352,25 @@ public class ProductRepositoryTest {
         }
        List<Product> searchIdUpdatedAtMoreThan = productRepository.searchProductUpdatedAtMoreThan(ids, time); 
        assertEquals(2, searchIdUpdatedAtMoreThan.size());
-       assertEquals(2400L, searchIdUpdatedAtMoreThan.getLast().getSellPrice());
+       assertTrue(BigDecimal.valueOf(2400L).compareTo(searchIdUpdatedAtMoreThan.getLast().getSellPrice()) == 0);
+    
     }
 
     @Test
     public void getOutOfStockProducts_foundEntity_returnProjection() {
         Product dumpProduct = Product.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(2L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(2L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         productRepository.save(dumpProduct);
 
         List<ProductOutOfStock> exists = productRepository.findAllOutOfStockProduct();
         assertEquals(1, exists.size());
-        assertEquals(dumpProduct.getStockQuantity(), exists.getFirst().stockQuantity());
+        assertEquals(dumpProduct.getStockQuantity().longValue(), exists.getFirst().stockQuantity().longValue());
  
     }
 

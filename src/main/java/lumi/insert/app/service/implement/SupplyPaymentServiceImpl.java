@@ -1,6 +1,7 @@
 package lumi.insert.app.service.implement;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -90,19 +91,19 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
             .totalPayment(request.getTotalPayment())
             .build();
 
-        supply.setTotalUnpaid(supply.getTotalUnpaid() - request.getTotalPayment());
-        supply.setTotalPaid(supply.getTotalPaid() + request.getTotalPayment());
+        supply.setTotalUnpaid(supply.getTotalUnpaid().subtract(request.getTotalPayment()));
+        supply.setTotalPaid(supply.getTotalPaid().add(request.getTotalPayment()));
 
-        if(supply.getTotalUnpaid() < 0) {
+        if(supply.getTotalUnpaid().compareTo(BigDecimal.ZERO) < 0) {
             log.debug("Supply payment exceeds unpaid amount supplyId={}, requestedPayment={}", supplyId, request.getTotalPayment());
             throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + supplyId + ", enter an exact amount to proceed");
         }
 
         Supplier supplier = supply.getSupplier();
-        supplier.setTotalUnpaid(supplier.getTotalUnpaid() - request.getTotalPayment());
-        supplier.setTotalPaid(supplier.getTotalPaid() + request.getTotalPayment());
+        supplier.setTotalUnpaid(supplier.getTotalUnpaid().subtract(request.getTotalPayment()));
+        supplier.setTotalPaid(supplier.getTotalPaid().add(request.getTotalPayment()));
         // Upcoming: integrate with email notification
-        if(supply.getTotalUnpaid() == 0) supply.setStatus(SupplyStatus.COMPLETE);
+        if(supply.getTotalUnpaid().compareTo(BigDecimal.ZERO) == 0) supply.setStatus(SupplyStatus.COMPLETE);
         SupplyPayment savedSupplyPayment = supplyPaymentRepository.save(supplyPayment);
         SupplyPaymentResponse supplyPaymentResponse = allSupplyMapper.createSupplyPaymentResponseDto(savedSupplyPayment);
 
@@ -196,17 +197,17 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
             .isForRefund(true)
             .build();
 
-        supply.setTotalUnrefunded(supply.getTotalUnrefunded() - request.getTotalPayment());
-        supply.setTotalRefunded(supply.getTotalRefunded() + request.getTotalPayment());
+        supply.setTotalUnrefunded(supply.getTotalUnrefunded().subtract(request.getTotalPayment()));
+        supply.setTotalRefunded(supply.getTotalRefunded().add(request.getTotalPayment()));
 
-        if(supply.getTotalUnrefunded() < 0) {
+        if(supply.getTotalUnrefunded().compareTo(BigDecimal.ZERO) < 0) {
             log.debug("Refund exceeds unrefunded amount supplyId={}, requestAmount={}", supplyId, request.getTotalPayment());
             throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + supplyId + ", enter an exact amount to proceed");
         }
 
         Supplier supplier = supply.getSupplier();
-        supplier.setTotalUnrefunded(supplier.getTotalUnrefunded() - request.getTotalPayment());
-        supplier.setTotalRefunded(supplier.getTotalRefunded() + request.getTotalPayment());
+        supplier.setTotalUnrefunded(supplier.getTotalUnrefunded().subtract(request.getTotalPayment()));
+        supplier.setTotalRefunded(supplier.getTotalRefunded().add(request.getTotalPayment()));
         // Upcoming: integrate with email notification 
         SupplyPayment savedSupplyPayment = supplyPaymentRepository.save(supplyPayment);
         SupplyPaymentResponse supplyPaymentResponse = allSupplyMapper.createSupplyPaymentResponseDto(savedSupplyPayment);

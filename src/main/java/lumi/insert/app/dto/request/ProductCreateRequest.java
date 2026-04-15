@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
+
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
@@ -19,20 +22,20 @@ public class ProductCreateRequest {
     @NotNull(message = "basePrice cannot be empty")
     @Min(value = 0, message = "basePrice cannot below 0")
     @Schema(description = "Base cost price of the product", example = "500000")
-    private Long basePrice;
+    private BigDecimal basePrice;
 
     @NotNull(message = "sellPrice cannot be empty")
     @Min(value = 0, message = "sellPrice cannot below 0")
     @Schema(description = "Selling price of the product", example = "750000")
-    private Long sellPrice;
+    private BigDecimal sellPrice;
 
     @NotNull(message = "stockQuantity cannot be empty")
     @Min(value = 0, message = "stockQuantity cannot below 0")
     @Schema(description = "Initial stock quantity", example = "100")
-    private Long stockQuantity;
+    private BigDecimal stockQuantity;
 
     @Schema(description = "Minimum stock level alerts", example = "10")
-    private Long stockMinimum;
+    private BigDecimal stockMinimum;
 
     @Schema(description = "Category ID to associate the product", example = "1")
     private Long categoryId;

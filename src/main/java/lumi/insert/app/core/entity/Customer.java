@@ -1,5 +1,7 @@
 package lumi.insert.app.core.entity;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +16,8 @@ import jakarta.persistence.Entity;
 
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -58,19 +62,19 @@ public class Customer extends BaseAuditing{
 
     @Builder.Default
     @NotAudited
-    private Long totalUnpaid = 0L;
+    private BigDecimal totalUnpaid = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long totalPaid = 0L;
+    private BigDecimal totalPaid = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long totalUnrefunded = 0L;
+    private BigDecimal totalUnrefunded = BigDecimal.ZERO;
 
     @Builder.Default
     @NotAudited
-    private Long totalRefunded = 0L;
+    private BigDecimal totalRefunded = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "customer")
     @Builder.Default
@@ -89,4 +93,12 @@ public class Customer extends BaseAuditing{
     @NotAudited
     private List<CustomerPicture> customerPictures = new ArrayList<>();
 
+    @PrePersist
+    @PreUpdate
+    void normalizeDecimal(){
+        this.totalUnpaid = this.totalUnpaid.setScale(4, RoundingMode.HALF_UP);
+        this.totalPaid = this.totalPaid.setScale(4, RoundingMode.HALF_UP);
+        this.totalUnrefunded = this.totalUnrefunded.setScale(4, RoundingMode.HALF_UP);
+        this.totalRefunded = this.totalRefunded.setScale(4, RoundingMode.HALF_UP);
+    }
 }

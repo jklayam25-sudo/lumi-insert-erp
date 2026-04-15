@@ -1,5 +1,6 @@
 package lumi.insert.app.service.implement;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -60,13 +61,13 @@ public class StockCardServiceImpl implements StockCardService{
     public StockCardResponse createStockCard(StockCardCreateRequest request) {
         log.info("Creating stock card for productId={}, referenceId={}, type={}", request.getProductId(), request.getReferenceId(), request.getType());
         if((request.getType() == StockMove.CUSTOMER_IN.toString() || request.getType() == StockMove.SUPPLIER_IN.toString() ||
-            request.getType() == StockMove.REPAIRED.toString()) && request.getQuantity() < 0L) {
+            request.getType() == StockMove.REPAIRED.toString()) && request.getQuantity().compareTo(BigDecimal.ZERO) < 0) {
                 log.debug("Invalid stock card quantity for IN type, quantity={}", request.getQuantity());
                 throw new TransactionValidationException("Stock 'IN' type should be positive quantity");
         }
 
         if((request.getType() == StockMove.CUSTOMER_OUT.toString() || request.getType() == StockMove.SUPPLIER_OUT.toString() ||
-            request.getType() == StockMove.DEFECT.toString()) && request.getQuantity() > 0L) {
+            request.getType() == StockMove.DEFECT.toString()) && request.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
                 log.debug("Invalid stock card quantity for OUT type, quantity={}", request.getQuantity());
                 throw new TransactionValidationException("Stock 'OUT' type should be negative quantity");
         }
@@ -79,11 +80,11 @@ public class StockCardServiceImpl implements StockCardService{
         Product product = productRepository.findById(request.getProductId())
             .orElseThrow(() -> new NotFoundEntityException("Product with ID " + request.getProductId() + " was not found"));
 
-        Long oldStock = product.getStockQuantity();
+        BigDecimal oldStock = product.getStockQuantity();
 
-        product.setStockQuantity(oldStock + request.getQuantity());
+        product.setStockQuantity(oldStock.add(request.getQuantity()));
  
-        if(product.getStockQuantity() < 0) throw new TransactionValidationException("Product stocks with ID " + request.getProductId() + " doesn't meet buyer quantity, stock left: " + oldStock);
+        if(product.getStockQuantity().compareTo(BigDecimal.ZERO) < 0) throw new TransactionValidationException("Product stocks with ID " + request.getProductId() + " doesn't meet buyer quantity, stock left: " + oldStock);
 
         StockCard stockCard = StockCard.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())

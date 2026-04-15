@@ -10,7 +10,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import lumi.insert.app.controller.BaseControllerTest;
 import lumi.insert.app.dto.response.SupplierDetailResponse;
 import lumi.insert.app.dto.response.SupplierNameResponse;  
- 
+ import org.springframework.test.context.ActiveProfiles;
+
+@ActiveProfiles("test")
 @WithMockUser(username = "admin", roles = "WAREHOUSE")
 public abstract class BaseSupplierControllerTest extends BaseControllerTest { 
 

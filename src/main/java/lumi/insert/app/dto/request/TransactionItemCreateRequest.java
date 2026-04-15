@@ -4,6 +4,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
+
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
@@ -18,6 +21,6 @@ public class TransactionItemCreateRequest {
     @NotNull(message =  "quantity must not be null")
     @Min(message = "quantity minimal value is 1", value = 1)
     @Schema(description = "Quantity of the product", example = "5")
-    Long quantity;
+    BigDecimal quantity;
 
 }

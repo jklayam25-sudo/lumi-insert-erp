@@ -1,6 +1,8 @@
 package lumi.insert.app.core.entity;
 
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
  
@@ -17,6 +19,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,16 +46,16 @@ public class Product extends BaseAuditing {
     private String name;
 
     @Column(nullable = false)    
-    private Long basePrice;
+    private BigDecimal basePrice;
 
     @Column(nullable = false)
-    private Long sellPrice;
+    private BigDecimal sellPrice;
 
     @Column(nullable = false)
-    private Long stockQuantity;
+    private BigDecimal stockQuantity;
 
     @Builder.Default
-    private Long stockMinimum = 0L;
+    private BigDecimal stockMinimum = BigDecimal.ZERO;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = true)
@@ -71,4 +75,13 @@ public class Product extends BaseAuditing {
     @ToString.Exclude
     @NotAudited
     private List<ProductPicture> productPicture = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    void normalizeDecimal(){
+        this.basePrice = this.basePrice.setScale(4, RoundingMode.HALF_UP);
+        this.sellPrice = this.sellPrice.setScale(4, RoundingMode.HALF_UP);
+        this.stockMinimum = this.stockMinimum.setScale(4, RoundingMode.HALF_UP);
+        this.stockQuantity = this.stockQuantity.setScale(4, RoundingMode.HALF_UP);
+    }
 }

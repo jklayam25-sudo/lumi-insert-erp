@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.request;
 
+import java.math.BigDecimal;
 import java.util.UUID;
   
 import jakarta.validation.constraints.NotBlank;
@@ -24,7 +25,7 @@ public class StockCardCreateRequest {
  
     @NotNull(message = "quantity cannot be empty and value atleas 1")
     @Schema(description = "Quantity of stock movement", example = "10")
-    private Long quantity; 
+    private BigDecimal quantity; 
  
     @NotBlank(message = "type cannot be empty")
     @Pattern(regexp = "CUSTOMER_IN|CUSTOMER_OUT|DEFECT|REPAIRED|SUPPLIER_IN|SUPPLIER_OUT|", message = "check documentation for type")

@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock; 
 import org.mockito.junit.jupiter.MockitoExtension; 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -23,6 +24,7 @@ import lumi.insert.app.mapper.AuthMapperImpl;
 import lumi.insert.app.utils.security.JwtUtils;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 public abstract class BaseAuthTokenServiceTest {
     
     @InjectMocks

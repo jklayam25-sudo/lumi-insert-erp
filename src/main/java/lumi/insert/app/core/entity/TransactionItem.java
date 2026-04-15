@@ -1,5 +1,7 @@
 package lumi.insert.app.core.entity;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 import org.hibernate.envers.Audited;
@@ -10,6 +12,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,10 +34,10 @@ public class TransactionItem extends BaseAuditing{
     private UUID id;
 
     @Builder.Default 
-    private Long price = 0L;
+    private BigDecimal price = BigDecimal.ZERO;
 
     @Builder.Default
-    private Long quantity = 0L;
+    private BigDecimal quantity = BigDecimal.ZERO;
 
     private String description;
 
@@ -50,5 +54,11 @@ public class TransactionItem extends BaseAuditing{
     @NotAudited
     private Transaction transaction;
     
-
+    @PrePersist
+    @PreUpdate
+    void normalizeDecimal(){
+        this.price = this.price.setScale(4, RoundingMode.HALF_UP);
+        this.quantity = this.quantity.setScale(4, RoundingMode.HALF_UP); 
+    }
 }
+

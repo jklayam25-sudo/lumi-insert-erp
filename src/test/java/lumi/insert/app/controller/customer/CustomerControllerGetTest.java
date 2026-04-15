@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -84,7 +85,7 @@ public class CustomerControllerGetTest extends BaseCustomerControllerTest{
         .andExpect(jsonPath("$.data.content[0].id").value(customerDetailResponse.id().toString()))
         .andExpect(jsonPath("$.errors").isEmpty());
 
-        verify(customerService, times(1)).getCustomers(argThat(arg -> arg.getEmail() == null && arg.getMinTotalPaid().equals(0L)));
+        verify(customerService, times(1)).getCustomers(argThat(arg -> arg.getEmail() == null && arg.getMinTotalPaid().compareTo(BigDecimal.ZERO) == 0));
     }
 
     @Test

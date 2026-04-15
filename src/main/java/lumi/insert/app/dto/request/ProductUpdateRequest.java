@@ -3,6 +3,9 @@ package lumi.insert.app.dto.request;
 import jakarta.validation.constraints.Min; 
 import lombok.Builder;
 import lombok.Data;
+
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
@@ -14,23 +17,19 @@ public class ProductUpdateRequest {
     private Long id;
 
     @Schema(description = "Updated product name", example = "Laptop")
-    private String name;
+    private String name; 
 
     @Min(value = 0, message = "basePrice cannot below 0")
     @Schema(description = "Updated base cost price", example = "500000")
-    private Long basePrice;
+    private BigDecimal basePrice;
 
     @Min(value = 0, message = "sellPrice cannot below 0")
     @Schema(description = "Updated selling price", example = "750000")
-    private Long sellPrice;
-
-    @Min(value = 0, message = "stockQuantity cannot below 0")
-    @Schema(description = "Updated stock quantity", example = "100")
-    private Long stockQuantity;
-
+    private BigDecimal sellPrice;
+  
     @Min(value = 0, message = "stockMinimum cannot below 0")
     @Schema(description = "Updated minimum stock level", example = "10")
-    private Long stockMinimum;
+    private BigDecimal stockMinimum;
 
     @Schema(description = "Updated category ID", example = "1")
     private Long categoryId;

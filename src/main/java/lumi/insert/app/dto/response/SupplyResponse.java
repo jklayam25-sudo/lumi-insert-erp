@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,28 +28,28 @@ public record SupplyResponse(
     Long totalItems, 
     
     @Schema(description = "Additional shipping or handling fees from supplier", example = "25000")
-    Long totalFee, 
+    BigDecimal totalFee, 
     
     @Schema(description = "Discount granted by the supplier", example = "50000")
-    Long totalDiscount, 
+    BigDecimal totalDiscount, 
     
     @Schema(description = "Total amount before discounts and fees", example = "2000000")
-    Long subTotal, 
+    BigDecimal subTotal, 
     
     @Schema(description = "Final amount to be paid to the supplier", example = "1975000")
-    Long grandTotal, 
+    BigDecimal grandTotal, 
     
     @Schema(description = "Debt amount still owed to the supplier", example = "975000")
-    Long totalUnpaid, 
+    BigDecimal totalUnpaid, 
     
     @Schema(description = "Amount already paid to the supplier", example = "1000000")
-    Long totalPaid, 
+    BigDecimal totalPaid, 
     
     @Schema(description = "Remaining balance that can still be claimed as a refund/return", example = "1000000")
-    Long totalUnrefunded, 
+    BigDecimal totalUnrefunded, 
     
     @Schema(description = "Total amount already refunded/returned by the supplier", example = "0")
-    Long totalRefunded, 
+    BigDecimal totalRefunded, 
     
     @Schema(description = "Current procurement status (e.g., RECEIVED, PENDING, PAID)", example = "RECEIVED")
     SupplyStatus status, 

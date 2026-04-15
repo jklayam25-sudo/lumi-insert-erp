@@ -5,6 +5,7 @@ import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect; 
 import org.springframework.beans.factory.annotation.Autowired; 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.github.f4b6a3.uuid.UuidCreator;
@@ -21,6 +22,7 @@ import lumi.insert.app.service.MessageProducerService;
 @Aspect
 @Component
 @Slf4j
+@ConditionalOnProperty(name = "app.aop.enabled", havingValue = "true", matchIfMissing = true)
 public class ActivityLogAspect {
 
     @Autowired
@@ -43,9 +45,11 @@ public class ActivityLogAspect {
             .entityName(activityLog.entityName()) 
             .ipAddress(auditorAwareImpl.getAuditorIpAddress().get())
             .build();
+
+            String auditor = auditorAwareImpl.getCurrentAuditor().get();
             
-            result.setCreatedBy(auditorAwareImpl.getCurrentAuditor().get());
-            result.setUpdatedBy(auditorAwareImpl.getCurrentAuditor().get());
+            result.setCreatedBy(auditor);
+            result.setUpdatedBy(auditor);
 
         if (activityLog.entityIdFromSingleParam()){
             Object[] args = joinPoint.getArgs();

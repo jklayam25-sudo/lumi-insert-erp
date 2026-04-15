@@ -20,6 +20,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import jakarta.persistence.EntityManager; 
 import lombok.extern.slf4j.Slf4j;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.Category; 
 import lumi.insert.app.dto.request.CategoryCreateRequest;
@@ -29,7 +30,7 @@ import lumi.insert.app.service.CategoryService;
 @SpringBootTest 
 @Slf4j
 @ActiveProfiles("test")
-public class AuditedEntityTITest {
+public class AuditedEntityTITest extends TestContainerTest {
     
     @Autowired
     CategoryService categoryService;

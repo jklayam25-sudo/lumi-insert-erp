@@ -1,5 +1,6 @@
 package lumi.insert.app.dto.request;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -35,32 +36,32 @@ public class TransactionGetByFilter extends PaginationRequest{
     @Builder.Default
     @Min(value = 0, message = "minGrandTotal minimal value is 0")
     @Schema(description = "Minimum transaction grand total", example = "100000")
-    Long minGrandTotal = 0L;
+    BigDecimal minGrandTotal = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxGrandTotal minimal value is 0")
     @Schema(description = "Maximum transaction grand total", example = "50000000")
-    Long maxGrandTotal = 9999999999990L;
+    BigDecimal maxGrandTotal = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Min(value = 0, message = "minTotalUnpaid minimal value is 0")
     @Schema(description = "Minimum unpaid amount", example = "0")
-    Long minTotalUnpaid = 0L;
+    BigDecimal minTotalUnpaid = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalUnpaid minimal value is 0")
     @Schema(description = "Maximum unpaid amount", example = "10000000")
-    Long maxTotalUnpaid = 9999999999990L;
+    BigDecimal maxTotalUnpaid = BigDecimal.valueOf(9999999999990L);
 
     @Builder.Default
     @Min(value = 0, message = "minTotalPaid minimal value is 0")
     @Schema(description = "Minimum paid amount", example = "0")
-    Long minTotalPaid = 0L;
+    BigDecimal minTotalPaid = BigDecimal.ZERO;
 
     @Builder.Default
     @Min(value = 0, message = "maxTotalPaid minimal value is 0")
     @Schema(description = "Maximum paid amount", example = "50000000")
-    Long maxTotalPaid = 9999999999990L;
+    BigDecimal maxTotalPaid = BigDecimal.valueOf(9999999999990L);
 
     @Schema(description = "Filter by transaction status", example = "COMPLETED")
     TransactionStatus status;

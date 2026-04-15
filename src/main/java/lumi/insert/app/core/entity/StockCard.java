@@ -1,5 +1,7 @@
 package lumi.insert.app.core.entity;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
  
 
@@ -12,6 +14,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,23 +46,33 @@ public class StockCard extends BaseAuditing{
     private String productName;
 
     @Column(nullable = false)    
-    private Long quantity;
+    private BigDecimal quantity;
 
     @Column(nullable = false)    
-    private Long oldStock;
+    private BigDecimal oldStock;
 
     @Column(nullable = false)    
-    private Long newStock;
+    private BigDecimal newStock;
 
     @Column(nullable = false)    
-    private Long oldPrice;
+    private BigDecimal oldPrice;
 
     @Column(nullable = false)    
-    private Long newPrice;
+    private BigDecimal newPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)   
     private StockMove type;
 
     private String description;
+
+    @PrePersist
+    @PreUpdate
+    void normalizeDecimal(){
+        this.quantity = this.quantity.setScale(4, RoundingMode.HALF_UP);
+        this.oldStock = this.oldStock.setScale(4, RoundingMode.HALF_UP);
+        this.newStock = this.newStock.setScale(4, RoundingMode.HALF_UP);
+        this.oldPrice = this.oldPrice.setScale(4, RoundingMode.HALF_UP);
+        this.newPrice = this.newPrice.setScale(4, RoundingMode.HALF_UP);
+    }
 }

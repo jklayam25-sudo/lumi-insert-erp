@@ -1,5 +1,6 @@
 package lumi.insert.app.service.implement;
 
+import java.math.BigDecimal;
 import java.util.ArrayList; 
 import java.util.HashSet;
 import java.util.List;
@@ -167,9 +168,9 @@ public class TransactionServiceImpl implements TransactionService{
         transactionItems.forEach(item -> {
             Product updatedProduct = productMap.get(item.getProduct().getId()); 
 
-            Long oldStock = updatedProduct.getStockQuantity();
+            BigDecimal oldStock = updatedProduct.getStockQuantity();
 
-            if(updatedProduct == null || updatedProduct.getStockQuantity() == 0) {
+            if(updatedProduct == null || updatedProduct.getStockQuantity().compareTo(BigDecimal.ZERO) == 0) {
                 listOfOutStockAndRemovedProduct.add(item.getId());
                 messages.add("Item removed due to outOfStock or removed Product, Product item ID: " + item.getProduct().getId());
                 return;
@@ -177,18 +178,18 @@ public class TransactionServiceImpl implements TransactionService{
 
             item.setPrice(updatedProduct.getSellPrice());
 
-            if(updatedProduct.getStockQuantity() < item.getQuantity()){
+            if(updatedProduct.getStockQuantity().compareTo(item.getQuantity()) < 0){
                 messages.add(updatedProduct.getName() + " stock lesser than " + item.getQuantity() + ", quantity decreased to " + updatedProduct.getStockQuantity());
                 item.setQuantity(updatedProduct.getStockQuantity());
             }
-            updatedProduct.setStockQuantity(updatedProduct.getStockQuantity()-item.getQuantity());
+            updatedProduct.setStockQuantity(updatedProduct.getStockQuantity().subtract(item.getQuantity()));
 
             StockCard stockCard = StockCard.builder()
                 .id(UuidCreator.getTimeOrderedEpochFast())
                 .referenceId(item.getId())
                 .product(updatedProduct)
                 .productName(updatedProduct.getName())
-                .quantity(-item.getQuantity())
+                .quantity(item.getQuantity().negate())
                 .oldStock(oldStock)
                 .newStock(updatedProduct.getStockQuantity())
                 .type(StockMove.SALE)
@@ -205,15 +206,19 @@ public class TransactionServiceImpl implements TransactionService{
             transactionItems.removeIf(item -> listOfOutStockAndRemovedProduct.contains(item.getId()));
         }
 
+        BigDecimal subTotal = transactionItems.stream()
+            .map(item -> item.getPrice().multiply(item.getQuantity()))
+            .collect(Collectors.reducing(BigDecimal.ZERO, BigDecimal::add));
+
         stockCardRepository.saveAll(stockCards);
         searchedTransaction.setTotalItems(Long.valueOf(transactionItems.size()));
-        searchedTransaction.setSubTotal(transactionItems.stream().mapToLong(item -> item.getPrice() * item.getQuantity()).sum());
-        searchedTransaction.setGrandTotal(searchedTransaction.getSubTotal() - searchedTransaction.getTotalDiscount() + searchedTransaction.getTotalFee());
+        searchedTransaction.setSubTotal(subTotal);
+        searchedTransaction.setGrandTotal(searchedTransaction.getSubTotal().subtract(searchedTransaction.getTotalDiscount()).add(searchedTransaction.getTotalFee()));
         searchedTransaction.setTotalUnpaid(searchedTransaction.getGrandTotal());
         searchedTransaction.setStatus(TransactionStatus.PROCESS);
 
         Customer customer = searchedTransaction.getCustomer();
-        customer.setTotalUnpaid(customer.getTotalUnpaid() + searchedTransaction.getGrandTotal());
+        customer.setTotalUnpaid(customer.getTotalUnpaid().add(searchedTransaction.getGrandTotal()));
          
         messageProducerService.sendTransactionInvoiceEmail(new TransactionInvoiceMail(id, customer.getEmail(), ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())));
         TransactionResponse response = allTransactionMapper.createTransactionResponseDto(searchedTransaction, messages);
@@ -275,15 +280,18 @@ public class TransactionServiceImpl implements TransactionService{
 
         Map<Long, Product> productMap = listProductFromTrxItemsUpdated.stream().collect(Collectors.toMap(Product::getId, Function.identity()));
  
-        Map<Long, List<TransactionItem>> listRefunded = transactionItems.stream().filter(item -> item.getQuantity() < 0).collect(Collectors.groupingBy(
-            item -> item.getProduct().getId()));
+        Map<Long, List<TransactionItem>> listRefunded = transactionItems.stream()
+            .filter(item -> item.getQuantity().compareTo(BigDecimal.ZERO) < 0)
+            .collect(Collectors.groupingBy(
+                item -> item.getProduct().getId()
+            ));
 
         List<StockCard> stockCards = new ArrayList<>();
 
         List<TransactionItem> toRefundItems = new ArrayList<>();
 
         for(TransactionItem item: transactionItems){
-            if(item.getQuantity() < 0) { 
+            if(item.getQuantity().compareTo(BigDecimal.ZERO) < 0) { 
                 continue;
             }; 
 
@@ -292,23 +300,25 @@ public class TransactionServiceImpl implements TransactionService{
             Product product = productMap.get(item.getProduct().getId());
             if(product == null) continue;
 
-            Long cancelledQuantity;
+            BigDecimal cancelledQuantity;
 
             UUID refId;
             if(transactionItem != null){
-                Long totalRefund = transactionItem.stream().mapToLong(reduce -> reduce.getQuantity()).sum();
+                BigDecimal totalRefund = transactionItem.stream()
+                    .map(reduce -> reduce.getQuantity())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                 TransactionItem reverseItem = TransactionItem.builder()
                     .id(UuidCreator.getTimeOrderedEpochFast())
                     .price(item.getPrice())
                     .productName(product.getName())
-                    .quantity(-(item.getQuantity() + totalRefund))
+                    .quantity(item.getQuantity().add(totalRefund).negate())
                     .description("CANCELLED: " + product.getName())
                     .product(product)
                     .transaction(searchedTransaction)
                     .build();
 
-                cancelledQuantity = item.getQuantity() + totalRefund;
+                cancelledQuantity = item.getQuantity().add(totalRefund);
                 refId = reverseItem.getId();
                 toRefundItems.add(reverseItem);
             } else {
@@ -316,7 +326,7 @@ public class TransactionServiceImpl implements TransactionService{
                     .id(UuidCreator.getTimeOrderedEpochFast())
                     .price(item.getPrice())
                     .productName(product.getName())
-                    .quantity(-(item.getQuantity()))
+                    .quantity(item.getQuantity().negate())
                     .description("CANCELLED: " + product.getName())
                     .product(product)
                     .transaction(searchedTransaction)
@@ -327,9 +337,9 @@ public class TransactionServiceImpl implements TransactionService{
                 toRefundItems.add(reverseItem);
             }
 
-            Long oldStock = product.getStockQuantity();
+            BigDecimal oldStock = product.getStockQuantity();
 
-            product.setStockQuantity(product.getStockQuantity() + cancelledQuantity);
+            product.setStockQuantity(product.getStockQuantity().add(cancelledQuantity));
 
             StockCard stockCard = StockCard.builder()
                 .id(UuidCreator.getTimeOrderedEpochFast())
@@ -352,18 +362,18 @@ public class TransactionServiceImpl implements TransactionService{
         transactionItemRepository.saveAll(toRefundItems);
         stockCardRepository.saveAll(stockCards);
 
-        Long totalPaid = searchedTransaction.getTotalPaid();
-        Long totalUnpaid = searchedTransaction.getTotalUnpaid();
+        BigDecimal totalPaid = searchedTransaction.getTotalPaid();
+        BigDecimal totalUnpaid = searchedTransaction.getTotalUnpaid();
 
-        searchedTransaction.setTotalUnrefunded(searchedTransaction.getTotalPaid() + searchedTransaction.getTotalUnrefunded());
-        searchedTransaction.setTotalUnpaid(0L);
-        searchedTransaction.setTotalPaid(0L); 
+        searchedTransaction.setTotalUnrefunded(searchedTransaction.getTotalPaid().add(searchedTransaction.getTotalUnrefunded()));
+        searchedTransaction.setTotalUnpaid(BigDecimal.ZERO);
+        searchedTransaction.setTotalPaid(BigDecimal.ZERO); 
         searchedTransaction.setStatus(TransactionStatus.CANCELLED);
 
         Customer customer = searchedTransaction.getCustomer();
-        customer.setTotalUnpaid(customer.getTotalUnpaid() - totalUnpaid);
-        customer.setTotalPaid(customer.getTotalPaid() - totalPaid);
-        customer.setTotalUnrefunded(customer.getTotalUnrefunded() + totalPaid);
+        customer.setTotalUnpaid(customer.getTotalUnpaid().subtract(totalUnpaid));
+        customer.setTotalPaid(customer.getTotalPaid().subtract(totalPaid));
+        customer.setTotalUnrefunded(customer.getTotalUnrefunded().add(totalPaid));
 
         TransactionResponse transactionResponseDto = allTransactionMapper.createTransactionResponseDto(searchedTransaction);
         log.debug("Transaction cancellation response created: {}", transactionResponseDto);
@@ -413,15 +423,19 @@ public class TransactionServiceImpl implements TransactionService{
 
             item.setPrice(updatedProduct.sellPrice());
 
-            if(updatedProduct.stockQuantity() < item.getQuantity()){
+            if(updatedProduct.stockQuantity().compareTo(item.getQuantity()) < 0){
                 messages.add("Product stock lesser than " + item.getQuantity() + ", transaction quantity decreased to " + updatedProduct.stockQuantity());
                 item.setQuantity(updatedProduct.stockQuantity());
             }
         });
-        
+
+        BigDecimal newSubTotal = transactionItems.stream()
+            .map(item -> item.getPrice().multiply(item.getQuantity()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         searchedTransaction.setTotalItems(Long.valueOf(transactionItems.size()));
-        searchedTransaction.setSubTotal(transactionItems.stream().mapToLong(item -> item.getPrice() * item.getQuantity()).sum());
-        searchedTransaction.setGrandTotal(searchedTransaction.getSubTotal() - searchedTransaction.getTotalDiscount() + searchedTransaction.getTotalFee());
+        searchedTransaction.setSubTotal(newSubTotal);
+        searchedTransaction.setGrandTotal(searchedTransaction.getSubTotal().subtract(searchedTransaction.getTotalDiscount()).add(searchedTransaction.getTotalFee()));
 
         TransactionResponse transactionResponseDto = allTransactionMapper.createTransactionResponseDto(searchedTransaction, messages);
         return transactionResponseDto;
