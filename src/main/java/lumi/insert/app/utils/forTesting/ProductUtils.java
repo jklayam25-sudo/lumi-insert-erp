@@ -1,5 +1,6 @@
 package lumi.insert.app.utils.forTesting;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,10 +20,10 @@ public class ProductUtils {
             Product dumpProduct = Product.builder()
             .id(ids)
             .name("Product " + i)
-            .basePrice(1000L * i)
-            .sellPrice(1200L * i)
-            .stockQuantity(10L * i)
-            .stockMinimum(1L * i)
+            .basePrice(BigDecimal.valueOf(1000L * i))
+            .sellPrice(BigDecimal.valueOf(1200L * i))
+            .stockQuantity(BigDecimal.valueOf(10L * i))
+            .stockMinimum(BigDecimal.valueOf(1L * i))
             .build();
 
             products.add(dumpProduct);
@@ -44,10 +45,10 @@ public class ProductUtils {
         Product dumpProduct = Product.builder()
             .id(1L)
             .name("Product")
-            .basePrice(1000L)
-            .sellPrice(1200L)
-            .stockQuantity(10L)
-            .stockMinimum(1L)
+            .basePrice(BigDecimal.valueOf(1000L))
+            .sellPrice(BigDecimal.valueOf(1200L))
+            .stockQuantity(BigDecimal.valueOf(10L))
+            .stockMinimum(BigDecimal.valueOf(1L))
             .category(dumpCategory)
             .build();
 

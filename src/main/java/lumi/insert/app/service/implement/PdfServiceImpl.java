@@ -3,7 +3,7 @@ package lumi.insert.app.service.implement;
 import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -95,7 +95,7 @@ public class PdfServiceImpl implements PdfService{
                 int i = 1;
                 for (SupplyItemResponse item : supplyItems) {
                 Color color = null;
-                if(item.quantity() < 0) color = ExtendedColor.RED; 
+                if(item.quantity().compareTo(BigDecimal.ZERO) < 0) color = ExtendedColor.RED; 
                 itemsTable.addCell(PdfCellBuilder.getUnborderedColouredCell(String.valueOf(i), color));
                 itemsTable.addCell(PdfCellBuilder.getUnborderedColouredCell(item.product().name(), color));
                 itemsTable.addCell(new PdfCellBuilder().paragraph(item.quantity().toString()).hAlign(Element.ALIGN_RIGHT).color(color).build());
@@ -148,7 +148,11 @@ public class PdfServiceImpl implements PdfService{
                 adjustmentCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 totalTable.addCell(adjustmentCell); 
 
-                long refundedValue = data.supplyItems().stream().filter(item -> item.quantity() < 0).mapToLong(item -> item.quantity() *  item.price()).sum();
+                BigDecimal refundedValue = data.supplyItems().stream()
+                        .filter(item -> item.quantity().compareTo(BigDecimal.ZERO) < 0)
+                        .map(item -> item.quantity().multiply(item.price()))
+                        .reduce(BigDecimal.ZERO,  BigDecimal::add);
+
                 totalTable.addCell(PdfCellBuilder.getUnborderedColouredCell("", null));
                 totalTable.addCell(PdfCellBuilder.getUnborderedColouredCell("", null));
                 totalTable.addCell(PdfCellBuilder.getUnborderedColouredCell("Refund value", null));
@@ -243,7 +247,7 @@ public class PdfServiceImpl implements PdfService{
                 int i = 1;
                 for (TransactionItemResponse item : items) {
                         Color color = null;
-                        if(item.quantity() < 0) color = ExtendedColor.RED; 
+                        if(item.quantity().compareTo(BigDecimal.ZERO) < 0) color = ExtendedColor.RED; 
                         itemsTable.addCell(PdfCellBuilder.getUnborderedColouredCell(String.valueOf(i), color));
                         itemsTable.addCell(PdfCellBuilder.getUnborderedColouredCell(item.productName(), color));
                         itemsTable.addCell(new PdfCellBuilder().paragraph(item.quantity().toString()).hAlign(Element.ALIGN_RIGHT).color(color).build());
@@ -294,9 +298,13 @@ public class PdfServiceImpl implements PdfService{
                 adjustmentCell.setColspan(2);
                 adjustmentCell.setBorder(0);
                 adjustmentCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                totalTable.addCell(adjustmentCell); 
+                totalTable.addCell(adjustmentCell);  
 
-                long refundedValue = data.transactionItems().stream().filter(item -> item.quantity() < 0).mapToLong(item -> item.quantity() *  item.price()).sum();
+                BigDecimal refundedValue = data.transactionItems().stream()
+                        .filter(item -> item.quantity().compareTo(BigDecimal.ZERO) < 0)
+                        .map(item -> item.quantity().multiply(item.price()))
+                        .reduce(BigDecimal.ZERO,  BigDecimal::add);
+
                 totalTable.addCell(PdfCellBuilder.getUnborderedColouredCell("", null));
                 totalTable.addCell(PdfCellBuilder.getUnborderedColouredCell("", null));
                 totalTable.addCell(PdfCellBuilder.getUnborderedColouredCell("Refund value", null));
@@ -421,7 +429,7 @@ public class PdfServiceImpl implements PdfService{
                 for (ProductRefund product : refunds) {  
                         refundTable.addCell(PdfCellBuilder.getUnborderedColouredCell(String.valueOf(ii), null));
                         refundTable.addCell(PdfCellBuilder.getUnborderedColouredCell(product.productName(), null));
-                        refundTable.addCell(new PdfCellBuilder().paragraph(Math.abs(product.totalRefunded()) + "Pcs" ).hAlign(Element.ALIGN_RIGHT).build());
+                        refundTable.addCell(new PdfCellBuilder().paragraph(product.totalRefunded().abs() + "Pcs" ).hAlign(Element.ALIGN_RIGHT).build());
         
                 ii++;
                 }

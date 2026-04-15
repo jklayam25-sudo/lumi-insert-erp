@@ -1,5 +1,6 @@
 package lumi.insert.app.service.implement;
 
+import java.math.BigDecimal; 
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,7 +103,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductStockResponse getProductStock(Long productId) {
         log.debug("Getting stock for product ID: {}", productId);
-        Long stock = productRepository.getStockById(productId).orElseThrow(() -> {
+        BigDecimal stock = productRepository.getStockById(productId).orElseThrow(() -> {
             log.debug("Product stock not found for ID: {}", productId);
             return new NotFoundEntityException("Product with ID " + productId + " was not found");
         });
@@ -147,7 +148,7 @@ public class ProductServiceImpl implements ProductService {
             newCategory.setTotalItems(newCategory.getTotalItems() + 1L);
 
             categoryRepository.save(newCategory);
-        }
+        } 
 
         Product updatedProduct = productRepository.save(existingProduct);
 

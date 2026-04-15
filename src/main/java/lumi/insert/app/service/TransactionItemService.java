@@ -1,5 +1,6 @@
 package lumi.insert.app.service;
  
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,7 +19,7 @@ public interface TransactionItemService {
 
     TransactionItemDelete deleteTransactionItem(UUID id);
 
-    TransactionItemResponse updateTransactionItemQuantity(UUID id, Long quantity);
+    TransactionItemResponse updateTransactionItemQuantity(UUID id, BigDecimal quantity);
 
     Slice<TransactionItemResponse> getTransactionItemsByTransactionId(UUID transactionId, PaginationRequest paginationRequest);
 

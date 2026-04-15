@@ -1,6 +1,7 @@
 package lumi.insert.app.service.implement;
  
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -88,19 +89,19 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
             .totalPayment(request.getTotalPayment())
             .build();
 
-        transaction.setTotalUnpaid(transaction.getTotalUnpaid() - request.getTotalPayment());
-        transaction.setTotalPaid(transaction.getTotalPaid() + request.getTotalPayment());
+        transaction.setTotalUnpaid(transaction.getTotalUnpaid().subtract(request.getTotalPayment()));
+        transaction.setTotalPaid(transaction.getTotalPaid().add(request.getTotalPayment()));
 
-        if(transaction.getTotalUnpaid() < 0) {
+        if(transaction.getTotalUnpaid().compareTo(BigDecimal.ZERO) < 0) {
             log.debug("Payment exceeds unpaid amount for transactionId={}, totalPayment={}", transactionId, request.getTotalPayment());
             throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + transactionId + ", enter an exact amount to proceed");
         }
 
         Customer customer = transaction.getCustomer();
-        customer.setTotalUnpaid(customer.getTotalUnpaid() - request.getTotalPayment());
-        customer.setTotalPaid(customer.getTotalPaid() + request.getTotalPayment());
+        customer.setTotalUnpaid(customer.getTotalUnpaid().subtract(request.getTotalPayment()));
+        customer.setTotalPaid(customer.getTotalPaid().add(request.getTotalPayment()));
         // Upcoming: integrate with email notification
-        if(transaction.getTotalUnpaid() == 0) transaction.setStatus(TransactionStatus.COMPLETE);
+        if(transaction.getTotalUnpaid().compareTo(BigDecimal.ZERO) == 0) transaction.setStatus(TransactionStatus.COMPLETE);
         TransactionPayment savedTransactionPayment = transactionPaymentRepository.save(transactionPayment);
         TransactionPaymentResponse transactionPaymentResponseDto = allTransactionMapper.createTransactionPaymentResponseDto(savedTransactionPayment);
 
@@ -190,9 +191,9 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
             throw new ForbiddenRequestException("Refund payment only to Transaction with status PROCESS(onGoing) or CANCELLED, check carefully");
         }
 
-        Long totalUnrefunded = transaction.getTotalUnrefunded();
+        BigDecimal totalUnrefunded = transaction.getTotalUnrefunded();
 
-        if(request.getTotalPayment() > totalUnrefunded) {
+        if(request.getTotalPayment().compareTo(totalUnrefunded) > 0) {
             log.debug("Refund payment exceeds unrefunded amount transactionId={}, requestAmount={}, remaining={}", transactionId, request.getTotalPayment(), totalUnrefunded);
             throw new TransactionValidationException("Payment refund exceeds the remaining transaction unrefunded debt with ID " + transaction.getId() + ", enter an exact amount to proceed");
         }
@@ -207,14 +208,14 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
             .build();
 
         Customer customer = transaction.getCustomer();
-        customer.setTotalRefunded(customer.getTotalRefunded() + request.getTotalPayment());
-        customer.setTotalUnrefunded(customer.getTotalUnrefunded() - request.getTotalPayment());
+        customer.setTotalRefunded(customer.getTotalRefunded().add(request.getTotalPayment()));
+        customer.setTotalUnrefunded(customer.getTotalUnrefunded().subtract(request.getTotalPayment()));
 
-        transaction.setTotalRefunded(transaction.getTotalRefunded() + request.getTotalPayment());
-        transaction.setTotalUnrefunded(transaction.getTotalUnrefunded() - request.getTotalPayment());
+        transaction.setTotalRefunded(transaction.getTotalRefunded().add(request.getTotalPayment()));
+        transaction.setTotalUnrefunded(transaction.getTotalUnrefunded().subtract(request.getTotalPayment()));
         
         // Upcoming: integrate with email notification
-        if(transaction.getTotalUnrefunded() == 0) transaction.setStatus(TransactionStatus.COMPLETE);
+        if(transaction.getTotalUnrefunded().compareTo(BigDecimal.ZERO) == 0) transaction.setStatus(TransactionStatus.COMPLETE);
         TransactionPayment savedTransactionPayment = transactionPaymentRepository.save(refundTransactionPayment);
         
         TransactionPaymentResponse transactionPaymentResponseDto = allTransactionMapper.createTransactionPaymentResponseDto(savedTransactionPayment);

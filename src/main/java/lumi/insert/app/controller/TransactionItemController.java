@@ -1,5 +1,6 @@
 package lumi.insert.app.controller;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.UUID;
 
@@ -148,7 +149,7 @@ public class TransactionItemController {
         consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     @PreAuthorize("hasAnyRole('CASHIER')")
-    ResponseEntity<WebResponse<TransactionItemResponse>> UpdateTransactionItemQuantity(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id, @Parameter(description = "New quantity") @RequestBody @RequestParam(name = "quantity") Long quantity){
+    ResponseEntity<WebResponse<TransactionItemResponse>> UpdateTransactionItemQuantity(@Parameter(description = "Transaction ID") @PathVariable(name = "transactionId") UUID transactionId, @Parameter(description = "Item ID") @PathVariable(name = "id") UUID id, @Parameter(description = "New quantity") @RequestBody @RequestParam(name = "quantity") BigDecimal quantity){
         log.info("Updating transaction item quantity for item ID: {} to quantity: {}", id, quantity);
         TransactionItemResponse resultFromService = transactionItemService.updateTransactionItemQuantity(id, quantity);
         log.debug("Transaction item updated: {}", resultFromService);
