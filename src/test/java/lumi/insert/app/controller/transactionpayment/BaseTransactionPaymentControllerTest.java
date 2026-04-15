@@ -1,5 +1,6 @@
 package lumi.insert.app.controller.transactionpayment;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
@@ -12,9 +13,9 @@ import lumi.insert.app.dto.response.TransactionPaymentResponse;
 @WithMockUser(username = "admin", roles = "CASHIER")
 public abstract class BaseTransactionPaymentControllerTest extends BaseControllerTest{
   
-    TransactionPaymentResponse transactionPaymentResponse = new TransactionPaymentResponse(UUID.randomUUID(), UUID.randomUUID(), 10000L, "CLIENT", "LUMI", false);
+    TransactionPaymentResponse transactionPaymentResponse = new TransactionPaymentResponse(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(10000L), "CLIENT", "LUMI", false);
 
-    TransactionPaymentResponse transactionRefundResponse = new TransactionPaymentResponse(UUID.randomUUID(), UUID.randomUUID(), 10000L, "LUMI", "CLIENT", true);
+    TransactionPaymentResponse transactionRefundResponse = new TransactionPaymentResponse(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(10000L), "LUMI", "CLIENT", true);
 
     MockMultipartFile mockMultipartFile = new MockMultipartFile(
         "files", 

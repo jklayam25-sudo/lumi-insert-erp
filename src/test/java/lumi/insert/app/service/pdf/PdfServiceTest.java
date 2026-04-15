@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -47,16 +48,16 @@ public class PdfServiceTest {
         SupplyItemResponse item1 = new SupplyItemResponse(
             UuidCreator.getTimeOrderedEpochFast(), 
             productName, 
-            10L, 
-            10L,
+            BigDecimal.valueOf(10L), 
+            BigDecimal.valueOf(10L),
              null
         );
         
         SupplyItemResponse item2 = new SupplyItemResponse(
             UuidCreator.getTimeOrderedEpochFast(), 
             productName, 
-            10L, 
-            10L,
+            BigDecimal.valueOf(10L), 
+            BigDecimal.valueOf(10L),
              null
         );
 
@@ -67,14 +68,14 @@ public class PdfServiceTest {
             "Acme Supply Co.", 
                 List.of(item1, item2),
                 2L,
-                2L,    
-                20L,  
-                200L,  
-                182L,  
-                182L, 
-                0L,   
-                0L,
-                0L,
+                BigDecimal.valueOf(2L),    
+                BigDecimal.valueOf(20L),  
+                BigDecimal.valueOf(200L),  
+                BigDecimal.valueOf(182L),  
+                BigDecimal.valueOf(182L), 
+                BigDecimal.valueOf(0L),   
+                BigDecimal.valueOf(0L),
+                BigDecimal.valueOf(0L),
                 SupplyStatus.UNPAID,
                 null,
                 null,
@@ -119,8 +120,8 @@ public class PdfServiceTest {
             1L,
             "Shoes",
             null,
-            10L, 
-            10L,
+            BigDecimal.valueOf(10L), 
+            BigDecimal.valueOf(10L),
             null, 
             null
         );
@@ -131,8 +132,8 @@ public class PdfServiceTest {
             2L,
             "Watch",
             null,
-            100L, 
-            10L,
+            BigDecimal.valueOf(100L), 
+            BigDecimal.valueOf(10L),
             null, 
             null
         );
@@ -144,14 +145,14 @@ public class PdfServiceTest {
             "Acme Supply Co.", 
                 List.of(item1, item2),
                 2L,
-                2L,    
-                20L,  
-                200L,  
-                182L,  
-                182L, 
-                0L,   
-                0L,
-                0L,
+                BigDecimal.valueOf(2L),    
+                BigDecimal.valueOf(20L),  
+                BigDecimal.valueOf(200L),  
+                BigDecimal.valueOf(182L),  
+                BigDecimal.valueOf(182L), 
+                BigDecimal.valueOf(0L),   
+                BigDecimal.valueOf(0L),
+                BigDecimal.valueOf(0L),
                 TransactionStatus.PROCESS,
                 null,
                 null,
@@ -193,9 +194,9 @@ public class PdfServiceTest {
     
     @Test
     void testExportProductsStatistic_Success() throws IOException { 
-        ProductSale sales = new ProductSale("Tea", 100L);
-        ProductRefund refunds = new ProductRefund("Shoes", 5L);
-        ProductOutOfStock oosProduct = new ProductOutOfStock(1L, "Mirror", 2L, 10L);
+        ProductSale sales = new ProductSale("Tea", BigDecimal.valueOf(100L));
+        ProductRefund refunds = new ProductRefund("Shoes", BigDecimal.valueOf(5L));
+        ProductOutOfStock oosProduct = new ProductOutOfStock(1L, "Mirror", BigDecimal.valueOf(2L), BigDecimal.valueOf(10L));
 
         TransactionItemStatisticResponse statsResponse = TransactionItemStatisticResponse.builder()
         .productRefunds(List.of(refunds))

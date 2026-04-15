@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import lumi.insert.app.activitycore.entity.ActivityLog;
 import lumi.insert.app.activitycore.entity.nondatabase.ActivityLogMessage;
@@ -22,6 +23,7 @@ import lumi.insert.app.core.entity.nondatabase.UploadStorageMessage;
 import lumi.insert.app.service.implement.MessageProducerServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 public class MessageProducerTest {
     
     @InjectMocks

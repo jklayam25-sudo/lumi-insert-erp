@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.f4b6a3.uuid.UuidCreator;
@@ -29,6 +30,7 @@ import lumi.insert.app.mapper.AllSupplyMapperImpl;
 import lumi.insert.app.mapper.ProductMapperImpl;
 
 @ExtendWith(MockitoExtension.class) 
+@ActiveProfiles("test")
 public abstract class BaseSupplyServiceTest {
     
     @InjectMocks

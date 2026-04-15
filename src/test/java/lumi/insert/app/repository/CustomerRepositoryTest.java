@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,13 +34,14 @@ import lumi.insert.app.core.repository.CustomerRepository;
 import lumi.insert.app.dto.request.CustomerGetByFilter;
 import lumi.insert.app.dto.response.CustomerNameResponse;
 import lumi.insert.app.utils.generator.JpaSpecGenerator; 
+import lumi.insert.app.TestContainerTest;
 
 @DataJpaTest 
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Transactional
 @ActiveProfiles("test")
 @Import({JpaSpecGenerator.class, AuditorAwareImpl.class})
-public class CustomerRepositoryTest {
+public class CustomerRepositoryTest extends TestContainerTest {
 
     @Autowired
     CustomerRepository customerRepository;
@@ -74,7 +76,7 @@ public class CustomerRepositoryTest {
         Customer saveAndFlush = customerRepository.saveAndFlush(customer);
         assertNotNull(saveAndFlush.getId());
         assertEquals("TEST@mail.com", saveAndFlush.getEmail());
-        assertEquals(0, saveAndFlush.getTotalPaid());
+        assertTrue(BigDecimal.ZERO.compareTo(saveAndFlush.getTotalPaid()) == 0);
     }
 
     @Test
@@ -164,7 +166,7 @@ public class CustomerRepositoryTest {
         .contact("081234567890")
         .shippingAddress("Jl. xxx")
         .isActive(false)
-        .totalUnpaid(1200L)
+        .totalUnpaid(BigDecimal.valueOf(1200L))
         .build();
 
         Customer unMatchCustomer = Customer.builder()
@@ -174,7 +176,7 @@ public class CustomerRepositoryTest {
         .contact("081234567890")
         .shippingAddress("Jl. xxx")
         .isActive(false)
-        .totalUnpaid(1600L)
+        .totalUnpaid(BigDecimal.valueOf(1600L))
         .build();
 
         Customer unMatchCustomer1 = Customer.builder()
@@ -183,15 +185,15 @@ public class CustomerRepositoryTest {
         .email("TEST@mail.com")
         .contact("081234567890")
         .shippingAddress("Jl. xxx")
-        .totalUnpaid(1200L)
+        .totalUnpaid(BigDecimal.valueOf(1200L))
         .build();
 
         customerRepository.saveAllAndFlush(List.of(matchCustomer, unMatchCustomer, unMatchCustomer1));
 
         CustomerGetByFilter request = CustomerGetByFilter.builder()
         .isActive(false)
-        .minTotalUnpaid(1000L)
-        .maxTotalUnpaid(1500L)
+        .minTotalUnpaid(BigDecimal.valueOf(1000L))
+        .maxTotalUnpaid(BigDecimal.valueOf(1500L))
         .build();
 
         Pageable pageable = specGenerator.pageable(request);
@@ -209,8 +211,8 @@ public class CustomerRepositoryTest {
 
         CustomerGetByFilter request = CustomerGetByFilter.builder()
         .isActive(false)
-        .minTotalUnpaid(1000L)
-        .maxTotalUnpaid(1500L)
+        .minTotalUnpaid(BigDecimal.valueOf(1000L))
+        .maxTotalUnpaid(BigDecimal.valueOf(1500L))
         .build();
 
         Pageable pageable = specGenerator.pageable(request);

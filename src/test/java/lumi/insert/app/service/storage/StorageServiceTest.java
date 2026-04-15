@@ -20,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Uploader; 
@@ -29,6 +30,7 @@ import lumi.insert.app.service.implement.CloudinaryStorageServiceImpl;
 import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 public class StorageServiceTest {
     
     @InjectMocks

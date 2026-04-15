@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,12 +33,12 @@ public class SupplyPaymentServiceGetTest extends BaseSupplyPaymentServiceTest{
     @Test
     @DisplayName("Should return SupplyPaymentResponce when supply payment found")
     public void getSupplyPayment_validId_returnSupplyPaymentDTO(){
-        setupSupplyPayment.setTotalPayment(1000L);
+        setupSupplyPayment.setTotalPayment(BigDecimal.valueOf(1000L));
         when(supplyPaymentRepositoryMock.findById(setupSupplyPayment.getId())).thenReturn(Optional.of(setupSupplyPayment));
 
         SupplyPaymentResponse result = supplyPaymentServiceMock.getSupplyPayment(setupSupplyPayment.getId());
         assertEquals(setupSupplyPayment.getId(), result.id());
-        assertEquals(1000L, result.totalPayment());
+        assertTrue(BigDecimal.valueOf(1000L).compareTo(result.totalPayment()) == 0);
     }
 
     @Test
@@ -51,13 +52,13 @@ public class SupplyPaymentServiceGetTest extends BaseSupplyPaymentServiceTest{
     @Test
     @DisplayName("Should return Slice of SupplyPaymentResponce when supply payment with containing trx id found")
     public void getSupplyPaymentBySupplyId_validId_returnSliceSupplyPaymentDTO(){
-        setupSupplyPayment.setTotalPayment(1000L);
+        setupSupplyPayment.setTotalPayment(BigDecimal.valueOf(1000L));
         Slice<SupplyPayment> slices = new SliceImpl<>(List.of(setupSupplyPayment));
         when(supplyPaymentRepositoryMock.findAllBySupplyId(eq(setupSupplyPayment.getId()), any())).thenReturn(slices);
 
         Slice<SupplyPaymentResponse> result = supplyPaymentServiceMock.getSupplyPaymentsBySupplyId(setupSupplyPayment.getId(), PaginationRequest.builder().build());
         assertEquals(setupSupplyPayment.getId(), result.getContent().getFirst().id());
-        assertEquals(1000L, result.getContent().getFirst().totalPayment());
+        assertTrue(BigDecimal.valueOf(1000L).compareTo(result.getContent().getFirst().totalPayment()) == 0);
         assertEquals(1, result.getNumberOfElements());
     }
 
@@ -76,7 +77,7 @@ public class SupplyPaymentServiceGetTest extends BaseSupplyPaymentServiceTest{
     @Test
     @DisplayName("Should return Slice of SupplyPaymentResponce when supply payment with containing trx id found")
     public void getSupplyPaymentsByRequest_validId_returnSliceSupplyPaymentDTO(){
-        setupSupplyPayment.setTotalPayment(1000L);
+        setupSupplyPayment.setTotalPayment(BigDecimal.valueOf(1000L));
         Page<SupplyPayment> slices = new PageImpl<SupplyPayment>((List.of(setupSupplyPayment)));
         when(jpaSpecGenerator.pageable(any())).thenReturn(PageRequest.of(0, 10));
         when(jpaSpecGenerator.supplyPaymentSpecification(any())).thenReturn(Specification.anyOf(List.of()));
@@ -84,7 +85,7 @@ public class SupplyPaymentServiceGetTest extends BaseSupplyPaymentServiceTest{
 
         Slice<SupplyPaymentResponse> result = supplyPaymentServiceMock.getSupplyPaymentsByRequests(SupplyPaymentGetByFilter.builder().build());
         assertEquals(setupSupplyPayment.getId(), result.getContent().getFirst().id());
-        assertEquals(1000L, result.getContent().getFirst().totalPayment());
+        assertTrue(BigDecimal.valueOf(1000L).compareTo(result.getContent().getFirst().totalPayment()) == 0);
         assertEquals(1, result.getNumberOfElements());
     }
 

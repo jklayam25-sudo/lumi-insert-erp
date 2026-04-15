@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -24,10 +25,10 @@ public class TransactionItemServiceDeleteTest extends BaseTransactionItemService
     @DisplayName("Should calcute Transaction total and delete entity, return TransactionItemDeleteResponse DTO when delete transaction item is successful")
     public void deleteTransactionItem_validRequest_returnTransactionItemResponse(){  
         setupTransaction.setTotalItems(1L);
-        setupTransaction.setSubTotal(100000L);
+        setupTransaction.setSubTotal(BigDecimal.valueOf(100000L));
         setupTransactionItem.setTransaction(setupTransaction);
-        setupTransactionItem.setPrice(50000L);
-        setupTransactionItem.setQuantity(1L);
+        setupTransactionItem.setPrice(BigDecimal.valueOf(50000L));
+        setupTransactionItem.setQuantity(BigDecimal.valueOf(1L));
 
         when(transactionItemRepositoryMock.findById(setupTransactionItem.getId())).thenReturn(Optional.of(setupTransactionItem));
 
@@ -35,8 +36,8 @@ public class TransactionItemServiceDeleteTest extends BaseTransactionItemService
 
         assertEquals(setupTransactionItem.getId(), deleteTransactionItem.id()); 
         assertTrue(deleteTransactionItem.deleted()); 
-        assertEquals(50000L, setupTransaction.getGrandTotal());
-        assertEquals(0L, setupTransaction.getTotalItems());
+        assertTrue(BigDecimal.valueOf(50000L).compareTo(setupTransaction.getSubTotal()) == 0); 
+        assertEquals(0L, setupTransaction.getTotalItems()); 
 
         verify(transactionItemRepositoryMock, times(1)).delete(setupTransactionItem);
     }

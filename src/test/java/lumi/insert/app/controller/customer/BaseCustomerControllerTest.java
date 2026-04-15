@@ -12,7 +12,9 @@ import lumi.insert.app.controller.BaseControllerTest;
 import lumi.insert.app.dto.response.CustomerDetailResponse;
 import lumi.insert.app.dto.response.CustomerNameResponse;
 import lumi.insert.app.dto.response.CustomerResponse; 
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("test")
 @WithMockUser(username = "admin", roles = "CASHIER")
 public abstract class BaseCustomerControllerTest extends BaseControllerTest{
  

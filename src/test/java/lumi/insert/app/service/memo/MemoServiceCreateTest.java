@@ -87,7 +87,7 @@ public class MemoServiceCreateTest extends BaseMemoServiceTest{
         when(employeeRepository.getReferenceById(any())).thenReturn(employee);
         when(memoViewRepository.save(any(MemoView.class))).thenThrow(new ConstraintViolationException("", null));
  
-        assertTrue(memoService.createMemoView(login, 1L).getId().isEmpty());
+        assertTrue(memoService.createMemoView(login, 1L).getId() == null);
         
     }
 }

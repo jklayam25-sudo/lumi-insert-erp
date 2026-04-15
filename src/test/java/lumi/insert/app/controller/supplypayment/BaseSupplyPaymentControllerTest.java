@@ -1,5 +1,6 @@
 package lumi.insert.app.controller.supplypayment;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
@@ -12,9 +13,9 @@ import lumi.insert.app.dto.response.SupplyPaymentResponse;
 @WithMockUser(username = "admin", roles = "FINANCE")
 public abstract class BaseSupplyPaymentControllerTest extends BaseControllerTest{
  
-    SupplyPaymentResponse supplyPaymentResponse = new SupplyPaymentResponse(UUID.randomUUID(), UUID.randomUUID(), 10000L, "CLIENT", "LUMI", false);
+    SupplyPaymentResponse supplyPaymentResponse = new SupplyPaymentResponse(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(10000L), "CLIENT", "LUMI", false);
 
-    SupplyPaymentResponse supplyRefundResponse = new SupplyPaymentResponse(UUID.randomUUID(), UUID.randomUUID(), 10000L, "LUMI", "CLIENT", true);
+    SupplyPaymentResponse supplyRefundResponse = new SupplyPaymentResponse(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.valueOf(10000L), "LUMI", "CLIENT", true);
 
     MockMultipartFile mockMultipartFile = new MockMultipartFile(
         "files", 

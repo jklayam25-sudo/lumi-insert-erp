@@ -13,9 +13,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import; 
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.nondatabase.ActivityAction; 
 import lumi.insert.app.dto.request.CategoryCreateRequest;
@@ -28,7 +31,7 @@ import lumi.insert.app.service.implement.MessageProducerServiceImpl;
 @ActiveProfiles("test") 
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @Transactional
-public class AcvityLogAspectTITest {
+public class AcvityLogAspectTITest extends TestContainerTest{
     
     @Autowired
     CategoryService categoryService;
@@ -38,6 +41,11 @@ public class AcvityLogAspectTITest {
 
     @MockitoBean
     AuditorAwareImpl auditorAwareImpl;
+
+    @DynamicPropertySource
+    static void allowAOP(DynamicPropertyRegistry registry){
+        registry.add("app.aop.enabled", () -> true);
+    }
   
     @Test
     void saveCategory_shouldSaveActivityLog(){
@@ -45,7 +53,7 @@ public class AcvityLogAspectTITest {
         when(auditorAwareImpl.getAuditorIpAddress()).thenReturn(Optional.of("0.1.2.3"));
 
         CategoryCreateRequest request = CategoryCreateRequest.builder()
-        .name("testxxx")
+        .name("testxxx")                
         .build();
 
         CategoryResponse response = categoryService.createCategory(request);

@@ -28,12 +28,14 @@ import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.core.repository.EmployeeRepository;
 
+import lumi.insert.app.TestContainerTest;
+
 @DataJpaTest 
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Transactional
 @ActiveProfiles("test")
 @Import({AuditorAwareImpl.class})
-public class EmployeeRepositoryTest {
+public class EmployeeRepositoryTest  extends TestContainerTest {
     
     @Autowired
     EmployeeRepository employeeRepository;

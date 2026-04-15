@@ -2,7 +2,7 @@ package lumi.insert.app.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest; 
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.context.ActiveProfiles;
@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import lumi.insert.app.TestContainerTest; 
 import lumi.insert.app.mapper.AllSupplyMapper;
 import lumi.insert.app.mapper.AllTransactionMapper;
 import lumi.insert.app.mapper.CategoryMapper;
@@ -29,13 +30,13 @@ import lumi.insert.app.service.TransactionItemService;
 import lumi.insert.app.service.TransactionPaymentService;
 import lumi.insert.app.service.TransactionService;
 import lumi.insert.app.service.XlsxService;
-import lumi.insert.app.service.implement.StockCardServiceImpl;
+import lumi.insert.app.service.implement.StockCardServiceImpl; 
 import tools.jackson.databind.ObjectMapper;
 
-@SpringBootTest
+@SpringBootTest 
 @WithMockUser(username = "admin")
-@ActiveProfiles("test")
-public abstract class BaseControllerTest {
+@ActiveProfiles("test") 
+public abstract class BaseControllerTest extends TestContainerTest{
     
     protected MockMvc mockMvc;
 

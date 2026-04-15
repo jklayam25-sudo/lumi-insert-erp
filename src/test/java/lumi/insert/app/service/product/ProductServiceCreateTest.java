@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.security.InvalidParameterException;
 import java.util.Optional;
 
@@ -25,19 +26,19 @@ public class ProductServiceCreateTest extends BaseProductServiceTest{
     public void createProduct_validUncategorizedRequest_returnProductResponseDTO(){
         ProductCreateRequest productCreateRequest = ProductCreateRequest.builder()
         .name("NIKE Flyway 3")
-        .basePrice(100L)
-        .sellPrice(120L)
+        .basePrice(BigDecimal.valueOf(100L))
+        .sellPrice(BigDecimal.valueOf(120L))
         .categoryId(null)
-        .stockQuantity(3L)
+        .stockQuantity(BigDecimal.valueOf(3L))
         .build();
 
         ProductResponse createdProduct = productService.createProduct(productCreateRequest);
 
         assertEquals("NIKE Flyway 3", createdProduct.name());
-        assertEquals(100L, createdProduct.basePrice());
-        assertEquals(120L, createdProduct.sellPrice());
-        assertEquals(3L, createdProduct.stockQuantity());
-        assertEquals(0L, createdProduct.stockMinimum());
+        assertEquals(BigDecimal.valueOf(100L).longValue(), createdProduct.basePrice().longValue());
+        assertEquals(BigDecimal.valueOf(120L).longValue(), createdProduct.sellPrice().longValue());
+        assertEquals(BigDecimal.valueOf(3L).longValue(), createdProduct.stockQuantity().longValue());
+        assertEquals(BigDecimal.valueOf(0L).longValue(), createdProduct.stockMinimum().longValue());
         assertNotNull(createdProduct.id());
         assertNull(createdProduct.category());
         assertNotNull(createdProduct.createdAt());
@@ -54,10 +55,10 @@ public class ProductServiceCreateTest extends BaseProductServiceTest{
     public void createProduct_existingName_throwDuplicateEntityException() {
         ProductCreateRequest productCreateRequest = ProductCreateRequest.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .build();
 
         when(productRepositoryMock.existsByName("NIKE Jordan Low 3")).thenReturn(true);
@@ -70,10 +71,10 @@ public class ProductServiceCreateTest extends BaseProductServiceTest{
     public void createProduct_invalidCategoryId_throwNotFoundEntityException() {
         ProductCreateRequest productCreateRequest = ProductCreateRequest.builder()
         .name("NIKE Jordan Low 3")
-        .basePrice(10000L)
-        .sellPrice(12000L)
-        .stockQuantity(50L)
-        .stockMinimum(5L)
+        .basePrice(BigDecimal.valueOf(10000L))
+        .sellPrice(BigDecimal.valueOf(12000L))
+        .stockQuantity(BigDecimal.valueOf(50L))
+        .stockMinimum(BigDecimal.valueOf(5L))
         .categoryId(12L)
         .build();
 

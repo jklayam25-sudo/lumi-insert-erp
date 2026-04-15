@@ -12,7 +12,9 @@ import lumi.insert.app.controller.BaseControllerTest;
 import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.dto.response.MemoResponse; 
- 
+ import org.springframework.test.context.ActiveProfiles;
+
+@ActiveProfiles("test")
 @WithMockUser(username = "admin", roles = {"OWNER"} )
 public abstract class BaseMemoControllerTest extends BaseControllerTest{
      

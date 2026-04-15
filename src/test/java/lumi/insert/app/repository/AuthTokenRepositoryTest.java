@@ -21,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
+import lumi.insert.app.TestContainerTest;
 import lumi.insert.app.config.security.AuditorAwareImpl;
 import lumi.insert.app.core.entity.AuthToken;
 import lumi.insert.app.core.entity.Employee;
@@ -34,7 +35,7 @@ import lumi.insert.app.core.repository.EmployeeRepository;
 @Transactional
 @ActiveProfiles("test")
 @Import({AuditorAwareImpl.class})
-public class AuthTokenRepositoryTest {
+public class AuthTokenRepositoryTest extends TestContainerTest  {
     
     @Autowired
     AuthTokenRepository authTokenRepository;

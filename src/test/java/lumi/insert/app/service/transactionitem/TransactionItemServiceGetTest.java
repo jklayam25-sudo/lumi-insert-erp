@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -75,8 +76,8 @@ public class TransactionItemServiceGetTest extends BaseTransactionItemServiceTes
     @Test
     @DisplayName("Should return TransactionItemStatisticResponse (List of productSale and List of productRefund) when found any")
     public void getTransactionItemStats_foundAny_returnTransactionItemStatisticResponse(){ 
-        ProductSale productSale = new ProductSale("SomeProduct", 10L);
-        ProductRefund productRefund = new ProductRefund("SomeProduct", 10L);
+        ProductSale productSale = new ProductSale("SomeProduct", BigDecimal.valueOf(10L));
+        ProductRefund productRefund = new ProductRefund("SomeProduct", BigDecimal.valueOf(10L));
         when(transactionItemRepositoryMock.getProductTopSales(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of(productSale)); 
         when(transactionItemRepositoryMock.getProductTopRefund(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of(productRefund)); 
 

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -38,6 +40,7 @@ import lumi.insert.app.service.TransactionItemService;
 import lumi.insert.app.service.implement.MailSenderServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 class MailSenderServiceTest {
 
     @Mock
@@ -109,7 +112,7 @@ class MailSenderServiceTest {
         LocalDateTime start = LocalDateTime.now().minusDays(1);
         LocalDateTime end = LocalDateTime.now();
         TransactionItemStatisticResponse stats = TransactionItemStatisticResponse.builder().build();
-        List<ProductOutOfStock> outOfStock = List.of(new ProductOutOfStock(1L, "Prod", 0L, 0L));
+        List<ProductOutOfStock> outOfStock = List.of(new ProductOutOfStock(1L, "Prod", BigDecimal.ZERO, BigDecimal.ZERO));
         byte[] pdfContent = "stat content".getBytes();
         ByteArrayInputStream pdfStream = new ByteArrayInputStream(pdfContent);
 

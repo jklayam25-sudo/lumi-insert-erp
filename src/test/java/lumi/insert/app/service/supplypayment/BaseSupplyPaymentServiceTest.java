@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -27,6 +28,7 @@ import lumi.insert.app.utils.generator.JpaSpecGenerator;
 import lumi.insert.app.mapper.AllSupplyMapperImpl;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 public abstract class BaseSupplyPaymentServiceTest {
 
     @InjectMocks

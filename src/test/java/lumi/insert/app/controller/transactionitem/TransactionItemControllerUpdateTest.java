@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +29,7 @@ public class TransactionItemControllerUpdateTest extends BaseTransactionItemCont
     @Test
     @DisplayName("should return transaction item dto when request Trx item to update quantity success")
     public void updateTransactionItemQuantityAPI_validId_shouldReturnDTO() throws Exception{  
-        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), 5L)).thenReturn(transactionItemResponse);
+        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), BigDecimal.valueOf(5L))).thenReturn(transactionItemResponse);
 
         mockMvc.perform(
             post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/quantity")
@@ -46,7 +47,7 @@ public class TransactionItemControllerUpdateTest extends BaseTransactionItemCont
     @Test
     @WithMockUser(username = "admin", roles = "OWNER")
     public void updateTransactionItemQuantityAPI_higherRole_shouldReturnDTO() throws Exception{  
-        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), 5L)).thenReturn(transactionItemResponse);
+        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), BigDecimal.valueOf(5L))).thenReturn(transactionItemResponse);
 
         mockMvc.perform(
             post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/quantity")
@@ -64,7 +65,7 @@ public class TransactionItemControllerUpdateTest extends BaseTransactionItemCont
     @Test
     @WithMockUser(username = "admin", roles = "WAREHOUSE")
     public void updateTransactionItemQuantityAPI_invalidRole_shouldReturnDTO() throws Exception{  
-        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), 5L)).thenReturn(transactionItemResponse);
+        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), BigDecimal.valueOf(5L))).thenReturn(transactionItemResponse);
 
         mockMvc.perform(
             post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/quantity")
@@ -81,7 +82,7 @@ public class TransactionItemControllerUpdateTest extends BaseTransactionItemCont
     @Test
     @DisplayName("should return error not found when request Trx item Not Found")
     public void updateTransactionItemQuantityAPI_invalidId_shouldReturnErrorNotFound() throws Exception{ 
-        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), 5L)).thenThrow(new NotFoundEntityException("Transaction Items with ID " + 1L + " was not found"));
+        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), BigDecimal.valueOf(5L))).thenThrow(new NotFoundEntityException("Transaction Items with ID " + 1L + " was not found"));
         
        mockMvc.perform(
             post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/quantity")
@@ -98,7 +99,7 @@ public class TransactionItemControllerUpdateTest extends BaseTransactionItemCont
     @Test
     @DisplayName("should return error forbiddenrequest when request Transaction is not pending")
     public void updateTransactionItemQuantityAPI_nonPendingTrx_shouldReturnErrorForbiddenRequest() throws Exception{ 
-        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), 5L)).thenThrow(new ForbiddenRequestException("Couldn't delete the item because Transaction Status is not PENDING(CART)"));
+        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), BigDecimal.valueOf(5L))).thenThrow(new ForbiddenRequestException("Couldn't delete the item because Transaction Status is not PENDING(CART)"));
 
        mockMvc.perform(
             post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/quantity")
@@ -115,7 +116,7 @@ public class TransactionItemControllerUpdateTest extends BaseTransactionItemCont
     @Test
     @DisplayName("should return error transactionvalidation when request product stock lesser than requested quantity")
     public void updateTransactionItemQuantityAPI_outOfStock_shouldReturnErrorTransactionValidation() throws Exception{ 
-        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), 10L)).thenThrow(new TransactionValidationException("Product stocks with ID " + 1L + " doesn't meet buyer quantity, stock left: " + 5L));
+        when(transactionItemService.updateTransactionItemQuantity(transactionItemResponse.id(), BigDecimal.valueOf(10L))).thenThrow(new TransactionValidationException("Product stocks with ID " + 1L + " doesn't meet buyer quantity, stock left: " + 5L));
 
        mockMvc.perform(
             post("/api/transactions/" + UUID.randomUUID().toString() + "/items/" + transactionItemResponse.id().toString() + "/quantity")

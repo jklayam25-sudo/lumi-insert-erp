@@ -10,7 +10,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import lumi.insert.app.controller.BaseControllerTest;
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.dto.response.EmployeeResponse; 
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("test")
 @WithMockUser(username = "admin", roles = "OWNER")
 public abstract class BaseEmployeeControllerTest extends BaseControllerTest {
       

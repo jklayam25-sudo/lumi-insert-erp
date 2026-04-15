@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
+import java.math.BigDecimal;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ public class TransactionItemControllerCreateTest extends BaseTransactionItemCont
     @Test
     @DisplayName("should return Transaction Item Response when create succesfully")
     public void createTransactionItemAPI_validRequest_shouldReturnCreatedEntity() throws Exception{
-        when(transactionItemService.createTransactionItem(transactionItemResponse.transactionId(), TransactionItemCreateRequest.builder().productId(1L).quantity(5L).build())).thenReturn(transactionItemResponse);
+        when(transactionItemService.createTransactionItem(transactionItemResponse.transactionId(), TransactionItemCreateRequest.builder().productId(1L).quantity(BigDecimal.valueOf(5L)).build())).thenReturn(transactionItemResponse);
 
         mockMvc.perform(
             post("/api/transactions/" + transactionItemResponse.transactionId() + "/items")
@@ -45,7 +46,7 @@ public class TransactionItemControllerCreateTest extends BaseTransactionItemCont
     @Test
     @WithMockUser(username = "admin", roles = "OWNER")
     public void createTransactionItemAPI_higherRole_shouldReturnCreatedEntity() throws Exception{
-        when(transactionItemService.createTransactionItem(transactionItemResponse.transactionId(), TransactionItemCreateRequest.builder().productId(1L).quantity(5L).build())).thenReturn(transactionItemResponse);
+        when(transactionItemService.createTransactionItem(transactionItemResponse.transactionId(), TransactionItemCreateRequest.builder().productId(1L).quantity(BigDecimal.valueOf(5L)).build())).thenReturn(transactionItemResponse);
 
         mockMvc.perform(
             post("/api/transactions/" + transactionItemResponse.transactionId() + "/items")
@@ -64,7 +65,7 @@ public class TransactionItemControllerCreateTest extends BaseTransactionItemCont
     @Test
     @WithMockUser(username = "admin", roles = "WAREHOUSE")
     public void createTransactionItemAPI_invalidRole_shouldReturnCreatedEntity() throws Exception{
-        when(transactionItemService.createTransactionItem(transactionItemResponse.transactionId(), TransactionItemCreateRequest.builder().productId(1L).quantity(5L).build())).thenReturn(transactionItemResponse);
+        when(transactionItemService.createTransactionItem(transactionItemResponse.transactionId(), TransactionItemCreateRequest.builder().productId(1L).quantity(BigDecimal.valueOf(5L)).build())).thenReturn(transactionItemResponse);
 
         mockMvc.perform(
             post("/api/transactions/" + transactionItemResponse.transactionId() + "/items")
