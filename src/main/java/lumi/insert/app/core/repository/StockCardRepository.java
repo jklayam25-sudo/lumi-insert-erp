@@ -9,10 +9,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import lumi.insert.app.core.entity.StockCard;
 import lumi.insert.app.dto.response.StockCardResponse; 
 
+/**
+ * Repository for {@link StockCard} entity.
+ * <p>Support {@link JpaSpecificationExecutor} query.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
+@Repository
 public interface StockCardRepository extends JpaRepository<StockCard, UUID>, JpaSpecificationExecutor<StockCard>{
     
     @Query("SELECT s.id as id, s.referenceId as referenceId, s.product.id as productId, s.productName as productName, s.quantity as quantity, s.oldStock as oldStock, s.newStock as newStock, s.oldPrice as oldPrice, s.newPrice as newPrice, s.type as type, s.description as description, s.createdAt as createdAt " + 

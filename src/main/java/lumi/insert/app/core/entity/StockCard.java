@@ -24,6 +24,14 @@ import lombok.NoArgsConstructor;
 import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 import lumi.insert.app.core.entity.nondatabase.StockMove;
 
+/**
+ * Representation class of database table {@code"stock_cards"}. 
+ * <p>Store product movement information such as snapshot, quantity, etc.<br>
+ * Class can be implemented by{@code NoArgsConstructor, AllArgsConstructor and Builder}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity(name = "stock_cards")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -66,6 +74,10 @@ public class StockCard extends BaseAuditing{
 
     private String description;
 
+    /**
+     * Pre-query function used to normalize BigDecimal scale
+     * <p>Rounding half up  and scaled by 4 for precise value</p>
+     */
     @PrePersist
     @PreUpdate
     void normalizeDecimal(){

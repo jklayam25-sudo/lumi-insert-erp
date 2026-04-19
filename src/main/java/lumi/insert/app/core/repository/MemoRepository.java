@@ -14,9 +14,21 @@ import lumi.insert.app.core.entity.Memo;
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.dto.response.MemoResponse;
 
+/**
+ * Repository for {@link Memo} entity.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Repository
 public interface MemoRepository extends JpaRepository<Memo, Long>{
      
+    /**
+     * Fetch unviewed active memos base on role and updated time.  
+     * @param id
+     * @param role
+     * @param time
+     * @return Slices of {@link MemoResponse}
+     */
     @Query("SELECT m.id as id, m.title as title, m.body as body, m.images as images, m.role as role, " + 
        "(CASE WHEN mv.id IS NULL THEN false ELSE true END) as isRead " + 
        "FROM memos m " + 

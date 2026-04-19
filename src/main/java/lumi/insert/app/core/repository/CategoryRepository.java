@@ -7,6 +7,11 @@ import org.springframework.stereotype.Repository;
 
 import lumi.insert.app.core.entity.Category;
 
+/**
+ * Repository for {@link Category} entity.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     

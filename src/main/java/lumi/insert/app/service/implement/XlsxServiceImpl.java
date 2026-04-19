@@ -1,5 +1,5 @@
 package lumi.insert.app.service.implement;
- 
+  
 import java.io.OutputStream;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -19,18 +19,35 @@ import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.aspect.annotation.ActivityLogger;
-import lumi.insert.app.core.entity.nondatabase.ActivityAction;
+import lumi.insert.app.core.entity.nondatabase.ActivityAction; 
 import lumi.insert.app.dto.response.SupplyResponse;
 import lumi.insert.app.dto.response.TransactionResponse;
 import lumi.insert.app.service.XlsxService;
 
+/**
+ * Implementation of {@link XlsxService}.
+ * <p>
+ * This service handles the making of templated pdf document from input data.
+ * </p>
+ * * <h3>Key Responsibilities:</h3>
+ * <ul>
+ * <li><b>Generating XLSX :</b> Converting a given data source into bytes.</li>    
+ * </ul>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Slf4j
 @Service
 public class XlsxServiceImpl implements XlsxService{
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT);
 
-
+    /**
+     * Convert list of {@link TransactionResponse} into templated XLSX and pass it to given {@link OutputStream}.
+     * @param datas a source of data from list {@link TransactionResponse}.
+     * @param outputStream stream used to put the created bytes(xlsx).
+     */ 
     @Override
     @ActivityLogger(
         entityName = "transactions",
@@ -134,6 +151,11 @@ public class XlsxServiceImpl implements XlsxService{
         }
     }
 
+    /**
+     * Convert list of {@link SupplyResponse} into templated XLSX and pass it to given {@link OutputStream}.
+     * @param datas a source of data from list {@link SupplyResponse}.
+     * @param outputStream stream used to put the created bytes(xlsx).
+     */ 
     @Override
     @ActivityLogger(
         entityName = "supplies",

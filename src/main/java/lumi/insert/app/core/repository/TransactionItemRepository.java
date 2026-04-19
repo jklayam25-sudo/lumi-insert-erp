@@ -16,6 +16,11 @@ import lumi.insert.app.core.entity.TransactionItem;
 import lumi.insert.app.core.repository.projection.ProductRefund;
 import lumi.insert.app.core.repository.projection.ProductSale;
 
+/**
+ * Repository for {@link TransactionItem} entity.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Repository
 public interface TransactionItemRepository extends JpaRepository<TransactionItem, UUID>{
     

@@ -9,6 +9,11 @@ import lumi.insert.app.core.entity.Category;
 import lumi.insert.app.dto.response.CategoryResponse;
 import lumi.insert.app.dto.response.CategorySimpleResponse;
 
+/**
+ * Mapper for {@link Category}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
 

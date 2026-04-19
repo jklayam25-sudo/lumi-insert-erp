@@ -5,7 +5,11 @@ import java.util.concurrent.ThreadLocalRandom;
  
 import org.springframework.stereotype.Component;
  
-
+/**
+ * Utilities of Invoice's related.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Component
 public class InvoiceGenerator { 
 

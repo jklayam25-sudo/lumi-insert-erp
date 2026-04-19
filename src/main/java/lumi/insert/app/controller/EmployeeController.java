@@ -31,9 +31,15 @@ import lumi.insert.app.dto.request.EmployeeCreateRequest;
 import lumi.insert.app.dto.request.EmployeeUpdateRequest;
 import lumi.insert.app.dto.request.PaginationRequest;
 import lumi.insert.app.dto.response.EmployeeResponse;
-import lumi.insert.app.exception.ForbiddenRequestException;
+import lumi.insert.app.exception.ForbiddenRequestException; 
 import lumi.insert.app.service.EmployeeService;
 
+/**
+ * REST Controller to access {@link EmployeeService}.
+ * Endpoints for managing employee accounts and authentication.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController 
 @Slf4j
 @Tag(name = "Employees", description = "Endpoints for managing employee accounts and authentication")
@@ -44,6 +50,9 @@ public class EmployeeController {
 
     private final int fileUploadSize = 2 * 1024 * 1024;
 
+/**
+ * Creates a new employee account with the specified details
+ */
     @Operation(summary = "Create new employee", description = "Creates a new employee account with the specified details")
     @ApiResponse(responseCode = "201", description = "Employee created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -72,6 +81,9 @@ public class EmployeeController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Retrieve detailed information about a specific employee
+ */
     @Operation(summary = "Get employee by ID", description = "Retrieve detailed information about a specific employee")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved employee")
     @ApiResponse(responseCode = "404", description = "Employee not found")
@@ -89,6 +101,9 @@ public class EmployeeController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve paginated list of all employees
+ */
     @Operation(summary = "Get all employees", description = "Retrieve paginated list of all employees")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved employees")
     @GetMapping(
@@ -106,6 +121,9 @@ public class EmployeeController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Check if a username is already registered in the system
+ */
     @Operation(summary = "Check if username exists", description = "Check if a username is already registered in the system")
     @ApiResponse(responseCode = "200", description = "Successfully checked username availability")
     @GetMapping(
@@ -120,6 +138,9 @@ public class EmployeeController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Reset an employee's password to a new value
+ */
     @Operation(summary = "Reset employee password", description = "Reset an employee's password to a new value")
     @ApiResponse(responseCode = "200", description = "Password reset successfully")
     @ApiResponse(responseCode = "404", description = "Employee not found")
@@ -141,6 +162,9 @@ public class EmployeeController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Updates information for an existing employee
+ */
     @Operation(summary = "Update employee", description = "Updates information for an existing employee")
     @ApiResponse(responseCode = "200", description = "Employee updated successfully")
     @ApiResponse(responseCode = "404", description = "Employee not found")
@@ -164,6 +188,9 @@ public class EmployeeController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Upload an employee's profile picture
+ */
     @Operation(summary = "Upload and set employee profile", description = "Upload an employee's profile picture")
     @ApiResponse(responseCode = "200", description = "Profile set successfully")
     @ApiResponse(responseCode = "404", description = "Employee not found")

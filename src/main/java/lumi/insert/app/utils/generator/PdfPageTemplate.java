@@ -16,6 +16,11 @@ import org.openpdf.text.pdf.PdfPTable;
 import org.openpdf.text.pdf.PdfPageEventHelper;
 import org.openpdf.text.pdf.PdfWriter;
 
+/**
+ * Utilities of Pdf's related.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 public class PdfPageTemplate extends PdfPageEventHelper{
     
     @Override

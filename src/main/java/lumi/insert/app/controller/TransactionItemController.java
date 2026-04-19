@@ -34,6 +34,12 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+/**
+ * REST Controller to access {@link TransactionItemService}.
+ * Endpoints for managing items within sales transactions.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Slf4j
 @Tag(name = "Transaction Items", description = "Endpoints for managing items within sales transactions")
@@ -42,6 +48,9 @@ public class TransactionItemController {
     @Autowired
     TransactionItemService transactionItemService;
 
+/**
+ * Adds a new item to an existing transaction
+ */
     @Operation(summary = "Create transaction item", description = "Adds a new item to an existing transaction")
     @ApiResponse(responseCode = "201", description = "Transaction item created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -70,6 +79,9 @@ public class TransactionItemController {
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
+/**
+ * Retrieve paginated list of all items in a transaction
+ */
     @Operation(summary = "Get transaction items", description = "Retrieve paginated list of all items in a transaction")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved transaction items")
     @ApiResponse(responseCode = "404", description = "Transaction not found")
@@ -87,6 +99,9 @@ public class TransactionItemController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Retrieve detailed information about a specific transaction item
+ */
     @Operation(summary = "Get transaction item by ID", description = "Retrieve detailed information about a specific transaction item")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved transaction item")
     @ApiResponse(responseCode = "404", description = "Transaction item not found")
@@ -104,6 +119,9 @@ public class TransactionItemController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Retrieve all items in a transaction for a specific product
+ */
     @Operation(summary = "Get transaction items by product", description = "Retrieve all items in a transaction for a specific product")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved transaction items")
     @ApiResponse(responseCode = "404", description = "Transaction or product not found")
@@ -121,6 +139,9 @@ public class TransactionItemController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Removes an item from a transaction (410 Gone response)
+ */
     @Operation(summary = "Delete transaction item", description = "Removes an item from a transaction (410 Gone response)")
     @ApiResponse(responseCode = "410", description = "Transaction item deleted successfully")
     @ApiResponse(responseCode = "404", description = "Transaction item not found")
@@ -139,6 +160,9 @@ public class TransactionItemController {
         return ResponseEntity.status(HttpStatusCode.valueOf(410)).body(wrappedResult);   
     }
 
+/**
+ * Updates the quantity of a specific item in a transaction
+ */
     @Operation(summary = "Update transaction item quantity", description = "Updates the quantity of a specific item in a transaction")
     @ApiResponse(responseCode = "200", description = "Transaction item quantity updated successfully")
     @ApiResponse(responseCode = "404", description = "Transaction item not found")
@@ -160,6 +184,9 @@ public class TransactionItemController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Records a refund for a specific item in the transaction
+ */
     @Operation(summary = "Refund transaction item", description = "Records a refund for a specific item in the transaction")
     @ApiResponse(responseCode = "200", description = "Transaction item refunded successfully")
     @ApiResponse(responseCode = "404", description = "Transaction item not found")

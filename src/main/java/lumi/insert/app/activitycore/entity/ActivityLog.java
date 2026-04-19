@@ -15,6 +15,14 @@ import lombok.NoArgsConstructor;
 import lumi.insert.app.core.entity.nondatabase.ActivityAction;
 import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 
+/**
+ * Representation class of database table {@code"activity_logs"}. 
+ * <p>Represent detailed activity logs.<br>
+ * Class can be implemented by{@code NoArgsConstructor, AllArgsConstructor and Builder}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity(name = "activity_logs")
 @Builder
 @NoArgsConstructor

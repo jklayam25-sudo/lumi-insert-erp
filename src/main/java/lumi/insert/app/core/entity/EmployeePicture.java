@@ -17,6 +17,14 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 
+/**
+ * Representation class of database table {@code"employee_pics"}. 
+ * <p>Store image informations from storage.<br>
+ * Class can be implemented by{@code NoArgsConstructor, AllArgsConstructor and Builder}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity(name = "employee_pics")
 @Builder
 @NoArgsConstructor

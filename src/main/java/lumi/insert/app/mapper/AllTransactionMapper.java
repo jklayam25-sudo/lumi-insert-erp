@@ -17,6 +17,11 @@ import lumi.insert.app.dto.response.TransactionItemResponse;
 import lumi.insert.app.dto.response.TransactionPaymentResponse;
 import lumi.insert.app.dto.response.TransactionResponse;
 
+/**
+ * Mapper for {@link Transaction}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring", uses = ProductMapper.class)
 public interface AllTransactionMapper {
     

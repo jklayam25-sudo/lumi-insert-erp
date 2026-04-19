@@ -31,6 +31,17 @@ import lumi.insert.app.mapper.SupplierMapper;
 import lumi.insert.app.service.SupplierService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
+/**
+ * Implementation of {@link SupplierService} managing the procurement-side partner registry.
+ * <p>
+ * This service facilitates the management of supplier entities, ensuring unique identification 
+ * via time-ordered UUIDs. It supports dynamic filtering for administrative interfaces 
+ * and optimized keyset pagination for high-speed name lookups.
+ * </p>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -45,6 +56,13 @@ public class SupplierServiceImpl implements SupplierService{
     @Autowired
     JpaSpecGenerator jpaSpecGenerator;
 
+    /**
+     * Registers a new procurement supplie.
+     *
+     * @param request the supplier registration details.
+     * @return the detailed response of the created supplier.
+     * @throws DuplicateEntityException if a supplier with the same name already exists.
+     */
     @Override
     @ActivityLogger(
         entityName = "suppliers",
@@ -72,6 +90,13 @@ public class SupplierServiceImpl implements SupplierService{
         return response;
     }
 
+    /**
+     * Retrieves the complete profile of a supplier by their UUID.
+     *
+     * @param id the unique identifier of the supplier.
+     * @return {@link SupplierDetailResponse} containing contact and identity info.
+     * @throws NotFoundEntityException if the supplier record is missing.
+     */
     @Override
     public SupplierDetailResponse getSupplier(UUID id) {
         log.debug("Getting supplier by ID: {}", id);
@@ -86,6 +111,13 @@ public class SupplierServiceImpl implements SupplierService{
         return response;
     }
 
+    /**
+     * Retrieves a paginated slice of suppliers based on flexible search criteria.
+     * <p>Utilizes {@link JpaSpecGenerator} to handle complex multi-field filtering.</p>
+     *
+     * @param request the filter and pagination parameters.
+     * @return a {@link Slice} of supplier profiles.
+     */
     @Override
     public Slice<SupplierDetailResponse> getSuppliers(SupplierGetByFilter request) {
         log.debug("Getting suppliers with filter: {}", request);
@@ -98,6 +130,16 @@ public class SupplierServiceImpl implements SupplierService{
         return suppliers.map(supplierMapper::createDtoDetailResponseFromSupplier);
     }
 
+    /**
+     * Searches for supplier names using high-performance keyset pagination.
+     * <p>
+     * Designed for autocomplete or selection components where performance is critical. 
+     * Uses {@code lastId} to maintain consistent ordering and low latency.
+     * </p>
+     *
+     * @param request search query and keyset metadata.
+     * @return a {@link SliceIndex} of matching supplier names.
+     */
     @Override
     public SliceIndex<SupplierNameResponse> searchSupplierNames(SupplierGetNameRequest request) {
         log.debug("Searching supplier names with query: {}, size: {}", request.getName(), request.getSize());
@@ -109,6 +151,15 @@ public class SupplierServiceImpl implements SupplierService{
         return new SliceIndex<SupplierNameResponse>(suppliersName);
     }
 
+    /**
+     * Updates an existing supplier's information.
+     *
+     * @param id      the unique identifier of the target supplier.
+     * @param request the update data.
+     * @return the updated {@link SupplierDetailResponse}.
+     * @throws DuplicateEntityException if the updated name conflicts with another supplier.
+     * @throws NotFoundEntityException  if the supplier is not found.
+     */
     @Override
     @ActivityLogger(
         entityName = "suppliers",

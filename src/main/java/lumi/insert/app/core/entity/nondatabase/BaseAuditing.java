@@ -15,6 +15,13 @@ import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Abstract base class for every entity. 
+ * <p>Represent detailed audit informations.<br> 
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter

@@ -9,6 +9,11 @@ import org.mapstruct.ReportingPolicy;
 import lumi.insert.app.core.entity.StockCard;
 import lumi.insert.app.dto.response.StockCardResponse;
 
+/**
+ * Mapper for {@link StockCard}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring")
 public interface StockCardMapper {
 

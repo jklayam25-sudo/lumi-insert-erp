@@ -17,6 +17,14 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lumi.insert.app.config.RevisionListenerImpl;
 
+/**
+ * Representation class of database table {@code"revinfo"}. 
+ * <p>Custom revision audit from envers, implement username and ipAddress for tracing purposes<br>
+ * Class automatically implemented by{@code Spring Envers}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity
 @RevisionEntity(RevisionListenerImpl.class) 
 @Table(name = "revinfo")

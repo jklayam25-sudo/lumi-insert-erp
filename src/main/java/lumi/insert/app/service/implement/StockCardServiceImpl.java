@@ -32,6 +32,17 @@ import lumi.insert.app.mapper.StockCardMapper;
 import lumi.insert.app.service.StockCardService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
+/**
+ * Implementation of {@link StockCardService} providing a detailed audit trail for inventory movements.
+ * <p>
+ * This service is responsible for recording every stock change (Stock Card) and ensuring 
+ * the physical stock in {@link Product} remains consistent. It enforces strict validation 
+ * on stock direction (In/Out) and prevents negative inventory balances.
+ * </p>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -52,6 +63,23 @@ public class StockCardServiceImpl implements StockCardService{
     @Autowired
     JpaSpecGenerator jpaSpecGenerator;
 
+    /**
+     * Records a new stock movement and updates the current product's stock level.
+     * <p>
+     * Logic includes:
+     * <ul>
+     * <li>Validation of quantity polarity based on {@link StockMove} type (e.g., CUSTOMER_OUT must be negative).</li>
+     * <li>Reference integrity check for customer-related transactions.</li>
+     * <li>Prevention of stock levels falling below zero.</li>
+     * <li>Snapshot recording of prices and stock levels (old vs new) for audit purposes.</li>
+     * </ul>
+     * </p>
+     *
+     * @param request the details of the stock movement.
+     * @return the created {@link StockCardResponse} containing the movement snapshot.
+     * @throws TransactionValidationException if quantity polarity is invalid or stock is insufficient.
+     * @throws NotFoundEntityException        if the product or transaction reference is missing.
+     */
     @Override
     @ActivityLogger(
         entityName = "stock_cards",
@@ -106,6 +134,13 @@ public class StockCardServiceImpl implements StockCardService{
         return stockCardResponse;
     }
 
+    /**
+     * Retrieves a specific stock card record by its unique identifier.
+     *
+     * @param id the unique UUID of the stock card.
+     * @return the found {@link StockCardResponse}.
+     * @throws NotFoundEntityException if the stock card record does not exist.
+     */
     @Override
     public StockCardResponse getStockCard(UUID id) {
         log.info("Retrieving stock card id={}", id);
@@ -118,6 +153,14 @@ public class StockCardServiceImpl implements StockCardService{
         return stockCardMapper.createDtoResponseFromStockCard(stockCard);
     }
 
+    /**
+     * Retrieves a slice of stock cards using index-based (keyset) pagination.
+     * <p>Optimized for large audit logs by using the {@code lastId} to avoid high offset performance hits.</p>
+     *
+     * @param lastId  the last UUID seen in the previous page (null for the first page).
+     * @param request pagination parameters (size, sort).
+     * @return a {@link Slice} of stock card records.
+     */
     @Override
     public Slice<StockCardResponse> getStockCards(UUID lastId, PaginationRequest request) {
         if(lastId != null) request.setPage(0);
@@ -127,7 +170,14 @@ public class StockCardServiceImpl implements StockCardService{
 
         return slices;
     }
- 
+
+    /**
+     * Searches and filters stock card records using dynamic criteria.
+     * <p>Supports filtering by date range, product, and movement type via JPA Specifications.</p>
+     *
+     * @param request the filter and pagination criteria.
+     * @return a filtered {@link Slice} of {@link StockCardResponse}.
+     */
     @Override
     public Slice<StockCardResponse> searchStockCards(StockCardGetByFilter request) {
         Pageable pageable = jpaSpecGenerator.pageable(request);

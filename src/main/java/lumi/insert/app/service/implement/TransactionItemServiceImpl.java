@@ -1,6 +1,5 @@
 package lumi.insert.app.service.implement;
- 
- 
+  
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,7 +17,9 @@ import com.github.f4b6a3.uuid.UuidCreator;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+
 import lumi.insert.app.aspect.annotation.ActivityLogger;
+
 import lumi.insert.app.core.entity.Customer;
 import lumi.insert.app.core.entity.Product;
 import lumi.insert.app.core.entity.StockCard;
@@ -27,18 +28,21 @@ import lumi.insert.app.core.entity.TransactionItem;
 import lumi.insert.app.core.entity.nondatabase.ActivityAction;
 import lumi.insert.app.core.entity.nondatabase.StockMove;
 import lumi.insert.app.core.entity.nondatabase.TransactionStatus;
+
 import lumi.insert.app.core.repository.ProductRepository;
 import lumi.insert.app.core.repository.StockCardRepository;
 import lumi.insert.app.core.repository.TransactionItemRepository;
 import lumi.insert.app.core.repository.TransactionRepository;
 import lumi.insert.app.core.repository.projection.ProductRefund;
 import lumi.insert.app.core.repository.projection.ProductSale;
+
 import lumi.insert.app.dto.request.ItemRefundRequest;
 import lumi.insert.app.dto.request.PaginationRequest;
-import lumi.insert.app.dto.request.TransactionItemCreateRequest;
+import lumi.insert.app.dto.request.TransactionItemCreateRequest; 
 import lumi.insert.app.dto.response.TransactionItemDelete;
 import lumi.insert.app.dto.response.TransactionItemResponse;
 import lumi.insert.app.dto.response.TransactionItemStatisticResponse;
+
 import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.exception.NotFoundEntityException;
 import lumi.insert.app.exception.TransactionValidationException;
@@ -46,6 +50,20 @@ import lumi.insert.app.mapper.AllTransactionMapper;
 import lumi.insert.app.service.TransactionItemService;
 import lumi.insert.app.utils.generator.DateUtils;
 
+/**
+ * Implementation of {@link TransactionItemService} managing the lifecycle of line items within a transaction.
+ * <p>
+ * This service handles the items operations of a transaction, including:
+ * <ul>
+ * <li><b>Cart Operations:</b> Adding, updating, and removing items while a transaction is in {@code PENDING} status.</li>
+ * <li><b>Stock Validation:</b> Real-time checking of product availability before cart insertion or quantity updates.</li>
+ * <li><b>Recalculation:</b> Dynamically updating transaction totals (subtotal, grand total) as items change.</li> 
+ * </ul>
+ * </p>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -69,6 +87,16 @@ public class TransactionItemServiceImpl implements TransactionItemService{
     @Autowired
     DateUtils datePicker;
 
+    /**
+     * Adds a product to a transaction cart.
+     * <p>Increments the transaction's total item count and updates financial totals.</p>
+     *
+     * @param transactionId the target transaction UUID.
+     * @param request       contains the product ID and requested quantity.
+     * @return {@link TransactionItemResponse} representing the newly added line item.
+     * @throws NotFoundEntityException        if the transaction or product does not exist.
+     * @throws TransactionValidationException if the requested quantity exceeds available stock.
+     */
     @Override
     @ActivityLogger(
         entityName = "transaction_items",
@@ -110,6 +138,14 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         return transactionItemResponseDto;
     }
 
+    /**
+     * Removes an item from the transaction cart.
+     * <p>Only allowed if the transaction is still in {@code PENDING} status.</p>
+     *
+     * @param id the unique identifier of the transaction item to delete.
+     * @return a DTO containing details of the deleted item for UI confirmation.
+     * @throws ForbiddenRequestException if the transaction is already processed or completed.
+     */
     @Override
     @ActivityLogger(
         entityName = "transaction_items",
@@ -138,6 +174,15 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         return transactionItemDeleteResponseDto;
     }
 
+    /**
+     * Adjusts the quantity of an existing item in a pending cart.
+     * <p>Triggers a full recalculation of the parent transaction's subtotal and grand total.</p>
+     *
+     * @param id       the transaction item UUID.
+     * @param quantity the new desired quantity.
+     * @return the updated {@link TransactionItemResponse}.
+     * @throws TransactionValidationException if the new quantity exceeds current stock levels.
+     */
     @Override
     @ActivityLogger(
         entityName = "transaction_items",
@@ -175,6 +220,13 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         return transactionItemResponseDto;
     }
 
+    /**
+     * Retrieves transaction items from a transaction.
+     *
+     * @param transactionId the transaction unique identifier.
+     * @param request the pagination preset
+     * @return slice of {@link TransactionItemResponse}.
+     */
     @Override
     public Slice<TransactionItemResponse> getTransactionItemsByTransactionId(UUID transactionId, PaginationRequest request) {
         log.info("Retrieving items for transactionId={} page={} size={}", transactionId, request.getPage(), request.getSize());
@@ -186,6 +238,13 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         return result;
     }
 
+    /**
+     * Retrieves transaction items by transaction and product filter.
+     *
+     * @param transactionId the transaction unique identifier.
+     * @param ProductId the product identifier.
+     * @return slice of {@link TransactionItemResponse}.
+     */
     @Override
     public Slice<TransactionItemResponse> getTransactionByTransactionIdAndProductId(UUID transactionId, Long ProductId) {
         log.info("Retrieving transaction items for transactionId={} productId={}", transactionId, ProductId);
@@ -195,6 +254,23 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         return slices.map(allTransactionMapper::createTransactionItemResponseDto); 
     }
 
+    /**
+     * Processes a refund for a specific product after a transaction has been processed or completed.
+     * <p>
+     * This method performs a multi-step adjustment:
+     * <ul>
+     * <li><b>Stock:</b> Increases physical stock and logs a {@code CUSTOMER_IN} movement.</li>
+     * <li><b>Accounting:</b> Deducts from the customer's unpaid balance. If the refund amount 
+     * exceeds the remaining debt, the surplus is added to {@code totalUnrefunded}.</li>
+     * <li><b>Audit:</b> Creates a negative-quantity transaction item as a refund record.</li>
+     * </ul>
+     * </p>
+     *
+     * @param id      the parent transaction ID.
+     * @param request contains product ID and quantity to be returned.
+     * @return the refund record as a {@link TransactionItemResponse}.
+     * @throws ForbiddenRequestException if the refund quantity exceeds originally purchased quantity.
+     */
     @Override
     @ActivityLogger(
         entityName = "transaction_items",
@@ -215,6 +291,7 @@ public class TransactionItemServiceImpl implements TransactionItemService{
             .map(item -> item.getQuantity())
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Check if request refund exceed real transaction quantity left
         if(ttlRefundLeft.compareTo(request.getQuantity()) < 0) {
             log.debug("Refund quantity exceeds purchased quantity transactionId={} productId={} requested={} available={}", id, request.getProductId(), request.getQuantity(), ttlRefundLeft);
             throw new ForbiddenRequestException("Refund quantity is more than actual bought, use valid quantity");
@@ -234,6 +311,8 @@ public class TransactionItemServiceImpl implements TransactionItemService{
 
         BigDecimal customerRefund = request.getQuantity().multiply(baseTransactionItem.getPrice());
 
+        // Calculate transaction value. 
+        // Check if total refund pay the unpaid or convert to unrefunded
         if(transaction.getTotalUnpaid().subtract(customerRefund).compareTo(BigDecimal.ZERO) < 0){
             customer.setTotalUnpaid(customer.getTotalUnpaid().subtract(transaction.getTotalUnpaid()));
             BigDecimal balanceLeft = customerRefund.subtract(transaction.getTotalUnpaid());
@@ -250,6 +329,7 @@ public class TransactionItemServiceImpl implements TransactionItemService{
             customer.setTotalUnpaid(customer.getTotalUnpaid().subtract(customerRefund));
         }
 
+        //reverse
         TransactionItem refundTransactionItem = TransactionItem.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
             .price(baseTransactionItem.getPrice())
@@ -281,6 +361,12 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         return transactionItemResponseDto;
     }
 
+    /**
+     * Retrieves detailed transaction item by identifier.
+     *
+     * @param transactionId the transaction item unique identifier. 
+     * @return {@link TransactionItemResponse}.
+     */
     @Override
     public TransactionItemResponse getTransactionItem(UUID id) {
         log.info("Retrieving transaction item id={}", id);
@@ -291,6 +377,13 @@ public class TransactionItemServiceImpl implements TransactionItemService{
         return transactionItemResponseDto;
     }
 
+    /**
+     * Retrieves product statistic base on transaction item mapping.
+     *
+     * @param startDate transaction fetch start date. 
+     * @param startDate transaction fetch end date. 
+     * @return {@link TransactionItemStatisticResponse}.
+     */
     @Override
     public TransactionItemStatisticResponse getTransactionItemStats(LocalDateTime startDate, LocalDateTime endDate) { 
         log.info("Gathering transaction item stats from {} to {}", startDate, endDate);

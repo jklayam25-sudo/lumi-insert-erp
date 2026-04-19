@@ -25,7 +25,7 @@ import lumi.insert.app.dto.request.SupplierGetByFilter;
 import lumi.insert.app.dto.request.SupplierGetNameRequest;
 import lumi.insert.app.dto.request.SupplierUpdateRequest; 
 import lumi.insert.app.dto.response.SupplierDetailResponse;
-import lumi.insert.app.dto.response.SupplierNameResponse;
+import lumi.insert.app.dto.response.SupplierNameResponse; 
 import lumi.insert.app.service.SupplierService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,6 +33,12 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+/**
+ * REST Controller to access {@link SupplierService}.
+ * Endpoints for managing suppliers and vendor information.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Slf4j
 @Tag(name = "Suppliers", description = "Endpoints for managing suppliers and vendor information")
@@ -41,6 +47,9 @@ public class SupplierController {
     @Autowired
     SupplierService supplierService;
 
+/**
+ * Creates a new supplier with contact and location details
+ */
     @Operation(summary = "Create new supplier", description = "Creates a new supplier with contact and location details")
     @ApiResponse(responseCode = "201", description = "Supplier created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -68,6 +77,9 @@ public class SupplierController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Retrieve detailed information about a specific supplier
+ */
     @Operation(summary = "Get supplier by ID", description = "Retrieve detailed information about a specific supplier")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved supplier")
     @ApiResponse(responseCode = "404", description = "Supplier not found")
@@ -85,6 +97,9 @@ public class SupplierController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve paginated list of suppliers with optional filtering
+ */
     @Operation(summary = "Get all suppliers", description = "Retrieve paginated list of suppliers with optional filtering")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved suppliers")
     @GetMapping(
@@ -101,6 +116,9 @@ public class SupplierController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Search for suppliers by name with pagination support
+ */
     @Operation(summary = "Search supplier names", description = "Search for suppliers by name with pagination support")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved matching suppliers")
     @GetMapping(
@@ -117,6 +135,9 @@ public class SupplierController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Updates information for an existing supplier
+ */
     @Operation(summary = "Update supplier", description = "Updates information for an existing supplier")
     @ApiResponse(responseCode = "200", description = "Supplier updated successfully")
     @ApiResponse(responseCode = "404", description = "Supplier not found")

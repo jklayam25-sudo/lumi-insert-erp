@@ -9,6 +9,11 @@ import org.mapstruct.ReportingPolicy;
 import lumi.insert.app.core.entity.AuthToken;
 import lumi.insert.app.dto.response.AuthTokenResponse; 
 
+/**
+ * Mapper for {@link AuthToken}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring", uses = EmployeeMapper.class)
 public interface AuthMapper {
     

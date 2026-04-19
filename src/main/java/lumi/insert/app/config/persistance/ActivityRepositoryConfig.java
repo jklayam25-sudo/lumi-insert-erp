@@ -13,6 +13,14 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import jakarta.persistence.EntityManagerFactory;
 
+/**
+ * Configuration for logging action database
+ * <p>JPA Repositories divided by modules.</p> 
+ * <p>This result in repository and entity manager run only at module lumi.insert.app.activitycore</p> 
+ * <p>Seperation due to perfomance reason.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Configuration
 @EnableJpaRepositories(
     basePackages = "lumi.insert.app.activitycore.repository",  
@@ -21,6 +29,12 @@ import jakarta.persistence.EntityManagerFactory;
 )
 public class ActivityRepositoryConfig {
      
+    /**
+     * Entity manager for activitycore Entities.
+     * @param builder
+     * @param dataSource Use separated datasource
+     * @return  
+     */
     @Bean("activityEntityManagerFactory")
     LocalContainerEntityManagerFactoryBean activityEntityManagerFactoryBean(EntityManagerFactoryBuilder builder, @Qualifier("activity-hikari-ds") HikariDataSource dataSource){
         return builder

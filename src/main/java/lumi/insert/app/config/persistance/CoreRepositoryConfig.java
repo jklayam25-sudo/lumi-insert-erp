@@ -13,6 +13,14 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import jakarta.persistence.EntityManagerFactory;
 
+/**
+ * Configuration for core database
+ * <p>JPA Repositories divided by modules.</p> 
+ * <p>This result in repository and entity manager run only at module lumi.insert.app.core</p> 
+ * <p>Seperation due to perfomance reason.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Configuration
 @EnableJpaRepositories(
     basePackages = "lumi.insert.app.core.repository",  
@@ -21,6 +29,13 @@ import jakarta.persistence.EntityManagerFactory;
 )
 public class CoreRepositoryConfig {
     
+    /**
+     * Default EntityManager.<br>
+     * Entity manager for core Entities.
+     * @param builder
+     * @param dataSource Use separated datasource
+     * @return  
+     */
     @Primary
     @Bean("coreEntityManagerFactory")
     LocalContainerEntityManagerFactoryBean coreEntityManagerFactoryBean(EntityManagerFactoryBuilder builder, HikariDataSource dataSource){

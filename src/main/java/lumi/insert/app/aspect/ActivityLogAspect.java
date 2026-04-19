@@ -19,6 +19,10 @@ import lumi.insert.app.dto.response.Identifiable;
 
 import lumi.insert.app.service.MessageProducerService;
 
+/**
+ * AOP that handle {@link ActivityLogger} annotation.<br>
+ * Handled after a method finished.
+ */
 @Aspect
 @Component
 @Slf4j
@@ -51,6 +55,7 @@ public class ActivityLogAspect {
             result.setCreatedBy(auditor);
             result.setUpdatedBy(auditor);
 
+        // Check the entityIdFromSingleParam. If true, entityId set by method parameter. 
         if (activityLog.entityIdFromSingleParam()){
             Object[] args = joinPoint.getArgs();
             if(args.length > 0 && args[0] instanceof Identifiable){
@@ -60,11 +65,13 @@ public class ActivityLogAspect {
             } else {
                 log.debug("Entity id not resolved from single parameter for method={}", joinPoint.getSignature());
             }
+        // else false, entityId set by method return value < getId
         } else if(response instanceof Identifiable) {
             result.setEntityId(((Identifiable) response).getId());
             log.debug("Resolved entityId from response={}", result.getEntityId());
         }
 
+        // pass to message producer and will handled by consumer 
         messageProducerService.sendActivityLog(new ActivityLogMessage(result));
         log.info("ActivityLog sent action={} entityName={} entityId={}", activityLog.action(), activityLog.entityName(), result.getEntityId());
     }

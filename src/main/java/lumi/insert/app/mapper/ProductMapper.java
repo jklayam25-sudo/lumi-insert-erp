@@ -13,6 +13,11 @@ import lumi.insert.app.dto.response.ProductDeleteResponse;
 import lumi.insert.app.dto.response.ProductName;
 import lumi.insert.app.dto.response.ProductResponse;
 
+/**
+ * Mapper for {@link Product}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring", uses = CategoryMapper.class)
 public interface ProductMapper {
     

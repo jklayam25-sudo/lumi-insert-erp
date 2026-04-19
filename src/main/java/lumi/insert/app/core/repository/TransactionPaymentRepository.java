@@ -10,6 +10,12 @@ import org.springframework.stereotype.Repository;
 
 import lumi.insert.app.core.entity.TransactionPayment;
 
+/**
+ * Repository for {@link TransactionPayment} entity.
+ * <p>Support {@link JpaSpecificationExecutor} query.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Repository
 public interface TransactionPaymentRepository extends  JpaRepository<TransactionPayment, UUID>, JpaSpecificationExecutor<TransactionPayment>{
     

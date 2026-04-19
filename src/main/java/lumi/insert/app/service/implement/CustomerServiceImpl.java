@@ -43,6 +43,17 @@ import lumi.insert.app.service.CustomerService;
 import lumi.insert.app.service.StorageService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
+/**
+ * Implementation of {@link CustomerService} managing customer lifecycles and associated media.
+ * <p>
+ * This service provides high-level operations for customer registration, information 
+ * updates using MapStruct mappers, complex filtering via JPA Specifications, 
+ * and multi-file image management with automated rollback on storage failure.
+ * </p>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -63,6 +74,13 @@ public class CustomerServiceImpl implements CustomerService{
     @Autowired
     CustomerPictureRepository customerPictureRepository;
 
+    /**
+     * Registers a new customer.
+     *
+     * @param request the registration details.
+     * @return the detailed response of the registered customer.
+     * @throws DuplicateEntityException if the customer name is already registered.
+     */
     @Override
     @ActivityLogger(
         entityName = "customers",
@@ -94,6 +112,13 @@ public class CustomerServiceImpl implements CustomerService{
         return response;
     }
 
+    /**
+     * Retrieves detailed information of a specific customer.
+     *
+     * @param id the unique UUID of the customer.
+     * @return {@link CustomerDetailResponse} containing full customer profile.
+     * @throws NotFoundEntityException if no customer matches the provided UUID.
+     */
     @Override
     public CustomerDetailResponse getCustomer(UUID id) {
         log.debug("Getting customer by ID: {}", id);
@@ -111,6 +136,12 @@ public class CustomerServiceImpl implements CustomerService{
         return response;
     }
 
+    /**
+     * Retrieves a paginated slice of customers based on dynamic JpaSpecification Filtering.
+     *
+     * @param request the filter and pagination parameters.
+     * @return a {@link Slice} of customer summaries.
+     */
     @Override
     public Slice<CustomerResponse> getCustomers(CustomerGetByFilter request) {
         log.debug("Getting customers with filter - page: {}, size: {}, name: {}", request.getPage(), request.getSize(), request.getName());
@@ -127,6 +158,13 @@ public class CustomerServiceImpl implements CustomerService{
         return response;
     }
 
+    /**
+     * Performs a keyset-paginated search for customer names.
+     * <p>Utilizes {@code lastId} to optimize performance for large datasets.</p>
+     *
+     * @param request search criteria including the partial name and last seen ID.
+     * @return a {@link SliceIndex} containing matching names for autocomplete or selection.
+     */
     @Override
     public SliceIndex<CustomerNameResponse> searchCustomerNames(CustomerGetNameRequest request) {
         log.debug("Searching customer names with query: {}, size: {}", request.getName(), request.getSize());
@@ -143,6 +181,15 @@ public class CustomerServiceImpl implements CustomerService{
         return response;
     }
 
+    /**
+     * Updates an existing customer's profile information.
+     *
+     * @param id      the identifier of the customer to update.
+     * @param request the partial or full update details.
+     * @return the updated {@link CustomerDetailResponse}.
+     * @throws DuplicateEntityException if the updated name conflicts with an existing record.
+     * @throws NotFoundEntityException  if the target customer does not exist.
+     */
     @Override
     @ActivityLogger(
         entityName = "customers",
@@ -172,6 +219,20 @@ public class CustomerServiceImpl implements CustomerService{
         return response;
     }
 
+    /**
+     * Uploads multiple pictures and associates them with a customer.
+     * <p>
+     * This method implements a manual compensation logic: if the database persistence fails 
+     * after images are uploaded to the cloud storage, it attempts to delete the orphaned 
+     * cloud assets to maintain consistency.
+     * </p>
+     *
+     * @param id    the customer identifier.
+     * @param files array of multipart files to be uploaded.
+     * @return {@code true} if all files were successfully uploaded and persisted.
+     * @throws StorageActionException    if a network or I/O error occurs during upload.
+     * @throws DatabaseInternalException if persistence fails, triggering the cleanup process.
+     */
     @Override
     public Boolean addCustomerPicture(UUID id, MultipartFile[] files) {
         log.info("Adding pictures to customer with ID: {}, file count: {}", id, files.length);

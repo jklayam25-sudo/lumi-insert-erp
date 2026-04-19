@@ -13,7 +13,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler; 
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-
+/**
+ * Main security configuration for the application.
+ * Enables method-level security (e.g., @PreAuthorize) and defines 
+ * the HTTP filter chain, CORS/CSRF settings, and error handling.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -27,6 +33,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Custom handler for 403 Forbidden errors.
+     * Instead of a default Spring error page, it delegates the exception 
+     * to the global HandlerExceptionResolver, allowing for consistent 
+     * JSON error responses across the API.
+     */
     @Bean
     AccessDeniedHandler customAccessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
@@ -34,12 +46,18 @@ public class SecurityConfig {
         };
     }
 
+    /**
+     * Configures the HTTP security filter chain.
+     * Note: Current configuration permits all requests at the HTTP level, 
+     * relying on Method Security (@PreAuthorize) for specific endpoint protection.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.disable())
             .csrf(csrf -> csrf.disable()) 
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+            // Link the custom 403 error handler defined above.
             .exceptionHandling(exc -> exc.accessDeniedHandler(customAccessDeniedHandler()));
         
         return http.build();

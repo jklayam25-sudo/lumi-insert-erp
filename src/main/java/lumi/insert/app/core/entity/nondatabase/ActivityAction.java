@@ -1,5 +1,13 @@
 package lumi.insert.app.core.entity.nondatabase;
 
+import lumi.insert.app.aspect.ActivityLogAspect;
+
+/**
+ * Enum for every request action that triggered by AOP {@link ActivityLogAspect}.  
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 public enum ActivityAction {
     LOGIN_SUCCESS,
     LOGIN_FAILURE,

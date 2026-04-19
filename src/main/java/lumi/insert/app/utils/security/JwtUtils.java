@@ -3,6 +3,7 @@ package lumi.insert.app.utils.security;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.auth0.jwt.JWT;
@@ -12,16 +13,29 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 
 import lumi.insert.app.core.entity.Employee;
 
+/**
+ * Utilities of Pdf's related.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Component
 public class JwtUtils {
 
-    Algorithm algorithm = Algorithm.HMAC256("SOME_THING-iusedto_knOW");
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
+
+    Algorithm algorithm = Algorithm.HMAC256(jwtSecret);
     
     String issuer = "LUMI-INSERT";
 
     JWTVerifier jwtVerifier = JWT.require(algorithm)
             .withIssuer(issuer).build();
 
+    /**
+     * Create Token based on employee credentials with expired: 15 minutes.
+     * @param employee
+     * @return token
+     */
     public String getAccessToken(Employee employee){
         String accessToken = JWT.create()
         .withIssuer(issuer)
@@ -35,6 +49,11 @@ public class JwtUtils {
         return accessToken;
     }
 
+    /**
+     * Parse, decode and verify created token by {@link #getAccessToken(Employee)}. 
+     * @param accessToken
+     * @return decoded Token
+     */
     public DecodedJWT parseAccessToken(String accessToken){
         return jwtVerifier.verify(accessToken);
     }

@@ -44,6 +44,26 @@ import lumi.insert.app.mapper.AllSupplyMapper;
 import lumi.insert.app.service.SupplyPaymentService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
+/**
+ * Implementation of {@link SupplyPaymentService} managing supply settlements and proof of payment.
+ * <p>
+ * This service handles the final stages of the supply lifecycle, ensuring that cash inflows 
+ * and outflows (refunds) are accurate.
+ * </p>
+ * * <h3>Key Responsibilities:</h3>
+ * <ul>
+ * <li><b>Payment Processing:</b> Records company payments to supplier, reduces unpaid balances, and 
+ * adjust when there's refund.</li> 
+ * <li><b>Asynchronous Evidence Storage:</b> Handles payment proof (receipts/images) by 
+ * transferring {@link MultipartFile} to temporary storage and publishing 
+ * {@link UploadStorageMessage} events for background processing.</li>
+ * <li><b>Financial Integrity:</b> Prevents overpayment or over-refunding through strict 
+ * {@link BigDecimal} validation.</li>
+ * </ul>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -64,6 +84,15 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
     @Autowired
     ApplicationEventPublisher eventPublisher;
 
+    /**
+     * Processes a new payment for a supply.
+     * Validates that the supply is UNPAID and the amount doesn't exceed the debt.
+     * Updates unpaid/paid balances for both Supply and Supplier.
+     * * @param supplyId The ID of the supply to pay for.
+     * @param request Contains payment details and optional file attachments.
+     * @return DTO representation of the created payment.
+     * @throws TransactionValidationException if payment exceeds the remaining debt.
+     */
     @Override
     @ActivityLogger(
         entityName = "supply_payments",
@@ -94,6 +123,7 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         supply.setTotalUnpaid(supply.getTotalUnpaid().subtract(request.getTotalPayment()));
         supply.setTotalPaid(supply.getTotalPaid().add(request.getTotalPayment()));
 
+        // Check if request payment exceeds the unpaid left
         if(supply.getTotalUnpaid().compareTo(BigDecimal.ZERO) < 0) {
             log.debug("Supply payment exceeds unpaid amount supplyId={}, requestedPayment={}", supplyId, request.getTotalPayment());
             throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + supplyId + ", enter an exact amount to proceed");
@@ -107,10 +137,12 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         SupplyPayment savedSupplyPayment = supplyPaymentRepository.save(supplyPayment);
         SupplyPaymentResponse supplyPaymentResponse = allSupplyMapper.createSupplyPaymentResponseDto(savedSupplyPayment);
 
+        // Upload payment proof/others to storage via message producer
         MultipartFile[] files = request.getFiles();
         List<Path> paths = new ArrayList<>(); 
         try {
             for (MultipartFile file : files) {
+                // Save to temporary
                 Path tempFile = Files.createTempFile("paymentOf" + supply.getId() + "-", "_upload");
                 file.transferTo(tempFile);
                 paths.add(tempFile);
@@ -122,6 +154,7 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         }
         
          paths.forEach(path -> {
+            // Publish event to EventListener < listen and pass msg producer service
             eventPublisher.publishEvent(
                 new UploadStorageMessage(
                     EntityList.SUPPLY_PAYMENT,
@@ -136,8 +169,10 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         return supplyPaymentResponse;
     }
 
-    @Override
-    
+    /**
+     * Retrieves a paginated slice of payments associated with a specific supply.
+     */
+    @Override 
     public Slice<SupplyPaymentResponse> getSupplyPaymentsBySupplyId(UUID supplyId, PaginationRequest request) {
         log.info("Retrieving supply payments for supplyId={}, page={}, size={}", supplyId, request.getPage(), request.getSize());
         Pageable pageable = jpaSpecGenerator.pageable(request);
@@ -169,6 +204,14 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         return payments.map(allSupplyMapper::createSupplyPaymentResponseDto);
     }
 
+    /**
+     * Processes a refund received from a supplier.
+     * Similar to payment creation but targets the refund balances and 
+     * sets the 'isForRefund' flag to true.
+     * * @param supplyId The ID of the supply being refunded.
+     * @param request Contains refund details and proof files.
+     * @return DTO representation of the created refund record.
+     */
     @Override
     @ActivityLogger(
         entityName = "supply_payments",
@@ -200,6 +243,7 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         supply.setTotalUnrefunded(supply.getTotalUnrefunded().subtract(request.getTotalPayment()));
         supply.setTotalRefunded(supply.getTotalRefunded().add(request.getTotalPayment()));
 
+        // Check if request payment exceeds the unpaid left
         if(supply.getTotalUnrefunded().compareTo(BigDecimal.ZERO) < 0) {
             log.debug("Refund exceeds unrefunded amount supplyId={}, requestAmount={}", supplyId, request.getTotalPayment());
             throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + supplyId + ", enter an exact amount to proceed");
@@ -212,10 +256,12 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         SupplyPayment savedSupplyPayment = supplyPaymentRepository.save(supplyPayment);
         SupplyPaymentResponse supplyPaymentResponse = allSupplyMapper.createSupplyPaymentResponseDto(savedSupplyPayment);
 
+        // Upload payment proof/others to storage via message producer
         MultipartFile[] files = request.getFiles();
         List<Path> paths = new ArrayList<>(); 
         try {
             for (MultipartFile file : files) {
+                // Save to temporary
                 Path tempFile = Files.createTempFile("refPaymentOf" + supply.getId() + "-", "_upload");
                 file.transferTo(tempFile);
                 paths.add(tempFile);
@@ -227,6 +273,7 @@ public class SupplyPaymentServiceImpl implements SupplyPaymentService{
         }
         
          paths.forEach(path -> {
+            // Publish event to EventListener < listen and pass msg producer service
             eventPublisher.publishEvent(
                 new UploadStorageMessage(
                     EntityList.SUPPLY_PAYMENT,

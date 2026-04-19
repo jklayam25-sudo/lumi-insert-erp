@@ -10,6 +10,11 @@ import lumi.insert.app.core.entity.Memo;
 import lumi.insert.app.dto.request.MemoUpdateRequest;
 import lumi.insert.app.dto.response.MemoResponse;
 
+/**
+ * Mapper for {@link Memo}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring")
 public interface MemoMapper {
     

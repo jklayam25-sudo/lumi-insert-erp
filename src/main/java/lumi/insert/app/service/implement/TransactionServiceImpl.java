@@ -219,8 +219,13 @@ public class TransactionServiceImpl implements TransactionService{
 
         Customer customer = searchedTransaction.getCustomer();
         customer.setTotalUnpaid(customer.getTotalUnpaid().add(searchedTransaction.getGrandTotal()));
-         
-        messageProducerService.sendTransactionInvoiceEmail(new TransactionInvoiceMail(id, customer.getEmail(), ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())));
+        
+        String email = customer.getEmail();
+        if(email != null) {
+            log.info("Sending transaction invoice to: {}", email);
+            messageProducerService.sendTransactionInvoiceEmail(new TransactionInvoiceMail(id, email, ((EmployeeLogin) SecurityContextHolder.getContext().getAuthentication().getPrincipal())));
+        }
+        
         TransactionResponse response = allTransactionMapper.createTransactionResponseDto(searchedTransaction, messages);
         log.debug("Transaction processed to PROCESS status: {}, messages: {}", id, messages);
         return response;

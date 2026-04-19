@@ -21,6 +21,14 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 
+/**
+ * Representation class of database table {@code"supply_items"}. 
+ * <p>Represent detailed supply item informations. All transaction value base on snapshot of last information before saved.<br>
+ * Class can be implemented by{@code NoArgsConstructor, AllArgsConstructor and Builder}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity(name = "supply_items")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -51,6 +59,10 @@ public class SupplyItem extends BaseAuditing{
     @NotAudited
     private Supply supply;
     
+    /**
+     * Pre-query function used to normalize BigDecimal scale
+     * <p>Rounding half up  and scaled by 4 for precise value</p>
+     */
     @PrePersist
     @PreUpdate
     void normalizeDecimal(){

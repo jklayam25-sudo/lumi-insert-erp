@@ -11,6 +11,8 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.type.SqlTypes;
 
+import com.github.f4b6a3.uuid.UuidCreator;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 
@@ -26,6 +28,14 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 
+/**
+ * Representation class of database table {@code"customers"}. 
+ * <p>Store credential informations such as token, Employee and token expired date.<br>
+ * Class can be implemented by{@code NoArgsConstructor, AllArgsConstructor and Builder}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity(name = "customers")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -35,27 +45,52 @@ import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 @Audited
 public class Customer extends BaseAuditing{
     
+    /**
+     * Unique identifier of entity .
+     * <p>Strongly recommend to assign manually use {@link UuidCreator#getTimeOrderedEpochFast()}.</p>
+     */
     @Id 
     private UUID id;
 
+    /**
+     * Customer name. 
+     ** <p>Important: must not null and unique.</p> 
+     */
     @Column(unique = true, nullable = false )
     private String name;
  
+    /**
+     * Customer email. 
+     ** <p>All email services(Invoice order, Etc) will send to this value if not null</p> 
+     */
     private String email;
 
+    /**
+     * Customer contant. 
+     ** <p>Important: must not null.</p> 
+     */
     @Column(nullable = false )
     private String contact;
 
+    /**
+     * Customer shipping address. 
+     ** <p>Important: must not null.</p> 
+     */
     @Column(nullable = false )
-    private String shippingAddress;
+    private String shippingAddress; 
 
-    private Double Latitude;
+    private Double Latitude; 
 
     private Double Longitude;
 
     @Builder.Default 
     private Boolean isActive = true;
 
+    
+    /**
+     * Total transactions related, count by increment each product saved. 
+     ** <p>Note: Default value is 0</p> 
+     */
     @Builder.Default 
     @NotAudited
     private Long totalTransaction = 0L;
@@ -93,6 +128,10 @@ public class Customer extends BaseAuditing{
     @NotAudited
     private List<CustomerPicture> customerPictures = new ArrayList<>();
 
+    /**
+     * Pre-query function used to normalize BigDecimal scale
+     * <p>Rounding half up  and scaled by 4 for precise value</p>
+     */
     @PrePersist
     @PreUpdate
     void normalizeDecimal(){

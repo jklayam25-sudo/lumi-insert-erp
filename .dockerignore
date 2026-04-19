@@ -19,3 +19,7 @@ logs/
 loki_data/
 rabbitmq_data/
 prometheus_data/
+
+image/
+README.md
+LICENSE.txt

@@ -28,6 +28,13 @@ import lumi.insert.app.mapper.AuthMapper;
 import lumi.insert.app.service.AuthTokenService;
 import lumi.insert.app.utils.security.JwtUtils;
 
+/**
+ * Services of {@link AuthToken} for managing session and authentication.
+ * <p>Handles credential validation, JWT generation, and stateful refresh token 
+ * management. This service enforces a single-active-session policy per employee.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Service
 @Transactional
 @Slf4j
@@ -48,6 +55,16 @@ public class AuthTokenServiceImpl implements AuthTokenService{
     @Autowired
     JwtUtils jwtUtils;
 
+    /**
+     * Authenticates an employee and issues a new session.
+     * * <p><b>Side Effects:</b> Deletes any existing refresh tokens for the employee 
+     * to ensure a single active session.</p>
+     * * @param request The login credentials (username and password).
+     * @return {@link AuthTokenResponse} containing the JWT access token and refresh token.
+     * @throws AuthenticationTokenException if the username is not found.
+     * @throws AccountExpiredException if the employee account is disabled.
+     * @throws BadCredentialsExceptsion if the password verification fails.
+     */
     @Override
     @ActivityLogger(
         entityName = "auth_tokens",
@@ -72,10 +89,13 @@ public class AuthTokenServiceImpl implements AuthTokenService{
             throw new BadCredentialsException("Bad credentials, wrong password!");
         }
 
+        // Generate new access token
         String accessToken = jwtUtils.getAccessToken(employee);
 
+        // Delete previous refresh token(any)
         authTokenRepository.deleteByEmployeeId(employee.getId());
 
+        // Generate new refresh token and save to DB
         AuthToken authToken = AuthToken.builder()
             .id(UuidCreator.getTimeOrderedEpochFast())
             .employee(employee)
@@ -88,6 +108,13 @@ public class AuthTokenServiceImpl implements AuthTokenService{
         return authMapper.createDtoResponseFromEntity(accessToken, savedToken);
     }
 
+    /**
+     * Exchanges a valid refresh token for a new access token.
+     * * <p>Validates the existence and expiration of the refresh token.</p>
+     * * @param refreshToken The unique UUID string representing the session.
+     * @return {@link AuthTokenResponse} with a fresh access token.
+     * @throws AuthenticationTokenException if the token is missing, invalid, or expired.
+     */
     public AuthTokenResponse refreshAuthToken(String refreshToken) {
         log.info("Refreshing auth token for refreshToken={}", refreshToken);
         AuthToken authToken = authTokenRepository.findByRefreshToken(refreshToken)
@@ -96,6 +123,7 @@ public class AuthTokenServiceImpl implements AuthTokenService{
                 return new AuthenticationTokenException("Credentials token is not valid");
             });
         
+        // Delete from database if token is expired
         if(authToken.getExpiredAt().isBefore(LocalDateTime.now())) {
             log.debug("Refresh token expired for authTokenId={}, employeeId={}", authToken.getId(), authToken.getEmployee().getId());
             authTokenRepository.delete(authToken);
@@ -104,12 +132,17 @@ public class AuthTokenServiceImpl implements AuthTokenService{
 
         Employee employee = authToken.getEmployee();
 
+        // Generate new access token
         String accessToken = jwtUtils.getAccessToken(employee);
 
         log.info("Refresh succeeded for employeeId={}, refreshToken={}", employee.getId(), refreshToken);
         return authMapper.createDtoResponseFromEntity(accessToken, authToken);
     }
 
+    /**
+     * Delete existing refresh token. 
+    * @param refreshToken The unique UUID string representing the session. 
+     */
     @Override
     @ActivityLogger(
         entityName = "auth_tokens",

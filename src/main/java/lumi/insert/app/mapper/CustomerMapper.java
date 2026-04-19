@@ -11,6 +11,11 @@ import lumi.insert.app.dto.request.CustomerUpdateRequest;
 import lumi.insert.app.dto.response.CustomerDetailResponse;
 import lumi.insert.app.dto.response.CustomerResponse; 
 
+/**
+ * Mapper for {@link Customer}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring")
 public interface CustomerMapper {
     
