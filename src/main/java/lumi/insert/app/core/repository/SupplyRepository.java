@@ -11,11 +11,22 @@ import org.springframework.stereotype.Repository;
 
 import lumi.insert.app.core.entity.Supply; 
 
+/**
+ * Repository for {@link Supply} entity.
+ * <p>Support {@link JpaSpecificationExecutor} query.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Repository
 public interface SupplyRepository extends JpaRepository<Supply, UUID>, JpaSpecificationExecutor<Supply>{
     
     Optional<Supply> findByInvoiceId(String invoiceId);
 
+    /**
+     * Fetch detailed supply (include items > product).
+     * @param id
+     * @return Detailed {@link Supply}
+     */
     @Query("SELECT DISTINCT s " + 
         "FROM supplies s LEFT JOIN FETCH " +
         "s.supplyItems si LEFT JOIN FETCH " +

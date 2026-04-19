@@ -24,7 +24,7 @@ import lumi.insert.app.dto.request.PaginationRequest;
 import lumi.insert.app.dto.request.SupplyPaymentCreateRequest;
 import lumi.insert.app.dto.request.SupplyPaymentGetByFilter;
 import lumi.insert.app.dto.response.SupplyPaymentResponse;
-import lumi.insert.app.exception.ForbiddenRequestException;
+import lumi.insert.app.exception.ForbiddenRequestException; 
 import lumi.insert.app.service.SupplyPaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,6 +32,12 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+/**
+ * REST Controller to access {@link SupplyPaymentService}.
+ * Endpoints for managing supply order payments and invoices.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Transactional
 @Slf4j
@@ -43,6 +49,9 @@ public class SupplyPaymentController {
 
     private final int fileUploadSize = 8 * 1024 * 1024;
 
+/**
+ * Records a new payment made for a supply order
+ */
     @Operation(summary = "Create supply payment", description = "Records a new payment made for a supply order")
     @ApiResponse(responseCode = "201", description = "Supply payment created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -76,6 +85,9 @@ public class SupplyPaymentController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Records a refund for a payment in a supply order
+ */
     @Operation(summary = "Refund supply payment", description = "Records a refund for a payment in a supply order")
     @ApiResponse(responseCode = "201", description = "Supply payment refund created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -109,6 +121,9 @@ public class SupplyPaymentController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Retrieve detailed information about a specific supply payment
+ */
     @Operation(summary = "Get supply payment by ID", description = "Retrieve detailed information about a specific supply payment")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved supply payment")
     @ApiResponse(responseCode = "404", description = "Supply payment not found")
@@ -126,6 +141,9 @@ public class SupplyPaymentController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve paginated list of all payments for a supply order
+ */
     @Operation(summary = "Get supply payments", description = "Retrieve paginated list of all payments for a supply order")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved supply payments")
     @ApiResponse(responseCode = "404", description = "Supply order not found")
@@ -143,6 +161,9 @@ public class SupplyPaymentController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Search supply payments with filtering options
+ */
     @Operation(summary = "Search supply payments", description = "Search supply payments with filtering options")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved filtered supply payments")
     @ApiResponse(responseCode = "404", description = "Supply order not found")

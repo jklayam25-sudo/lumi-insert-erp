@@ -3,6 +3,11 @@ package lumi.insert.app.utils.generator;
 import java.time.LocalDateTime; 
 import org.springframework.stereotype.Component;
 
+/**
+ * Utilities of Date's related.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Component
 public class DateUtils {
     

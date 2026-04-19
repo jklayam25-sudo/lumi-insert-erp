@@ -8,6 +8,12 @@ import org.springframework.context.annotation.Primary;
 
 import com.zaxxer.hikari.HikariDataSource;
 
+/**
+ * Configuration for DB DataSource 
+ * <p>Seperation due to perfomance reason.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Configuration
 public class DataSourceConfig {
     

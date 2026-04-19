@@ -13,21 +13,27 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
  
-
+/**
+ * RabbitMQ message broker configurations
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Configuration
 public class RabbitMQConfig {
 
-    // Message Queue Configuration
+    // Message Queue Configuration for  activity-logs rute
     @Bean 
     public Queue activityQueue() {
         return new Queue("activity-logs", false);
     }
 
+    // Message Queue Configuration for transaction-invoice-mail rute
     @Bean 
     public Queue transactionInvoiceQueue() {
         return new Queue("transaction-invoice-mail", false);
     }
 
+    // Message Queue Configuration for upload-storage rute
     @Bean 
     public Queue uploadStorageQueue() {
         return new Queue("upload-storage", false);

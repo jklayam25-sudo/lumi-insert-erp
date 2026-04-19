@@ -36,6 +36,17 @@ import lumi.insert.app.mapper.EmployeeMapper;
 import lumi.insert.app.service.EmployeeService;
 import lumi.insert.app.service.StorageService;
 
+/**
+ * Implementation of {@link EmployeeService} providing administrative and profile management for staff members.
+ * <p>
+ * This service handles sensitive operations including password encryption via {@link BCryptPasswordEncoder},
+ * session management by invalidating {@link AuthToken} upon critical updates, and employee profile
+ * image processing with automated storage cleanup on persistence failure.
+ * </p>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -59,6 +70,13 @@ public class EmployeeServiceImpl implements EmployeeService{
     @Autowired
     EmployeePictureRepository employeePictureRepository;
 
+    /**
+     * Registers a new employee.
+     *
+     * @param request the employee creation details.
+     * @return the mapped {@link EmployeeResponse} of the saved entity.
+     * @throws DuplicateEntityException if the username is already taken.
+     */
     @Override
     @ActivityLogger(
         entityName = "employees",
@@ -87,6 +105,13 @@ public class EmployeeServiceImpl implements EmployeeService{
         return employeeMapper.createDtoResponseFromEmployee(savedEmployee);
     }
 
+    /**
+     * Retrieves an employee profile by their unique identifier.
+     *
+     * @param id the unique UUID of the employee.
+     * @return the found {@link EmployeeResponse}.
+     * @throws NotFoundEntityException if the employee does not exist.
+     */
     @Override
     public EmployeeResponse getEmployee(UUID id) {
         log.info("Retrieving employee id={}", id);
@@ -99,6 +124,12 @@ public class EmployeeServiceImpl implements EmployeeService{
         return employeeMapper.createDtoResponseFromEmployee(employee);
     }
 
+    /**
+     * Retrieves a paginated slice of all employees, sorted by creation date descending.
+     *
+     * @param request the pagination parameters (page, size).
+     * @return a {@link Slice} of {@link EmployeeResponse}.
+     */
     @Override
     public Slice<EmployeeResponse> getEmployees(PaginationRequest request) {
         log.info("Listing employees page={}, size={}", request.getPage(), request.getSize());
@@ -108,11 +139,26 @@ public class EmployeeServiceImpl implements EmployeeService{
         return employees.map(employeeMapper::createDtoResponseFromEmployee);
     }
 
+    /**
+     * Checks if a username is already occupied in the system.
+     *
+     * @param username the username to check.
+     * @return {@code true} if exists, {@code false} otherwise.
+     */
     @Override
     public boolean isExistsEmployeeByUsername(String username) {
         return employeeRepository.existsByUsername(username);
     }
 
+    /**
+     * Resets an employee's password and invalidates all existing active sessions.
+     * <p>Critical: This operation deletes all associated {@link AuthToken}s to force re-login.</p>
+     *
+     * @param id       the employee identifier.
+     * @param password the new plain-text password to be encoded.
+     * @return the updated {@link EmployeeResponse}.
+     * @throws NotFoundEntityException if the employee ID is invalid.
+     */
     @Override
     @ActivityLogger(
         entityName = "employees",
@@ -137,6 +183,16 @@ public class EmployeeServiceImpl implements EmployeeService{
         return employeeMapper.createDtoResponseFromEmployee(savedEmployee);
     }
 
+    /**
+     * Updates employee's informations.
+     * <p>If the account set to deactive, all active tokens are revoked.</p>
+     *
+     * @param id      the identifier of the employee.
+     * @param request the update data.
+     * @return the updated {@link EmployeeResponse}.
+     * @throws DuplicateEntityException if the new username is already in use.
+     * @throws NotFoundEntityException  if the employee is not found.
+     */
     @Override
     @ActivityLogger(
         entityName = "employees",
@@ -165,6 +221,20 @@ public class EmployeeServiceImpl implements EmployeeService{
         return employeeMapper.createDtoResponseFromEmployee(employee);
     }
 
+    /**
+     * Updates the employee's profile picture and persists the metadata.
+     * <p>
+     * Logic includes a safety net: if database persistence fails after a successful 
+     * cloud upload, the service will attempt to delete the orphaned image from 
+     * the storage provider.
+     * </p>
+     *
+     * @param id   the employee identifier.
+     * @param file the multipart image file.
+     * @return {@code true} if the profile picture was successfully updated.
+     * @throws StorageActionException    if cloud upload fails.
+     * @throws DatabaseInternalException if database save fails after upload.
+     */
     @Override
     public boolean setEmployeeProfile(UUID id, MultipartFile file){ 
         log.info("Setting profile image for employee id={}", id);

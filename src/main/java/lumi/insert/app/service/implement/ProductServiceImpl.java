@@ -37,6 +37,18 @@ import lumi.insert.app.mapper.ProductMapper;
 import lumi.insert.app.service.ProductService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
+/**
+ * Implementation of {@link ProductService} for comprehensive inventory and product management.
+ * <p>
+ * This service ensures strict inventory consistency by synchronizing product states with 
+ * {@link Category} statistics. It handles complex lifecycle operations such as 
+ * dynamic category reassignment, stock monitoring, and advanced filtering using 
+ * JPA Specifications and keyset pagination.
+ * </p>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -54,6 +66,14 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     JpaSpecGenerator jpaSpecGenerator;
 
+    /**
+     * Creates a new product and increments the associated category's item count.
+     *
+     * @param request the product details including pricing and initial stock.
+     * @return the mapped {@link ProductResponse}.
+     * @throws DuplicateEntityException if a product with the same name already exists.
+     * @throws NotFoundEntityException  if the specified category ID does not exist.
+     */
     @Override
     @ActivityLogger(
         entityName = "products",
@@ -100,6 +120,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
+    /**
+     * Retrieves the current stock quantity for a specific product.
+     *
+     * @param productId the unique identifier of the product.
+     * @return a {@link ProductStockResponse} containing the ID and current stock level.
+     * @throws NotFoundEntityException if the product ID is not found.
+     */
     @Override
     public ProductStockResponse getProductStock(Long productId) {
         log.debug("Getting stock for product ID: {}", productId);
@@ -114,9 +141,19 @@ public class ProductServiceImpl implements ProductService {
             .build();
 
         return responseStock;
-    }
+    } 
 
-
+    /**
+     * Updates product information and handles category migration logic.
+     * <p>
+     * If the category is changed, the service automatically decrements the item count 
+     * from the old category and increments the count for the new category.
+     * </p>
+     *
+     * @param request the update data containing the product ID and new values.
+     * @return the updated {@link ProductResponse}.
+     * @throws NotFoundEntityException if the product or the new category is not found.
+     */
     @Override
     @ActivityLogger(
         entityName = "products",
@@ -157,6 +194,12 @@ public class ProductServiceImpl implements ProductService {
         return dtoResponseFromProduct;
     }
 
+    /**
+     * Performs a keyset-paginated search for active product names.
+     *
+     * @param request search parameters including partial name and last seen ID.
+     * @return a {@link SliceIndex} of matching product names.
+     */
     @Override
     public SliceIndex<ProductName> searchProductNames(ProductGetNameRequest request) {
         log.debug("Searching product names with query: {}, size: {}", request.getName(), request.getSize());
@@ -168,7 +211,12 @@ public class ProductServiceImpl implements ProductService {
         return new SliceIndex<ProductName>(allByNameContaining);
     }
 
-
+    /**
+     * Retrieves a single product's details by its ID.
+     *
+     * @param id the product identifier.
+     * @return the found {@link ProductResponse}.
+     */
     @Override
     public ProductResponse getProductById(Long id) {
         log.debug("Getting product by ID: {}", id);
@@ -182,7 +230,12 @@ public class ProductServiceImpl implements ProductService {
         return responseProduct;
     }
 
-
+    /**
+     * Retrieves a paginated slice of all products sorted by name.
+     *
+     * @param request pagination parameters (page, size).
+     * @return a {@link Slice} of product responses.
+     */
     @Override
     public Slice<ProductResponse> getProducts(PaginationRequest request) {
         log.debug("Getting products with pagination page: {}, size: {}", request.getPage(), request.getSize());
@@ -195,7 +248,13 @@ public class ProductServiceImpl implements ProductService {
         return mapResult;
     }
 
-
+    /**
+     * Searches for products using dynamic multi-criteria filters.
+     *
+     * @param request complex filter criteria (price range, category, status, etc.).
+     * @return a filtered {@link Slice} of products.
+     * @throws NotFoundEntityException if a category filter is provided but the category doesn't exist.
+     */
     @Override
     public Slice<ProductResponse> getProductsByRequests(ProductGetByFilter request) {
         log.debug("Searching products by filter: {}", request);
@@ -213,7 +272,13 @@ public class ProductServiceImpl implements ProductService {
         return resultMap;
     }
 
-
+    /**
+     * Deactivates a product and decrements the associated category's active item count.
+     *
+     * @param id the product identifier.
+     * @return the deactivation metadata.
+     * @throws BoilerplateRequestException if the product is already inactive.
+     */
     @Override
     @ActivityLogger(
         entityName = "products",
@@ -246,7 +311,13 @@ public class ProductServiceImpl implements ProductService {
         return deleteDtoResponseFromProduct;
     }
 
-
+    /**
+     * Reactivates a product and increments the associated category's active item count.
+     *
+     * @param id the product identifier.
+     * @return the activation metadata.
+     * @throws BoilerplateRequestException if the product is already active.
+     */
     @Override
     @ActivityLogger(
         entityName = "products",
@@ -278,7 +349,11 @@ public class ProductServiceImpl implements ProductService {
         return deleteDtoResponseFromProduct;
     }
 
-
+    /**
+     * Identifies products whose stock levels have fallen below their defined minimum threshold.
+     *
+     * @return a list of products requiring replenishment.
+     */
     @Override
     public List<ProductOutOfStock> getOutOfStockProducts() {
         log.debug("Fetching out-of-stock products");

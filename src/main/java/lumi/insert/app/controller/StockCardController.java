@@ -29,6 +29,12 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+/**
+ * REST Controller to access {@link StockCardService}.
+ * Endpoints for managing stock card records and inventory tracking.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Slf4j
 @Tag(name = "Stock Cards", description = "Endpoints for managing stock card records and inventory tracking")
@@ -37,6 +43,9 @@ public class StockCardController {
     @Autowired
     StockCardService stockCardService;
     
+/**
+ * Creates a new stock card record for inventory tracking
+ */
     @Operation(summary = "Create new stock card", description = "Creates a new stock card record for inventory tracking")
     @ApiResponse(responseCode = "201", description = "Stock card created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -63,6 +72,9 @@ public class StockCardController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Retrieve detailed information about a specific stock card
+ */
     @Operation(summary = "Get stock card by ID", description = "Retrieve detailed information about a specific stock card")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved stock card")
     @ApiResponse(responseCode = "404", description = "Stock card not found")
@@ -80,6 +92,9 @@ public class StockCardController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve paginated list of all stock cards with optional cursor-based pagination
+ */
     @Operation(summary = "Get all stock cards", description = "Retrieve paginated list of all stock cards with optional cursor-based pagination")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved stock cards")
     @GetMapping(
@@ -96,6 +111,9 @@ public class StockCardController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Search stock cards with filtering options
+ */
     @Operation(summary = "Search stock cards", description = "Search stock cards with filtering options")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved filtered stock cards")
     @GetMapping(

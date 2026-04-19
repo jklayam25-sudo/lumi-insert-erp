@@ -7,6 +7,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Wrapper class for cloudinary response. 
+ * <p>Represent Url, publicId,  etc.<br> 
+ * Class mapped by {@code Jackson} and can be implemented manually by{@code NoArgsConstructor, AllArgsConstructor and Builder}.</p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Data
 @Builder
 @NoArgsConstructor

@@ -26,6 +26,16 @@ import lumi.insert.app.service.PdfService;
 import lumi.insert.app.service.ProductService;
 import lumi.insert.app.service.TransactionItemService;
 
+/**
+ * Implementation of {@link MailSenderService} for handling automated email communications.
+ * <p>
+ * This service orchestrates the generation of document-based emails, support attachments.
+ * It supports HTML-formatted templates and multi-part messaging for binary attachments.
+ * </p>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Slf4j
 public class MailSenderServiceImpl implements MailSenderService {
@@ -61,6 +71,17 @@ public class MailSenderServiceImpl implements MailSenderService {
                 "</div>" +
      "</div>";
 
+     /**
+     * Sends a transaction invoice to a customer via email.
+     * <p>
+     * This method retrieves full transaction details, converts them into a PDF stream, 
+     * and dispatches an HTML email with the PDF attached.
+     * </p>
+     *
+     * @param request the mail request containing the recipient's email and transaction ID.
+     * @throws MessagingException      if the email construction or SMTP delivery fails.
+     * @throws NotFoundEntityException if the transaction ID does not exist in the database.
+     */
     @Override
     public void sendTransactionInvoice(TransactionInvoiceMail request) throws MessagingException { 
         log.info("Preparing transaction invoice email to={} transactionId={}", request.email(), request.transactionId());
@@ -82,6 +103,17 @@ public class MailSenderServiceImpl implements MailSenderService {
         log.info("Transaction invoice email sent to={} transactionId={}", request.email(), request.transactionId());
     }
 
+    /**
+     * Generates and sends a performance report of products to the system owner.
+     * <p>
+     * The report includes transaction statistics and a list of out-of-stock items 
+     * for a specified period, bundled as a PDF attachment.
+     * </p>
+     *
+     * @param startDate the beginning of the reporting period.
+     * @param endDate   the end of the reporting period.
+     * @throws MessagingException if the email delivery fails.
+     */
     @Override
     public void sendProductsStatistic(LocalDateTime startDate, LocalDateTime endDate) throws MessagingException { 
         log.info("Preparing products statistic email for period {} to {}", startDate, endDate);

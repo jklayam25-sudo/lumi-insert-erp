@@ -3,10 +3,17 @@ package lumi.insert.app.core.entity.nondatabase;
 import java.util.List;
 
 import org.springframework.data.domain.Slice;
-
+ 
 import lumi.insert.app.dto.response.CustomerNameResponse;
 import lumi.insert.app.dto.response.ProductName;
 import lumi.insert.app.dto.response.SupplierNameResponse;
+
+/**
+ ** Custom wrapper for class {@link Slice}. 
+ *  <p>Used to optimize pagination by using last index parameter</p>.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 public class SliceIndex<T> {
     private boolean first;
     private boolean last;

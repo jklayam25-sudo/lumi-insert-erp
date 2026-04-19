@@ -28,7 +28,16 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 import lumi.insert.app.core.entity.nondatabase.TransactionStatus;
+import lumi.insert.app.utils.generator.InvoiceGenerator;
 
+/**
+ * Representation class of database table {@code"transactions"}. 
+ * <p>Represent detailed supply informations. All transaction value base on snapshot of last information before saved.<br>
+ * Class can be implemented by{@code NoArgsConstructor, AllArgsConstructor and Builder}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity(name = "transactions")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -41,9 +50,18 @@ public class Transaction extends BaseAuditing{
     @Id 
     private UUID id;
 
+    /**
+     * Unique identifier Invoice ID of this transaction. 
+     ** <p>Note: Strongly recommended to assign by {@link InvoiceGenerator#generate()}.</p> 
+     ** <p>Important: Must not null, unique and max 55 alphs</p> 
+     */
     @Column(unique = true, nullable = false, length = 55)
     private String invoiceId;
 
+    /**
+     * Total transactions related, count by increment each transactionItem saved. 
+     ** <p>Note: Default value is 0</p> 
+     */
     @Builder.Default 
     @NotAudited
     private Long totalItems = 0L;
@@ -104,6 +122,10 @@ public class Transaction extends BaseAuditing{
     @NotAudited
     private List<TransactionPayment> transactionPayments = new ArrayList<>();
     
+    /**
+     * Pre-query function used to normalize BigDecimal scale
+     * <p>Rounding half up  and scaled by 4 for precise value</p>
+     */
     @PrePersist
     @PreUpdate
     void normalizeDecimal(){

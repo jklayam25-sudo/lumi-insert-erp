@@ -24,7 +24,7 @@ import lumi.insert.app.core.entity.MemoView;
 import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.dto.request.MemoCreateRequest;
 import lumi.insert.app.dto.request.MemoUpdateRequest;
-import lumi.insert.app.dto.response.MemoResponse;
+import lumi.insert.app.dto.response.MemoResponse; 
 import lumi.insert.app.service.MemoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,6 +32,12 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+/**
+ * REST Controller to access {@link MemoService}.
+ * Endpoints for managing memos and announcements.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Slf4j
 @Tag(name = "Memos", description = "Endpoints for managing memos and announcements")
@@ -40,6 +46,9 @@ public class MemoController {
     @Autowired
     MemoService memoService;
 
+/**
+ * Creates a new memo with optional attachments
+ */
     @Operation(summary = "Create new memo", description = "Creates a new memo with optional attachments")
     @ApiResponse(responseCode = "201", description = "Memo created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -66,6 +75,9 @@ public class MemoController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Records that an employee has read a specific memo
+ */
     @Operation(summary = "Mark memo as read", description = "Records that an employee has read a specific memo")
     @ApiResponse(responseCode = "200", description = "Memo marked as read successfully")
     @ApiResponse(responseCode = "404", description = "Memo not found")
@@ -84,6 +96,9 @@ public class MemoController {
     }
 
     
+/**
+ * Updates the content of an existing memo
+ */
     @Operation(summary = "Update memo", description = "Updates the content of an existing memo")
     @ApiResponse(responseCode = "200", description = "Memo updated successfully")
     @ApiResponse(responseCode = "404", description = "Memo not found")
@@ -106,6 +121,9 @@ public class MemoController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Archives a memo to hide it from regular view (OWNER only)
+ */
     @Operation(summary = "Archive memo", description = "Archives a memo to hide it from regular view (OWNER only)")
     @ApiResponse(responseCode = "200", description = "Memo archived successfully")
     @ApiResponse(responseCode = "404", description = "Memo not found")
@@ -126,6 +144,9 @@ public class MemoController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve detailed information about a specific memo
+ */
     @Operation(summary = "Get memo by ID", description = "Retrieve detailed information about a specific memo")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved memo")
     @ApiResponse(responseCode = "404", description = "Memo not found")
@@ -143,6 +164,9 @@ public class MemoController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve paginated list of memos for the authenticated employee updated after specified time
+ */
     @Operation(summary = "Get memos for current employee", description = "Retrieve paginated list of memos for the authenticated employee updated after specified time")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved memos")
     @GetMapping(

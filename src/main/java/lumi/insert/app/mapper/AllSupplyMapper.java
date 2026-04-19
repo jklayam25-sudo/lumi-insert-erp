@@ -17,6 +17,11 @@ import lumi.insert.app.dto.response.SupplyItemResponse;
 import lumi.insert.app.dto.response.SupplyPaymentResponse;
 import lumi.insert.app.dto.response.SupplyResponse;  
 
+/**
+ * Mapper for {@link Supply}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring", uses = ProductMapper.class)
 public interface AllSupplyMapper {
     
@@ -30,11 +35,7 @@ public interface AllSupplyMapper {
     SupplyItemResponse createItemResponseDTO(SupplyItem supplyItem);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE) 
-    void updateSupply(SupplyUpdateRequest request, @MappingTarget Supply supply);
-
-    // @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
-    // @Mapping(target = "deleted", constant = "true")
-    // TransactionItemDelete createTransactionItemDeleteResponseDto(TransactionItem transactionItem);
+    void updateSupply(SupplyUpdateRequest request, @MappingTarget Supply supply); 
 
     @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
     @Mapping(target = "supplyId", source = "supply.id")

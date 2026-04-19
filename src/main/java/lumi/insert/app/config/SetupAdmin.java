@@ -14,6 +14,11 @@ import lumi.insert.app.core.entity.Employee;
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.core.repository.EmployeeRepository; 
 
+/**
+ * Early setup at first launch to register OWNER credentials.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Component
 public class SetupAdmin implements CommandLineRunner{
 

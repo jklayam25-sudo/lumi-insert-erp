@@ -11,6 +11,12 @@ import org.springframework.stereotype.Repository;
 import lumi.insert.app.core.entity.Supplier;
 import lumi.insert.app.dto.response.SupplierNameResponse; 
 
+/**
+ * Repository for {@link Supplier} entity.
+ * <p>Support {@link JpaSpecificationExecutor} query.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Repository
 public interface SupplierRepository extends JpaRepository<Supplier, UUID>, JpaSpecificationExecutor<Supplier>{
     

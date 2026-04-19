@@ -10,6 +10,11 @@ import lumi.insert.app.core.entity.Employee;
 import lumi.insert.app.dto.request.EmployeeUpdateRequest; 
 import lumi.insert.app.dto.response.EmployeeResponse; 
 
+/**
+ * Mapper for {@link Employee}, mapped from DTO to Entity and Otherwise.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Mapper(componentModel = "spring")
 public interface EmployeeMapper {
     

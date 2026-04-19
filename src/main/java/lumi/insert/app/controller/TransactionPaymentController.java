@@ -35,6 +35,12 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+/**
+ * REST Controller to access {@link TransactionPaymentService}.
+ * Endpoints for managing transaction payments and collections.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Transactional
 @Slf4j
@@ -46,6 +52,9 @@ public class TransactionPaymentController {
 
     private final int fileUploadSize = 8 * 1024 * 1024;
 
+/**
+ * Records a new payment received for a transaction
+ */
     @Operation(summary = "Create transaction payment", description = "Records a new payment received for a transaction")
     @ApiResponse(responseCode = "201", description = "Transaction payment created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -79,6 +88,9 @@ public class TransactionPaymentController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Records a refund for a payment in a transaction
+ */
     @Operation(summary = "Refund transaction payment", description = "Records a refund for a payment in a transaction")
     @ApiResponse(responseCode = "201", description = "Transaction payment refund created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -112,6 +124,9 @@ public class TransactionPaymentController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Retrieve detailed information about a specific transaction payment
+ */
     @Operation(summary = "Get transaction payment by ID", description = "Retrieve detailed information about a specific transaction payment")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved transaction payment")
     @ApiResponse(responseCode = "404", description = "Transaction payment not found")
@@ -129,6 +144,9 @@ public class TransactionPaymentController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve paginated list of all payments for a transaction
+ */
     @Operation(summary = "Get transaction payments", description = "Retrieve paginated list of all payments for a transaction")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved transaction payments")
     @ApiResponse(responseCode = "404", description = "Transaction not found")
@@ -146,6 +164,9 @@ public class TransactionPaymentController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Search transaction payments with filtering options
+ */
     @Operation(summary = "Search transaction payments", description = "Search transaction payments with filtering options")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved filtered transaction payments")
     @ApiResponse(responseCode = "404", description = "Transaction not found")

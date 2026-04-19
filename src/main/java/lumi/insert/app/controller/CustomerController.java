@@ -38,6 +38,12 @@ import lumi.insert.app.dto.response.CustomerResponse;
 import lumi.insert.app.exception.ForbiddenRequestException;
 import lumi.insert.app.service.CustomerService;
 
+/**
+ * REST Controller to access {@link CustomerService}.
+ * Endpoints for managing customer information and details.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Slf4j
 @Tag(name = "Customers", description = "Endpoints for managing customer information and details")
@@ -48,6 +54,9 @@ public class CustomerController {
 
     private final int fileUploadSize = 8 * 1024 * 1024;
 
+/**
+ * Creates a new customer with the specified details including location
+ */
     @Operation(summary = "Create new customer", description = "Creates a new customer with the specified details including location")
     @ApiResponse(responseCode = "201", description = "Customer created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -74,6 +83,9 @@ public class CustomerController {
         return ResponseEntity.created(location).body(wrappedResult);
     }
 
+/**
+ * Retrieve detailed information about a specific customer
+ */
     @Operation(summary = "Get customer by ID", description = "Retrieve detailed information about a specific customer")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved customer")
     @ApiResponse(responseCode = "404", description = "Customer not found")
@@ -91,6 +103,9 @@ public class CustomerController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve paginated list of customers with optional filtering
+ */
     @Operation(summary = "Get all customers", description = "Retrieve paginated list of customers with optional filtering")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved customers")
     @GetMapping(
@@ -107,6 +122,9 @@ public class CustomerController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Search for customers by name with pagination support
+ */
     @Operation(summary = "Search customer names", description = "Search for customers by name with pagination support")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved matching customers")
     @GetMapping(
@@ -123,6 +141,9 @@ public class CustomerController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Updates information for an existing customer
+ */
     @Operation(summary = "Update customer", description = "Updates information for an existing customer")
     @ApiResponse(responseCode = "200", description = "Customer updated successfully")
     @ApiResponse(responseCode = "404", description = "Customer not found")
@@ -146,6 +167,9 @@ public class CustomerController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Upload an customer's desc pictures
+ */
     @Operation(summary = "Upload and set customer description pictures", description = "Upload an customer's desc pictures")
     @ApiResponse(responseCode = "200", description = "Upload set successfully")
     @ApiResponse(responseCode = "404", description = "Customer not found")

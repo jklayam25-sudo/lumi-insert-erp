@@ -17,6 +17,15 @@ import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.core.entity.nondatabase.CloudinaryResponse;
 import lumi.insert.app.service.StorageService;
 
+/**
+ * Implementation of {@link StorageService} using Cloudinary for cloud-based media management.
+ * <p>
+ * This service provides methods to upload images from local paths or byte arrays,
+ * and to delete assets using their public identifiers.
+ * </p>
+ * * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Slf4j
 public class CloudinaryStorageServiceImpl implements StorageService{
@@ -27,6 +36,13 @@ public class CloudinaryStorageServiceImpl implements StorageService{
     @Autowired
     ObjectMapper objectMapper;
  
+    /**
+     * Uploads an image file from a specific system path. 
+     * * @param path       the local {@link Path} of the file to be uploaded.
+     * @param folderName the destination folder name in Cloudinary.
+     * @return a {@link CloudinaryResponse} containing asset metadata and URLs.
+     * @throws IOException if the file cannot be read or the upload fails.
+     */
     @Override
     public CloudinaryResponse uploadImage(Path path, String folderName) throws IOException {
         log.info("Uploading image from path={} to folder={}", path, folderName);
@@ -54,6 +70,15 @@ public class CloudinaryStorageServiceImpl implements StorageService{
 
     }
  
+    /**
+     * Uploads image data provided as a byte array.
+     * <p>This method performs a synchronous upload directly from memory buffer.</p>
+     * * @param files      the raw byte array of the image.
+     * @param fileName   the desired public ID/filename for the asset.
+     * @param folderName the destination folder name in Cloudinary.
+     * @return a {@link CloudinaryResponse} containing asset metadata.
+     * @throws IOException if the upload process encounters a network or API error.
+     */
     @Override
     public CloudinaryResponse uploadImageSync(byte[] files, String fileName, String folderName) throws IOException {
         log.info("Uploading image bytes with publicId={} to folder={}", fileName, folderName);
@@ -76,6 +101,11 @@ public class CloudinaryStorageServiceImpl implements StorageService{
 
     }
 
+    /**
+     * Deletes an asset from Cloudinary storage.
+     * * @param publicId the unique identifier of the asset (including folder path if applicable).
+     * @return {@code true} if the deletion was successful ("ok"), {@code false} otherwise.
+     */
     @Override
     public Boolean deleteImage(String publicId) {
         log.info("Deleting image with publicId={}", publicId);

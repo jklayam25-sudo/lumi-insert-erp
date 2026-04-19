@@ -19,6 +19,14 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 
+/**
+ * Representation class of database table {@code"memo_views"}. 
+ * <p>Store viewed memo and employee that view <br>
+ * Class can be implemented by{@code NoArgsConstructor, AllArgsConstructor and Builder}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity(name = "memo_views")
 @Table(
      uniqueConstraints = @UniqueConstraint(columnNames = {"memo_id", "employee_id"})
@@ -44,6 +52,11 @@ public class MemoView extends BaseAuditing{
     @NotAudited
     private Employee employee;
 
+    /**
+     * Default constructor, return MemoView with id from combining memo's id and employee's id.
+     * @param memo
+     * @param employee
+     */
     public MemoView (Memo memo, Employee employee){
         this(memo.getId().toString() + employee.getId(), memo, employee);
     }

@@ -29,6 +29,12 @@ import lumi.insert.app.dto.request.PaginationRequest;
 import lumi.insert.app.dto.response.CategoryResponse;
 import lumi.insert.app.service.CategoryService;
 
+/**
+ * REST Controller to access {@link CategoryService}.
+ * Endpoints for managing product categories.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Tag(name = "Categories", description = "Endpoints for managing product categories")
 @Slf4j
@@ -37,6 +43,10 @@ public class CategoryController {
     @Autowired
     CategoryService categoryService;
 
+    /**
+     * Creates a new product category with the specified name
+     * @param request JSON Value of {@link CategoryCreateRequest}
+     */ 
     @Operation(summary = "Create new category", description = "Creates a new product category with the specified name")
     @ApiResponse(responseCode = "201", description = "Category created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -63,7 +73,9 @@ public class CategoryController {
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
-
+    /**
+     * Retrieve paginated list of all categories with filtering options 
+     */ 
     @Operation(summary = "Get all categories", description = "Retrieve paginated list of all categories with filtering options")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved categories")
     @GetMapping(
@@ -80,7 +92,9 @@ public class CategoryController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
-
+    /**
+     * Retrieve detailed information about a specific category
+     */ 
     @Operation(summary = "Get category by ID", description = "Retrieve detailed information about a specific category")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved category")
     @ApiResponse(responseCode = "404", description = "Category not found")
@@ -96,9 +110,11 @@ public class CategoryController {
 
         log.debug("Category search by id result: {}", resultFromService);
         return ResponseEntity.ok(wrappedResult);   
-    }
+    } 
 
-
+    /**
+     * Updates the name of an existing category
+     */
     @Operation(summary = "Update category name", description = "Updates the name of an existing category")
     @ApiResponse(responseCode = "200", description = "Category updated successfully")
     @ApiResponse(responseCode = "404", description = "Category not found")
@@ -124,6 +140,9 @@ public class CategoryController {
     }
 
 
+    /**
+     * Activates a category to make it visible for new products
+     */
     @Operation(summary = "Activate category", description = "Activates a category to make it visible for new products")
     @ApiResponse(responseCode = "200", description = "Category activated successfully")
     @ApiResponse(responseCode = "404", description = "Category not found")
@@ -144,6 +163,9 @@ public class CategoryController {
     }
 
 
+/**
+ * Deactivates a category to prevent using it for new products
+ */
     @Operation(summary = "Deactivate category", description = "Deactivates a category to prevent using it for new products")
     @ApiResponse(responseCode = "200", description = "Category deactivated successfully")
     @ApiResponse(responseCode = "404", description = "Category not found")

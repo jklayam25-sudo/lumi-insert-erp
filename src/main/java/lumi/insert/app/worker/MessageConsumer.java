@@ -39,6 +39,11 @@ import lumi.insert.app.exception.StorageActionException;
 import lumi.insert.app.service.MailSenderService;
 import lumi.insert.app.service.StorageService;
 
+/**
+ * Message Broker Consumer.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Component
 @Slf4j
 public class MessageConsumer {
@@ -64,6 +69,11 @@ public class MessageConsumer {
     @Autowired
     private SupplyPaymentPictureRepository supplyPaymentPictureRepository;
 
+    /**
+     * Listener to queues = "activity-logs".
+     * <p>Save Activity Log to database</p>
+     * @param activityLog
+     */
     @RabbitListener(queues = "activity-logs")
     void activityLogsHandler(ActivityLogMessage activityLog){ 
         try {
@@ -76,6 +86,11 @@ public class MessageConsumer {
         }
     }
 
+    /**
+     * Listener to queues = "transaction-invoice-mail".
+     * <p>Send transaction invoice to mail via Service</p>
+     * @param TransactionInvoiceMail
+     */
     @RabbitListener(queues = "transaction-invoice-mail")
     void transactionInvoiceMailHandler(TransactionInvoiceMail request) throws MessagingException{ 
         try {
@@ -92,6 +107,11 @@ public class MessageConsumer {
         }
     }
 
+    /**
+     * Listener to queues = "upload-storage".
+     * <p>Handle upload to 3rd storage and update related entity</p>
+     * @param UploadStorageMessage
+     */
     @RabbitListener(queues = "upload-storage")
     @Transactional
     void uploadStorageHandler(UploadStorageMessage request){  

@@ -19,6 +19,12 @@ import lumi.insert.app.core.repository.projection.ProductOutOfStock;
 import lumi.insert.app.core.repository.projection.ProductRefreshProjection;
 import lumi.insert.app.dto.response.ProductName;
 
+/**
+ * Repository for {@link Product} entity.
+ * <p>Support {@link JpaSpecificationExecutor} query.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product>{
 
@@ -33,6 +39,12 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     Boolean existsByName(String name);
 
+    /**
+     * Fetch list of quantity and sellPrice from products filter by last update time  
+     * @param ids
+     * @param updatedAt
+     * @return List of {@link  ProductRefreshProjection}
+     */
     @Query(value = "SELECT p.id AS id, p.sellPrice AS sellPrice, p.stockQuantity AS stockQuantity FROM products p WHERE p.id IN :ids AND p.updatedAt >= :updatedAt")
     List<ProductRefreshProjection> searchIdUpdatedAtMoreThan(@Param("ids") List<Long> ids,@Param("updatedAt") LocalDateTime updatedAt); 
 

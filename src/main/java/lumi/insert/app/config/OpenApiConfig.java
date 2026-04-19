@@ -14,6 +14,11 @@ import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 
+/**
+ * Swagger OpenAPI Config.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Configuration
 public class OpenApiConfig {
 

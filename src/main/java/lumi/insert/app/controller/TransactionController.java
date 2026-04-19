@@ -28,7 +28,7 @@ import lumi.insert.app.dto.request.TransactionGetByFilter;
 
 import lumi.insert.app.dto.response.TransactionDetailResponse;
 import lumi.insert.app.dto.response.TransactionResponse;
-import lumi.insert.app.service.PdfService;
+import lumi.insert.app.service.PdfService; 
 import lumi.insert.app.service.TransactionService;
 import lumi.insert.app.service.XlsxService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +37,12 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+/**
+ * REST Controller to access {@link TransactionService}.
+ * Endpoints for managing sales transactions and inventory operations.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Slf4j
 @Tag(name = "Transactions", description = "Endpoints for managing sales transactions and inventory operations")
@@ -51,6 +57,9 @@ public class TransactionController {
     @Autowired
     XlsxService xlsxService;
 
+/**
+ * Creates a new sales transaction with specified items and customer
+ */
     @Operation(summary = "Create new transaction", description = "Creates a new sales transaction with specified items and customer")
     @ApiResponse(responseCode = "201", description = "Transaction created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -78,6 +87,9 @@ public class TransactionController {
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
+/**
+ * Retrieve detailed information about a specific transaction
+ */
     @Operation(summary = "Get transaction by ID", description = "Retrieve detailed information about a specific transaction")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved transaction")
     @ApiResponse(responseCode = "404", description = "Transaction not found")
@@ -95,6 +107,9 @@ public class TransactionController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Retrieve paginated list of transactions with filtering options
+ */
     @Operation(summary = "Get transactions with filters", description = "Retrieve paginated list of transactions with filtering options")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved transactions")
     @GetMapping(
@@ -111,6 +126,9 @@ public class TransactionController {
         return ResponseEntity.ok(wrappedResult);
     }
 
+/**
+ * Export specific transactions with filtering options
+ */
     @Operation(summary = "Export transactions using filters to XLSX", description = "Export specific transactions with filtering options")
     @ApiResponse(responseCode = "200", description = "Successfully exported transactions list to XLSX")
     @GetMapping(
@@ -130,6 +148,9 @@ public class TransactionController {
         log.info("Transaction history export as xlxs completed successfully");
     }
 
+/**
+ * Generates a PDF document of the transaction order with all items
+ */
     @Operation(summary = "Export transaction order to PDF", description = "Generates a PDF document of the transaction order with all items")
     @ApiResponse(responseCode = "200", description = "Successfully exported transaction order to PDF")
     @ApiResponse(responseCode = "404", description = "Transaction order not found")
@@ -153,6 +174,9 @@ public class TransactionController {
             .body(new InputStreamResource(pdf));
     }
 
+/**
+ * Marks a transaction as processed and updates inventory accordingly
+ */
     @Operation(summary = "Process transaction", description = "Marks a transaction as processed and updates inventory accordingly")
     @ApiResponse(responseCode = "200", description = "Transaction processed successfully")
     @ApiResponse(responseCode = "404", description = "Transaction not found")
@@ -172,6 +196,9 @@ public class TransactionController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Cancels a transaction and reverses inventory changes
+ */
     @Operation(summary = "Cancel transaction", description = "Cancels a transaction and reverses inventory changes")
     @ApiResponse(responseCode = "200", description = "Transaction cancelled successfully")
     @ApiResponse(responseCode = "404", description = "Transaction not found")
@@ -191,6 +218,9 @@ public class TransactionController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Recalculates transaction totals and balances
+ */
     @Operation(summary = "Refresh transaction", description = "Recalculates transaction totals and balances")
     @ApiResponse(responseCode = "200", description = "Transaction refreshed successfully")
     @ApiResponse(responseCode = "404", description = "Transaction not found")

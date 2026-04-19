@@ -24,6 +24,12 @@ import lumi.insert.app.exception.NotFoundEntityException;
 import lumi.insert.app.mapper.CategoryMapper;
 import lumi.insert.app.service.CategoryService;
 
+/**
+ * Services of {@link Category}.
+ * <p>Handles category management such as creation, update, etc.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Service
 @Transactional
 @Slf4j
@@ -35,6 +41,12 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     CategoryMapper categoryMapper;
 
+    /**
+     * Creates a new category.
+     * * @param request the category creation details.
+     * @return the mapped {@link CategoryResponse} of the saved entity.
+     * @throws DuplicateEntityException if a category with the same name already exists.
+     */
     @Override
     @ActivityLogger(
         entityName = "categories",
@@ -61,6 +73,13 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
+    /**
+     * Updates the name of an existing category.
+     * * @param request the update request containing the ID and the new name.
+     * @return the mapped {@link CategoryResponse}.
+     * @throws DuplicateEntityException if the new name is already taken.
+     * @throws NotFoundEntityException if the category ID does not exist.
+     */
     @Override 
     @ActivityLogger(
         entityName = "categories",
@@ -85,6 +104,13 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
+    /**
+     * Sets a category status to active.
+     * * @param id the unique identifier of the category.
+     * @return the updated {@link CategoryResponse}.
+     * @throws NotFoundEntityException if the category ID is not found.
+     * @throws BoilerplateRequestException if the category is already active.
+     */
     @Override
     @ActivityLogger(
         entityName = "categories",
@@ -106,6 +132,13 @@ public class CategoryServiceImpl implements CategoryService {
         return response;
     }
 
+    /**
+     * Sets a category status to inactive.
+     * * @param id the unique identifier of the category.
+     * @return the updated {@link CategoryResponse}.
+     * @throws NotFoundEntityException if the category ID is not found.
+     * @throws BoilerplateRequestException if the category is already inactive.
+     */
     @Override
     @ActivityLogger(
         entityName = "categories",
@@ -127,6 +160,12 @@ public class CategoryServiceImpl implements CategoryService {
         return response;
     }
 
+    /**
+     * Retrieves a single category by its ID.
+     * * @param id the unique identifier.
+     * @return the found {@link CategoryResponse}.
+     * @throws NotFoundEntityException if no category matches the given ID.
+     */
     @Override
     public CategoryResponse getCategoryById(Long id) {
         log.debug("Getting category by ID: {}", id);
@@ -140,6 +179,12 @@ public class CategoryServiceImpl implements CategoryService {
         return response;
     }
 
+    /**
+     * Retrieves a paginated slice of active categories.
+     * <p>Results are sorted by name in ascending order by default.</p>
+     * * @param request the pagination parameters (page and size).
+     * @return a {@link Slice} of {@link CategoryResponse} objects.
+     */
     @Override
     public Slice<CategoryResponse> getCategories(PaginationRequest request) {
         log.debug("Getting categories with pagination - page: {}, size: {}", request.getPage(), request.getSize());

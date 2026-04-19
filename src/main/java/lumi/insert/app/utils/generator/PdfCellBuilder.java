@@ -8,6 +8,11 @@ import org.openpdf.text.pdf.PdfContentByte;
 import org.openpdf.text.pdf.PdfPCell;
 import org.openpdf.text.pdf.PdfWriter;
 
+/**
+ * Utilities of Pdf's related.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 public class PdfCellBuilder {
     
         PdfPCell pdfPCell;

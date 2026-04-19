@@ -47,6 +47,23 @@ import lumi.insert.app.mapper.AllSupplyMapper;
 import lumi.insert.app.service.SupplyService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
+/**
+ * Implementation of {@link SupplyService} for procurement and inventory valuation.
+ * <p>
+ * This service manages the complexity of receiving goods from suppliers, specifically:
+ * <ul>
+ * <li><b>Valuation:</b> Implements the Moving Average formula to update {@code Product.basePrice} 
+ * whenever new stock is added or refunded.</li>
+ * <li><b>Debt Tracking:</b> Tracks unpaid balances, surplus payments, and unrefunded amounts 
+ * at both the Supply and {@link Supplier} levels.</li>
+ * <li><b>Inventory Integrity:</b> Ensures {@link StockCard} consistency and prevents 
+ * refunding more stock than is physically available.</li>
+ * </ul>
+ * </p>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -73,6 +90,17 @@ public class SupplyServiceImpl implements SupplyService{
     @Autowired
     JpaSpecGenerator jpaSpecGenerator;
 
+    /**
+     * Places a new supply order and updates product inventory valuation.
+     * <p>
+     * For each item, it recalculates the Product's base price using:
+     * <br/>{@code NewBasePrice = (OldStockValue + SupplyValue) / NewStockQuantity}
+     * </p>
+     *
+     * @param request the supply order details including multiple products and pricing.
+     * @return a simplified {@link SupplyResponse}.
+     * @throws NotFoundEntityException if supplier or any product ID is invalid.
+     */
     @Override
     @ActivityLogger(
         entityName = "supplies",
@@ -90,15 +118,24 @@ public class SupplyServiceImpl implements SupplyService{
         List<SupplyItemCreate> items = request.getSupplyItems();
         log.debug("Supply creation request contains {} items", items.size());
 
+        /**
+         * - Map list of Supply Items to List of Product ID:
+         * - Fetch listed products ID to List of Product
+         */
         List<Long> listOfProductId = items.stream().map(item -> item.getProductId()).distinct().collect(Collectors.toCollection(ArrayList::new));
         List<Product> listOfProduct = productRepository.findAllById(listOfProductId);
 
+        /**
+         * Check if fetched products is not equal the request items
+         * throw with information of which product not found
+         */
         if(listOfProduct.size() != listOfProductId.size()){
             listOfProductId.removeAll(listOfProduct.stream().map(Product::getId).distinct().toList());
             log.debug("Supply creation failed - product ids not found: {}", listOfProductId);
             throw new NotFoundEntityException("Product with id " + listOfProductId.toString() + " not found!");
         } 
 
+        // Count subtotal from list supply item
         BigDecimal subTotal = items.stream().map(item -> item.getPrice().multiply(item.getQuantity())).reduce(BigDecimal.ZERO, BigDecimal::add);
         log.debug("Supply subtotal calculated: {}", subTotal);
 
@@ -118,12 +155,14 @@ public class SupplyServiceImpl implements SupplyService{
 
         Supply savedSupply = supplyRepository.saveAndFlush(supply);
 
+        // Map<Product ID, Product>
         Map<Long,Product> mappedProduct = listOfProduct.stream().collect(Collectors.toMap(Product::getId, Function.identity()));
 
         List<SupplyItem> itemsToAdd = new ArrayList<>();
 
         List<StockCard> stockCardsToAdd = new ArrayList<>();
 
+        //Add stock card and calculate new base price, new stock quantity for each item from supply items
         for (SupplyItemCreate item : items) {
             Product product = mappedProduct.get(item.getProductId());
             
@@ -177,6 +216,7 @@ public class SupplyServiceImpl implements SupplyService{
         stockCardRepository.saveAll(stockCardsToAdd);
         log.debug("Saved {} stock cards", stockCardsToAdd.size());
 
+        // Calculate supplier's transactional value
         supplier.addTransaction();
         supplier.setTotalUnpaid(supplier.getTotalUnpaid().add(savedSupply.getTotalUnpaid()));
         SupplyResponse response = allSupplyMapper.createSimpleDTO(savedSupply);
@@ -184,6 +224,12 @@ public class SupplyServiceImpl implements SupplyService{
         return response;
     }
 
+    /**
+     * Searches for supply orders based on dynamic filters.
+     *
+     * @param request filter criteria such as date range, supplier, or invoice ID.
+     * @return a {@link Slice} of matching supply orders.
+     */
     @Override
     public Slice<SupplyResponse> searchSuppliesByRequests(SupplyGetByFilter request) {
         log.debug("Searching supplies with filter: {}", request);
@@ -196,6 +242,19 @@ public class SupplyServiceImpl implements SupplyService{
         return supplies.map(allSupplyMapper::createSimpleDTO);
     }
 
+    /**
+     * Cancels an entire supply order and reverses all stock and financial impacts.
+     * <p>
+     * <b>Note:</b> Only possible if current physical stock is sufficient to cover 
+      reversed quantities. It also recalculates the base price using the average formula 
+      to maintain valuation accuracy.
+     * </p>
+     *
+     * @param id the unique identifier of the supply order.
+     * @return the cancelled supply metadata.
+     * @throws ForbiddenRequestException if order is already cancelled.
+     * @throws TransactionValidationException if insufficient stock for reversal.
+     */
     @Override
     @ActivityLogger(
         entityName = "supplies",
@@ -203,13 +262,15 @@ public class SupplyServiceImpl implements SupplyService{
         actionMessage = "Supply order cancelled"
     )
     public SupplyResponse cancelSupply(UUID id) {
+        
         log.info("Cancelling supply order with ID: {}", id);
         Supply supply = supplyRepository.findByIdDetail(id)
             .orElseThrow(() -> {
                 log.debug("Supply not found for cancellation with ID: {}", id);
                 return new NotFoundEntityException("Supply with ID " + id + " was not found");
             });
-
+        
+        // Cannot cancel alreay cancelled supply    
         if(supply.getStatus() == SupplyStatus.CANCELLED) {
             log.debug("Supply cancellation failed - already cancelled: {}", id);
             throw new ForbiddenRequestException("Unable to cancel supply because Supply Status is CANCELLED");
@@ -217,6 +278,7 @@ public class SupplyServiceImpl implements SupplyService{
 
         List<SupplyItem> supplyItems = supply.getSupplyItems();
         
+        // Map<ProductID, Total Refunded Quantity from Supply>. Only map s.items below zero (refunded)
         Map<Long, BigDecimal> listRefunded = supplyItems.stream()
             .filter(item -> item.getQuantity().compareTo(BigDecimal.ZERO) < 0)
             .collect(Collectors
@@ -238,11 +300,14 @@ public class SupplyServiceImpl implements SupplyService{
             BigDecimal oldStock = product.getStockQuantity();
             BigDecimal oldPrice = product.getBasePrice();
 
+            // Check available item quantity can be cancel
             BigDecimal alreadyRefundedProduct = listRefunded.get(product.getId());
             alreadyRefundedProduct = alreadyRefundedProduct != null ? alreadyRefundedProduct : BigDecimal.ZERO;
 
+            // Check available stock quantity
             if(oldStock.compareTo((item.getQuantity().add(alreadyRefundedProduct))) < 0) throw new TransactionValidationException("Unable to cancel supply items, product with id " + product.getId() + " doesn't have enough stock to refund, stock left: " + product.getStockQuantity());
             
+            //reverse supply item
             SupplyItem reverseItem = SupplyItem.builder()
                 .id(UuidCreator.getTimeOrderedEpochFast())
                 .price(item.getPrice())
@@ -289,11 +354,13 @@ public class SupplyServiceImpl implements SupplyService{
         stockCardRepository.saveAll(stockCardToAdd);
         log.debug("Saved {} refund stock cards", stockCardToAdd.size());
         
+        // Calculate supplier transactional value
         Supplier supplier = supply.getSupplier();
         supplier.setTotalUnpaid(supplier.getTotalUnpaid().subtract(supply.getTotalUnpaid()));
         supplier.setTotalPaid(supplier.getTotalPaid().subtract(supply.getTotalPaid()));
         supplier.setTotalUnrefunded(supplier.getTotalUnrefunded().add(supply.getTotalPaid()));
 
+        // Update supply value
         supply.setStatus(SupplyStatus.CANCELLED);
         supply.setTotalUnrefunded(supply.getTotalPaid().add(supply.getTotalUnrefunded()));
         supply.setTotalUnpaid(BigDecimal.ZERO);
@@ -304,6 +371,12 @@ public class SupplyServiceImpl implements SupplyService{
         return response;
     }
 
+    /**
+     * Retrieves detailed information of a supply order, including individual items.
+     *
+     * @param id the supply identifier.
+     * @return detailed {@link SupplyDetailResponse}.
+     */
     @Override
     public SupplyDetailResponse getSupply(UUID id) {
         log.debug("Getting supply detail for ID: {}", id);
@@ -318,6 +391,18 @@ public class SupplyServiceImpl implements SupplyService{
         return response;
     }
 
+    /**
+     * Updates non-item details of a supply order (e.g., description, fees, discounts).
+     * <p>
+     * Adjusting fees or discounts will trigger a recalculation of unpaid/paid balances 
+     * and may result in surplus payments (TotalUnrefunded) if the new total is lower 
+     * than what has already been paid.
+     * </p>
+     *
+     * @param id      the supply identifier.
+     * @param request the update data.
+     * @return updated {@link SupplyResponse}.
+     */
     @Override
     @ActivityLogger(
         entityName = "supplies",
@@ -378,6 +463,21 @@ public class SupplyServiceImpl implements SupplyService{
         return allSupplyMapper.createSimpleDTO(supply);
     }
 
+    /**
+     * Processes a partial refund for a specific product within a supply order.
+     * <p>
+     * This method:
+     * <ul>
+     * <li>Reduces physical stock and records a {@code SUPPLIER_OUT} move.</li>
+     * <li>Recalculates the Moving Average cost for the remaining stock.</li>
+     * <li>Allocates any resulting overpayment to the Supplier's {@code totalUnrefunded} balance.</li>
+     * </ul>
+     * </p>
+     *
+     * @param id      the supply identifier.
+     * @param request contains product ID and quantity to refund.
+     * @return updated supply state.
+     */
     @Override
     @ActivityLogger(
         entityName = "supplies",
@@ -392,14 +492,16 @@ public class SupplyServiceImpl implements SupplyService{
             log.debug("No supply items found for refund request supply ID: {}, product ID: {}", id, request.getProductId());
             throw new NotFoundEntityException("Unable to find any supply item with product id " + request.getProductId());
         }
+
+        // Check value of supplier price and quantity item left to refund
         BigDecimal priceFromSupplier = matchItems.getLast().getPrice();
-        BigDecimal ttlQuantiyLeft = matchItems.stream()
+        BigDecimal ttlQuantityLeft = matchItems.stream()
             .map(item -> item.getQuantity())
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if(ttlQuantiyLeft.compareTo(request.getQuantity()) < 0) {
-            log.debug("Refund request quantity {} exceeds remaining refundable stock {} for supply ID: {}", request.getQuantity(), ttlQuantiyLeft, id);
-            throw new ForbiddenRequestException("refund quantity exceeds the remaining refundedable stock with quantity: " + ttlQuantiyLeft + ", enter an exact amount to proceed");
+        if(ttlQuantityLeft.compareTo(request.getQuantity()) < 0) {
+            log.debug("Refund request quantity {} exceeds remaining refundable stock {} for supply ID: {}", request.getQuantity(), ttlQuantityLeft, id);
+            throw new ForbiddenRequestException("refund quantity exceeds the remaining refundedable stock with quantity: " + ttlQuantityLeft + ", enter an exact amount to proceed");
         }
 
         Supply supply = matchItems.getFirst().getSupply();

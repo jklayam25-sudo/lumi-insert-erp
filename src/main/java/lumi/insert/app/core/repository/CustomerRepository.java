@@ -11,6 +11,12 @@ import org.springframework.stereotype.Repository;
 import lumi.insert.app.core.entity.Customer;
 import lumi.insert.app.dto.response.CustomerNameResponse; 
 
+/**
+ * Repository for {@link Customer} entity.
+ * <p>Support {@link JpaSpecificationExecutor} query.</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, UUID>, JpaSpecificationExecutor<Customer>{
     

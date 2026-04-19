@@ -12,6 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.core.entity.nondatabase.EmployeeLogin; 
 import lumi.insert.app.service.MailSenderService; 
 
+/**
+ * Application scheduler & CRONJOB.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Component
 @Slf4j
 public class LumiScheduler {
@@ -21,6 +26,10 @@ public class LumiScheduler {
 
     private EmployeeLogin springScheduler = new EmployeeLogin(null, "springScheduler", null, "0.0.0.0");
     
+    /**
+     * Daily task: export and send products stats to email
+     * Time: 00:03 everyday
+     */
     @Scheduled(cron = "0 3 0 * * *", zone = "Asia/Jakarta") 
     void dailyProductsStatistics(){
         log.info("Starting daily products statistics email generation");
@@ -37,7 +46,11 @@ public class LumiScheduler {
         }
     }
 
-    @Scheduled(cron = "0 5 1 * * *", zone = "Asia/Jakarta")
+    /**
+     * Monthly task: export and send products stats to email
+     * Time: 01:05 every first day of month
+     */
+    @Scheduled(cron = "0 5 1 1 * *", zone = "Asia/Jakarta")
     void monthlyProductsStatistics(){
         log.info("Starting monthly products statistics email generation");
         try {

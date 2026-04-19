@@ -28,6 +28,12 @@ import lumi.insert.app.dto.request.SupplyPaymentGetByFilter;
 import lumi.insert.app.dto.request.TransactionGetByFilter;
 import lumi.insert.app.dto.request.TransactionPaymentGetByFilter;
 
+/**
+ * Entities JpaSpecification Generator.
+ * <p>Return Specification<any Entity> for Search Filter Query</p>
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Component
 public class JpaSpecGenerator {
     

@@ -47,6 +47,28 @@ import lumi.insert.app.mapper.AllTransactionMapper;
 import lumi.insert.app.service.TransactionPaymentService;
 import lumi.insert.app.utils.generator.JpaSpecGenerator;
 
+/**
+ * Implementation of {@link TransactionPaymentService} managing financial settlements and proof of payment.
+ * <p>
+ * This service handles the final stages of the transaction lifecycle, ensuring that cash inflows 
+ * and outflows (refunds) are accurately reflected in both transaction and customer balances.
+ * </p>
+ * * <h3>Key Responsibilities:</h3>
+ * <ul>
+ * <li><b>Payment Processing:</b> Records customer payments, reduces unpaid balances, and 
+ * automatically completes transactions when debt reaches zero.</li>
+ * <li><b>Refund Settlement:</b> Manages the payout of surplus balances (Unrefunded) to customers 
+ * following item returns or order cancellations.</li>
+ * <li><b>Asynchronous Evidence Storage:</b> Handles payment proof (receipts/images) by 
+ * transferring {@link MultipartFile} to temporary storage and publishing 
+ * {@link UploadStorageMessage} events for background processing.</li>
+ * <li><b>Financial Integrity:</b> Prevents overpayment or over-refunding through strict 
+ * {@link BigDecimal} validation.</li>
+ * </ul>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Transactional
 @Slf4j
@@ -67,6 +89,19 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
     @Autowired
     ApplicationEventPublisher eventPublisher;
 
+    /**
+     * Records a payment received from a customer for a specific transaction.
+     * <p>
+     * This method updates the debt status of both the {@link Transaction} and the {@link Customer}.
+     * It also initiates an asynchronous file upload process for any payment attachments provided.
+     * </p>
+     *
+     * @param transactionId the UUID of the transaction being paid.
+     * @param request       the payment details including amount and proof files.
+     * @return {@link TransactionPaymentResponse} confirming the recorded payment.
+     * @throws TransactionValidationException if the payment amount exceeds the remaining debt.
+     * @throws StorageActionException      if temporary file storage fails.
+     */
     @Override
     @ActivityLogger(
         entityName = "transaction_payments",
@@ -92,6 +127,7 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         transaction.setTotalUnpaid(transaction.getTotalUnpaid().subtract(request.getTotalPayment()));
         transaction.setTotalPaid(transaction.getTotalPaid().add(request.getTotalPayment()));
 
+        // Check if request payment exceeds the unpaid left
         if(transaction.getTotalUnpaid().compareTo(BigDecimal.ZERO) < 0) {
             log.debug("Payment exceeds unpaid amount for transactionId={}, totalPayment={}", transactionId, request.getTotalPayment());
             throw new TransactionValidationException("Payment exceeds the remaining transaction debts with ID " + transactionId + ", enter an exact amount to proceed");
@@ -105,10 +141,12 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         TransactionPayment savedTransactionPayment = transactionPaymentRepository.save(transactionPayment);
         TransactionPaymentResponse transactionPaymentResponseDto = allTransactionMapper.createTransactionPaymentResponseDto(savedTransactionPayment);
 
+        // Upload payment proof/others to storage via message producer
         MultipartFile[] files = request.getFiles();
         List<Path> paths = new ArrayList<>();
         try {
             for (MultipartFile file : files) {
+                // Save to temporary
                 Path tempFile = Files.createTempFile("paymentOf" + transaction.getId() + "-", "_upload");
                 file.transferTo(tempFile);
                 paths.add(tempFile);
@@ -120,6 +158,7 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         }
  
         paths.forEach(path -> {
+            // Publish event to EventListener < listen and pass msg producer service
             eventPublisher.publishEvent(
                 new UploadStorageMessage(
                     EntityList.TRANSACTION_PAYMENT,
@@ -134,6 +173,13 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         return transactionPaymentResponseDto;
     }
 
+    /**
+     * Retrieves a paginated list of payment history for a specific transaction.
+     *
+     * @param transactionId the transaction identifier.
+     * @param request       pagination parameters (page, size).
+     * @return a {@link Slice} of transaction payment records.
+     */
     @Override
     public Slice<TransactionPaymentResponse> getTransactionPaymentsByTransactionId(UUID transactionId, PaginationRequest request) {
         log.info("Retrieving transaction payments for transactionId={}, page={}, size={}", transactionId, request.getPage(), request.getSize());
@@ -146,6 +192,12 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         return result;
     }
 
+    /**
+     * Retrieves the details of a specific payment record by its ID.
+     *
+     * @param id the unique identifier of the payment.
+     * @return the {@link TransactionPaymentResponse}.
+     */
     @Override
     public TransactionPaymentResponse getTransactionPayment(UUID id) {
         log.info("Retrieving transaction payment id={}", id);
@@ -159,6 +211,12 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         return transactionPaymentResponseDto;
     }
 
+    /**
+     * Searches for payment records across the system using dynamic criteria.
+     *
+     * @param request filter criteria (e.g., date range, payment source).
+     * @return a {@link Slice} of matching transaction payments.
+     */
     @Override
     public Slice<TransactionPaymentResponse> getTransactionPaymentsByRequests(TransactionPaymentGetByFilter request) {
         log.info("Searching transaction payments with filters page={}, size={}", request.getPage(), request.getSize());
@@ -172,6 +230,20 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         return result;
     }
 
+    /**
+     * Records a refund payment sent back to the customer.
+     * <p>
+     * This is used to settle {@code totalUnrefunded} amounts caused by returns. 
+     * The transaction status will move to {@code COMPLETE} once all surplus 
+     * balances have been settled back to the customer.
+     * </p>
+     *
+     * @param transactionId the UUID of the transaction associated with the refund.
+     * @param request       refund details and proof of payout.
+     * @return the recorded refund payment details.
+     * @throws ForbiddenRequestException      if the transaction is still in PENDING or already COMPLETE.
+     * @throws TransactionValidationException if the refund amount exceeds the unrefunded balance.
+     */
     @Override
     @ActivityLogger(
         entityName = "transaction_payments",
@@ -193,6 +265,7 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
 
         BigDecimal totalUnrefunded = transaction.getTotalUnrefunded();
 
+        // Check if request payment exceeds the unpaid left
         if(request.getTotalPayment().compareTo(totalUnrefunded) > 0) {
             log.debug("Refund payment exceeds unrefunded amount transactionId={}, requestAmount={}, remaining={}", transactionId, request.getTotalPayment(), totalUnrefunded);
             throw new TransactionValidationException("Payment refund exceeds the remaining transaction unrefunded debt with ID " + transaction.getId() + ", enter an exact amount to proceed");
@@ -221,10 +294,12 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         TransactionPaymentResponse transactionPaymentResponseDto = allTransactionMapper.createTransactionPaymentResponseDto(savedTransactionPayment);
         log.info("Refund payment created paymentId={}, transactionId={}", savedTransactionPayment.getId(), transactionId);
         
+        // Upload payment proof/others to storage via message producer
         MultipartFile[] files = request.getFiles();
         List<Path> paths = new ArrayList<>();
         try {
             for (MultipartFile file : files) {
+                // Save to temporary
                 Path tempFile = Files.createTempFile("refPaymentOf" + transaction.getId() + "-", "_upload");
                 file.transferTo(tempFile);
                 paths.add(tempFile);
@@ -236,6 +311,7 @@ public class TransactionPaymentServiceImpl implements TransactionPaymentService 
         }
  
         paths.forEach(path -> {
+            // Publish event to EventListener < listen and pass msg producer service
             eventPublisher.publishEvent(
                 new UploadStorageMessage(
                     EntityList.TRANSACTION_PAYMENT,

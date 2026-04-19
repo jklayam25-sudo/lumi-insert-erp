@@ -3,9 +3,16 @@ package lumi.insert.app.core.repository;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import lumi.insert.app.core.entity.TransactionPaymentPicture;
 
+/**
+ * Repository for {@link TransactionPaymentPicture} entity.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
+@Repository
 public interface TransactionPaymentPictureRepository extends JpaRepository<TransactionPaymentPicture, UUID>{
     
 }

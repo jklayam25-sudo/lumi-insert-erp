@@ -19,11 +19,11 @@ import org.openpdf.text.pdf.PdfContentByte;
 import org.openpdf.text.pdf.PdfPCell;
 import org.openpdf.text.pdf.PdfPTable;
 import org.openpdf.text.pdf.PdfWriter; 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service; 
 
 import lombok.extern.slf4j.Slf4j;
 import lumi.insert.app.aspect.annotation.ActivityLogger;
-import lumi.insert.app.core.entity.nondatabase.ActivityAction;
+import lumi.insert.app.core.entity.nondatabase.ActivityAction; 
 import lumi.insert.app.core.repository.projection.ProductOutOfStock;
 import lumi.insert.app.core.repository.projection.ProductRefund;
 import lumi.insert.app.core.repository.projection.ProductSale;
@@ -36,12 +36,30 @@ import lumi.insert.app.service.PdfService;
 import lumi.insert.app.utils.generator.PdfCellBuilder;
 import lumi.insert.app.utils.generator.PdfPageTemplate;
 
+/**
+ * Implementation of {@link PdfService} generating pdf document as bytes.
+ * <p>
+ * This service handles the making of templated pdf document from input data.
+ * </p>
+ * * <h3>Key Responsibilities:</h3>
+ * <ul>
+ * <li><b>Generating PDF:</b> Converting DTO to PDF document as bytes.</li>    
+ * </ul>
+ *
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @Service
 @Slf4j
 public class PdfServiceImpl implements PdfService{
  
     private Font helveticaBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
 
+    /**
+     * Convert a {@link SupplyDetailResponse} into templated PDF as bytes
+     * @param data a source of data {@link SupplyDetailResponse}
+     * @return {@link ByteArrayInputStream}
+     */
     @Override
     @ActivityLogger(
         entityName = "supplies",
@@ -194,6 +212,11 @@ public class PdfServiceImpl implements PdfService{
         }
     }
 
+    /**
+     * Convert a {@link TransactionDetailResponse} into templated PDF as bytes
+     * @param data a source of data {@link TransactionDetailResponse}
+     * @return {@link ByteArrayInputStream}
+     */
     @Override
     @ActivityLogger(
         entityName = "transactions",
@@ -346,6 +369,11 @@ public class PdfServiceImpl implements PdfService{
         }
     }
 
+    /**
+     * Convert a {@link TransactionItemStatisticResponse} into templated PDF as bytes
+     * @param data a source of data {@link TransactionItemStatisticResponse}
+     * @return {@link ByteArrayInputStream}
+     */
     @Override
     @ActivityLogger(
         entityName = "products",

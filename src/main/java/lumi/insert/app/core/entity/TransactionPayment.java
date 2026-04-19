@@ -28,6 +28,14 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lumi.insert.app.core.entity.nondatabase.BaseAuditing;
 
+/**
+ * Representation class of database table {@code"transaction_payments"}. 
+ * <p>Represent detailed transaction payment informations.<br>
+ * Class can be implemented by{@code NoArgsConstructor, AllArgsConstructor and Builder}. </p>
+ * 
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Entity(name = "transaction_payments")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -48,26 +56,46 @@ public class TransactionPayment extends BaseAuditing{
     @Column(nullable = false)
     private BigDecimal totalPayment;
 
+    /**
+     * Payment bank account/information of customer.  
+     */
     @Column(nullable = false)
     private String paymentFrom;
 
+    /**
+     * Payment bank account/information of our company.  
+     */
     @Column(nullable = false)
     private String paymentTo;
 
+     /**
+     * When set to true mean this payment is meant to refund.
+     * <p>Example: Case when company has debt(unrefund) and want to pay by cash or item (return).</p>  
+     */
     @Builder.Default
     private Boolean isForRefund = false;
 
+    /**
+     * Payment picture url.  
+     */
     @JdbcTypeCode(SqlTypes.ARRAY)
     @NotAudited 
     @Builder.Default
     private List<String> pictureUrl = new ArrayList<>();
 
+    /**
+     * Payment picture related.  
+     */
     @OneToMany(mappedBy = "transactionPayment")
     @Builder.Default
     @ToString.Exclude
     @NotAudited
     private List<TransactionPaymentPicture> transactionPaymentPictures = new ArrayList<>();
 
+    /**
+     * Pre-query function used to normalize BigDecimal scale
+     * <p>Rounding half up  and scaled by 4 for precise value</p>
+     */
     @PrePersist
     @PreUpdate
     void normalizeDecimal(){

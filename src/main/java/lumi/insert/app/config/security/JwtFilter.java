@@ -31,6 +31,11 @@ import lumi.insert.app.core.entity.nondatabase.EmployeeLogin;
 import lumi.insert.app.core.entity.nondatabase.EmployeeRole;
 import lumi.insert.app.utils.security.JwtUtils;
 
+/**
+ * Implementation of request filter.
+ * @author KelvinKhodes
+ * @since 1.0.0 
+ */
 @Component
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter{
@@ -90,6 +95,7 @@ public class JwtFilter extends OncePerRequestFilter{
                 return;
             }
             
+            //Registering Auth Credentials to SecurityContext
             List<GrantedAuthority> roles = AuthorityUtils.createAuthorityList("ROLE_" + accessToken.getClaim("role").asString());
     
             EmployeeLogin employeeLogin = EmployeeLogin.builder()
@@ -111,6 +117,12 @@ public class JwtFilter extends OncePerRequestFilter{
         } 
     }
 
+    /**
+     * Parse raw request to Formatted JWT
+     * <p>Example: Header: Bearer someJWT. Returned value: someJWT</p>
+     * @param request
+     * @return parsed Token
+     */
     private String parseBearer(HttpServletRequest request){
          String header = request.getHeader("Authorization");
 

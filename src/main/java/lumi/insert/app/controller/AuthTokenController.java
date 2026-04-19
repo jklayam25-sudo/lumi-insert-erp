@@ -25,6 +25,12 @@ import lumi.insert.app.dto.request.AuthTokenCreateRequest;
 import lumi.insert.app.dto.response.AuthTokenResponse;
 import lumi.insert.app.service.AuthTokenService;
 
+/**
+ * REST Controller to access authentication services.
+ * Endpoints for managing user sessions and JWT tokens.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Tag(name = "Authentication", description = "Endpoints for managing user sessions and JWT tokens") 
 @Slf4j
@@ -33,6 +39,9 @@ public class AuthTokenController {
     @Autowired
     AuthTokenService authTokenService;
 
+    /*
+    * Authenticates user and returns access token in body and refresh token in HttpOnly cookie
+    */
     @Operation(summary = "Login to the system", description = "Authenticates user and returns access token in body and refresh token in HttpOnly cookie")
     @ApiResponse(responseCode = "200", description = "Login successful")
     @PostMapping(
@@ -56,8 +65,11 @@ public class AuthTokenController {
 
         log.info("User logged in successfully with username: {}", request.getUsername());
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(wrappedResult);
-    }
+    } 
 
+    /**
+     * Uses the refresh token from cookie to generate a new short-lived access token
+     */
     @Operation(summary = "Refresh access token", description = "Uses the refresh token from cookie to generate a new short-lived access token")
     @ApiResponse(responseCode = "200", description = "Token refreshed successfully")
     @PostMapping(
@@ -72,8 +84,11 @@ public class AuthTokenController {
         
         log.info("Access token refreshed successfully");
         return ResponseEntity.ok(wrappedResult);
-    }
-
+    } 
+    
+    /**
+     * Invalidates the refresh token and clears the authentication cookie
+     */
     @Operation(summary = "Logout", description = "Invalidates the refresh token and clears the authentication cookie")
     @ApiResponse(responseCode = "204", description = "Logout successful")
     @DeleteMapping(

@@ -45,6 +45,12 @@ import lumi.insert.app.service.ProductService;
 import lumi.insert.app.service.TransactionItemService;
 import lumi.insert.app.utils.generator.DateUtils;
 
+/**
+ * REST Controller to access {@link ProductService}.
+ * Endpoints for managing products and inventory.
+ * @author KelvinKhodes
+ * @since 1.0.0
+ */
 @RestController
 @Slf4j
 @Tag(name = "Products", description = "Endpoints for managing products and inventory")
@@ -62,6 +68,9 @@ public class ProductController {
     @Autowired
     DateUtils dateUtils;
     
+/**
+ * Retrieve detailed information about a specific product
+ */
     @Operation(summary = "Get product by ID", description = "Retrieve detailed information about a specific product")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved product")
     @ApiResponse(responseCode = "404", description = "Product not found")
@@ -79,6 +88,9 @@ public class ProductController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Search for products by name with pagination support
+ */
     @Operation(summary = "Search product names", description = "Search for products by name with pagination support")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved matching products")
     @GetMapping(
@@ -95,6 +107,9 @@ public class ProductController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Retrieve paginated list of products with filtering options
+ */
     @Operation(summary = "Get products by filter", description = "Retrieve paginated list of products with filtering options")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved filtered products")
     @GetMapping(
@@ -111,6 +126,9 @@ public class ProductController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Retrieve paginated list of all products
+ */
     @Operation(summary = "Get all products", description = "Retrieve paginated list of all products")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved products")
     @GetMapping(
@@ -127,6 +145,9 @@ public class ProductController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Retrieve detailed stock information for a specific product
+ */
     @Operation(summary = "Get product stock information", description = "Retrieve detailed stock information for a specific product")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved product stock")
     @ApiResponse(responseCode = "404", description = "Product not found")
@@ -144,6 +165,9 @@ public class ProductController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Generates a PDF document of all products statistics (Best Seller, Top Refund, Out of stock list)
+ */
     @Operation(summary = "Export products statistics to PDF", description = "Generates a PDF document of all products statistics (Best Seller, Top Refund, Out of stock list)")
     @ApiResponse(responseCode = "200", description = "Successfully exported supply order to PDF") 
     @GetMapping(
@@ -171,6 +195,9 @@ public class ProductController {
             .body(new InputStreamResource(pdf)); 
     }
 
+/**
+ * Creates a new product with the specified details
+ */
     @Operation(summary = "Create new product", description = "Creates a new product with the specified details")
     @ApiResponse(responseCode = "201", description = "Product created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -198,6 +225,9 @@ public class ProductController {
         return ResponseEntity.created(location).body(wrappedResult);   
     }
 
+/**
+ * Activates a product to make it available in the system
+ */
     @Operation(summary = "Activate product", description = "Activates a product to make it available in the system")
     @ApiResponse(responseCode = "200", description = "Product activated successfully")
     @ApiResponse(responseCode = "404", description = "Product not found")
@@ -218,6 +248,9 @@ public class ProductController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Deactivates a product to make it unavailable for new transactions
+ */
     @Operation(summary = "Deactivate product", description = "Deactivates a product to make it unavailable for new transactions")
     @ApiResponse(responseCode = "200", description = "Product deactivated successfully")
     @ApiResponse(responseCode = "404", description = "Product not found")
@@ -238,6 +271,9 @@ public class ProductController {
         return ResponseEntity.ok(wrappedResult);   
     }
 
+/**
+ * Updates information for an existing product
+ */
     @Operation(summary = "Update product", description = "Updates information for an existing product")
     @ApiResponse(responseCode = "200", description = "Product updated successfully")
     @ApiResponse(responseCode = "404", description = "Product not found")
